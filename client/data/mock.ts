@@ -29,6 +29,9 @@ export const mockPins: Pin[] = [
     after_img_url:
       "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=400&fit=crop",
     created_at: "2024-11-15T10:00:00Z",
+    work_type: "Shingle",
+    date_completed: "November 2024",
+    privacy_mode: false,
   },
   {
     id: "p2",
@@ -46,6 +49,9 @@ export const mockPins: Pin[] = [
     after_img_url:
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=400&fit=crop",
     created_at: "2024-10-22T14:30:00Z",
+    work_type: "Flat",
+    date_completed: "October 2024",
+    privacy_mode: false,
   },
   {
     id: "p3",
@@ -63,6 +69,9 @@ export const mockPins: Pin[] = [
     after_img_url:
       "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=600&h=400&fit=crop",
     created_at: "2024-09-10T09:15:00Z",
+    work_type: "Metal",
+    date_completed: "September 2024",
+    privacy_mode: false,
   },
   {
     id: "p4",
@@ -70,16 +79,16 @@ export const mockPins: Pin[] = [
     lat: 33.735,
     lng: -84.435,
     zip_code: "30310",
-    customer_name: "Angela T.",
+    customer_name: "",
     neighborhood: "West End",
-    review_text:
-      "From the free inspection to the final walkthrough, Smith Roofing was transparent and honest. No surprise charges, just great work.",
-    stars: 4,
-    before_img_url:
-      "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=600&h=400&fit=crop",
-    after_img_url:
-      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&h=400&fit=crop",
+    review_text: "",
+    stars: 0,
+    before_img_url: "",
+    after_img_url: "",
     created_at: "2024-08-05T16:45:00Z",
+    work_type: "Shingle",
+    date_completed: "August 2024",
+    privacy_mode: true,
   },
   {
     id: "p5",
@@ -97,6 +106,9 @@ export const mockPins: Pin[] = [
     after_img_url:
       "https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?w=600&h=400&fit=crop",
     created_at: "2024-07-20T11:00:00Z",
+    work_type: "Tile",
+    date_completed: "July 2024",
+    privacy_mode: false,
   },
   {
     id: "p6",
@@ -104,18 +116,51 @@ export const mockPins: Pin[] = [
     lat: 33.757,
     lng: -84.342,
     zip_code: "30307",
-    customer_name: "Patricia H.",
+    customer_name: "",
     neighborhood: "Inman Park",
-    review_text:
-      "Absolutely thrilled with our new roof! Smith Roofing took our old, leaky roof and transformed it. The curb appeal alone was worth every penny.",
-    stars: 5,
-    before_img_url:
-      "https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=600&h=400&fit=crop",
-    after_img_url:
-      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=600&h=400&fit=crop",
+    review_text: "",
+    stars: 0,
+    before_img_url: "",
+    after_img_url: "",
     created_at: "2024-06-12T13:20:00Z",
+    work_type: "Metal",
+    date_completed: "June 2024",
+    privacy_mode: true,
   },
 ];
+
+/**
+ * Simple hash function for deterministic offset per pin.
+ * Ensures privacy-mode pins get a stable random offset that doesn't jump on re-render.
+ */
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return hash;
+}
+
+/**
+ * Returns display coordinates for a pin.
+ * If privacy_mode is true, offsets lat/lng by a small deterministic amount
+ * so the pin lands in the general neighborhood rather than the exact house.
+ */
+export function getDisplayCoords(pin: Pin): { lat: number; lng: number } {
+  if (!pin.privacy_mode) {
+    return { lat: pin.lat, lng: pin.lng };
+  }
+  const h = hashString(pin.id);
+  // Normalize hash to a value between -0.5 and 0.5
+  const offsetLat = ((h % 1000) / 1000) * 0.005;
+  const offsetLng = (((h >> 10) % 1000) / 1000) * 0.005;
+  return {
+    lat: pin.lat + offsetLat,
+    lng: pin.lng + offsetLng,
+  };
+}
 
 export function getTenantBySlug(slug: string): Tenant | undefined {
   return mockTenants.find((t) => t.slug === slug);

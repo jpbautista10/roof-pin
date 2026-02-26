@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Pin, Tenant } from "@/types";
+import { getDisplayCoords } from "@/data/mock";
 import ProjectDrawer from "./ProjectDrawer";
 
 interface MapViewProps {
@@ -16,9 +17,15 @@ export default function MapView({ tenant, pins }: MapViewProps) {
   const [selectedPin, setSelectedPin] = useState<Pin | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // Use display coords (privacy-offset if needed)
+  const displayPins = pins.map((pin) => ({
+    pin,
+    coords: getDisplayCoords(pin),
+  }));
+
   // Calculate bounds for positioning pins relatively
-  const lats = pins.map((p) => p.lat);
-  const lngs = pins.map((p) => p.lng);
+  const lats = displayPins.map((d) => d.coords.lat);
+  const lngs = displayPins.map((d) => d.coords.lng);
   const minLat = Math.min(...lats);
   const maxLat = Math.max(...lats);
   const minLng = Math.min(...lngs);
@@ -26,11 +33,11 @@ export default function MapView({ tenant, pins }: MapViewProps) {
   const latRange = maxLat - minLat || 0.01;
   const lngRange = maxLng - minLng || 0.01;
 
-  const padding = 0.15; // 15% padding on each side
+  const padding = 0.15;
 
-  function pinPosition(pin: Pin) {
-    const normX = (pin.lng - minLng) / lngRange;
-    const normY = 1 - (pin.lat - minLat) / latRange; // invert for screen coords
+  function pinPosition(lat: number, lng: number) {
+    const normX = (lng - minLng) / lngRange;
+    const normY = 1 - (lat - minLat) / latRange;
     return {
       left: `${padding * 100 + normX * (1 - 2 * padding) * 100}%`,
       top: `${padding * 100 + normY * (1 - 2 * padding) * 100}%`,
@@ -74,9 +81,10 @@ export default function MapView({ tenant, pins }: MapViewProps) {
       />
 
       {/* Pins */}
-      {pins.map((pin) => {
-        const pos = pinPosition(pin);
+      {displayPins.map(({ pin, coords }) => {
+        const pos = pinPosition(coords.lat, coords.lng);
         const isSelected = selectedPin?.id === pin.id;
+        const isPrivacy = pin.privacy_mode;
         return (
           <button
             key={pin.id}
@@ -91,31 +99,27 @@ export default function MapView({ tenant, pins }: MapViewProps) {
             />
             {/* Marker dot */}
             <span
-              className="relative block w-5 h-5 rounded-full border-[3px] border-white shadow-lg transition-transform group-hover:scale-125"
+              className={`relative block w-5 h-5 rounded-full border-[3px] border-white shadow-lg transition-transform group-hover:scale-125 ${isPrivacy ? "opacity-70" : ""}`}
               style={{
                 backgroundColor: tenant.brand_color,
                 boxShadow: isSelected
                   ? `0 0 0 4px ${tenant.brand_color}40, 0 4px 12px ${tenant.brand_color}50`
                   : `0 2px 8px ${tenant.brand_color}40`,
                 transform: isSelected ? "scale(1.3)" : undefined,
+                border: isPrivacy ? `3px dashed white` : undefined,
               }}
             />
             {/* Tooltip */}
             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-medium rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               {pin.neighborhood}
+              {isPrivacy && (
+                <span className="ml-1 text-slate-400">· Area</span>
+              )}
               <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-slate-900" />
             </span>
           </button>
         );
       })}
-
-      {/* Branding badge */}
-      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md rounded-xl px-4 py-3 shadow-lg border border-slate-200/60 z-20">
-        <p className="text-sm font-bold text-slate-900">{tenant.company_name}</p>
-        <p className="text-xs text-slate-500 mt-0.5">
-          {pins.length} verified project{pins.length !== 1 ? "s" : ""}
-        </p>
-      </div>
 
       {/* Map style badge */}
       <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow border border-slate-200/60 z-20">

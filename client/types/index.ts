@@ -8,6 +8,8 @@ export interface Tenant {
   cta_link: string;
 }
 
+export type WorkType = "Shingle" | "Flat" | "Tile" | "Metal";
+
 export interface Pin {
   id: string;
   tenant_id: string;
@@ -21,4 +23,7 @@ export interface Pin {
   before_img_url: string;
   after_img_url: string;
   created_at: string;
+  work_type: WorkType;
+  date_completed: string;
+  privacy_mode: boolean;
 }

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/sheet";
 import BeforeAfterSlider from "./BeforeAfterSlider";
 import { Pin, Tenant } from "@/types";
+import { MapPin, Calendar, Hammer } from "lucide-react";
 
 interface ProjectDrawerProps {
   pin: Pin | null;
@@ -34,6 +35,8 @@ function EmptyStarIcon() {
 export default function ProjectDrawer({ pin, tenant, open, onOpenChange }: ProjectDrawerProps) {
   if (!pin) return null;
 
+  const isPrivacy = pin.privacy_mode;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -51,28 +54,81 @@ export default function ProjectDrawer({ pin, tenant, open, onOpenChange }: Proje
             </SheetTitle>
           </SheetHeader>
 
-          {/* Before/After Slider */}
-          <div className="px-6 pb-6">
-            <BeforeAfterSlider
-              beforeImg={pin.before_img_url}
-              afterImg={pin.after_img_url}
-            />
-          </div>
-
-          {/* Review / Social Proof */}
-          <div className="px-6 pb-6">
-            <div className="flex gap-0.5 mb-3">
-              {[...Array(5)].map((_, i) => (
-                i < pin.stars ? <StarIcon key={i} /> : <EmptyStarIcon key={i} />
-              ))}
+          {isPrivacy ? (
+            /* ── Privacy Mode: minimal info only ── */
+            <div className="px-6 pb-6 space-y-4">
+              <div className="bg-slate-50 rounded-xl p-5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Hammer className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Work Type</p>
+                    <p className="text-sm font-semibold text-slate-900">{pin.work_type}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Calendar className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Completed</p>
+                    <p className="text-sm font-semibold text-slate-900">{pin.date_completed}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Neighborhood</p>
+                    <p className="text-sm font-semibold text-slate-900">{pin.neighborhood}</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 text-center">
+                This project location has been anonymized for privacy.
+              </p>
             </div>
-            <blockquote className="text-sm text-slate-700 leading-relaxed italic">
-              "{pin.review_text}"
-            </blockquote>
-            <p className="mt-2 text-sm font-medium text-slate-500">
-              — {pin.customer_name}
-            </p>
-          </div>
+          ) : (
+            /* ── Full Mode: images, review, social proof ── */
+            <>
+              {/* Before/After Slider */}
+              <div className="px-6 pb-6">
+                <BeforeAfterSlider
+                  beforeImg={pin.before_img_url}
+                  afterImg={pin.after_img_url}
+                />
+              </div>
+
+              {/* Project details badges */}
+              <div className="px-6 pb-4 flex gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-700">
+                  <Hammer className="w-3 h-3" />
+                  {pin.work_type}
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-700">
+                  <Calendar className="w-3 h-3" />
+                  {pin.date_completed}
+                </span>
+              </div>
+
+              {/* Review / Social Proof */}
+              <div className="px-6 pb-6">
+                <div className="flex gap-0.5 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    i < pin.stars ? <StarIcon key={i} /> : <EmptyStarIcon key={i} />
+                  ))}
+                </div>
+                <blockquote className="text-sm text-slate-700 leading-relaxed italic">
+                  "{pin.review_text}"
+                </blockquote>
+                <p className="mt-2 text-sm font-medium text-slate-500">
+                  — {pin.customer_name}
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* CTA Footer */}
@@ -87,7 +143,9 @@ export default function ProjectDrawer({ pin, tenant, open, onOpenChange }: Proje
               boxShadow: `0 8px 20px ${tenant.brand_color}33`,
             }}
           >
-            Get a Quote like {pin.customer_name}
+            {isPrivacy
+              ? "Get a Free Quote"
+              : `Get a Quote like ${pin.customer_name}`}
           </a>
         </div>
       </SheetContent>

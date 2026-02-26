@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { getTenantBySlug, getPinsForTenant } from "@/data/mock";
 import MapView from "@/components/map/MapView";
+import MapHeader from "@/components/map/MapHeader";
+import StatsView from "@/components/map/StatsView";
 
 export default function PublicMap() {
   const { slug } = useParams<{ slug: string }>();
   const tenant = slug ? getTenantBySlug(slug) : undefined;
+  const [activeTab, setActiveTab] = useState("map");
 
   if (!tenant) {
     return (
@@ -28,8 +32,18 @@ export default function PublicMap() {
   const pins = getPinsForTenant(tenant.id);
 
   return (
-    <div className="h-screen w-screen overflow-hidden">
-      <MapView tenant={tenant} pins={pins} />
+    <div className="h-screen w-screen overflow-hidden relative">
+      <MapHeader
+        tenant={tenant}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+
+      {activeTab === "map" ? (
+        <MapView tenant={tenant} pins={pins} />
+      ) : (
+        <StatsView tenant={tenant} pins={pins} />
+      )}
     </div>
   );
 }
