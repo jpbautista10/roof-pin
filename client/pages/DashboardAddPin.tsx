@@ -1,3 +1,4 @@
+// TODO: Legacy mock page not used in router. Remove or migrate any reusable UI into DashboardLocationCreate.
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import imageCompression from "browser-image-compression";
@@ -21,12 +22,28 @@ import type { WorkType } from "@/types";
 
 const WORK_TYPES: WorkType[] = ["Shingle", "Flat", "Tile", "Metal"];
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 const YEARS = Array.from({ length: 6 }, (_, i) => String(2024 - i));
 
-function StarSelector({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+function StarSelector({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
@@ -74,7 +91,9 @@ function ImageUpload({ label, preview, onFile, onClear }: ImageUploadProps) {
       });
       const url = URL.createObjectURL(compressed);
       onFile(compressed, url);
-      toast.success(`Compressed: ${(file.size / 1024).toFixed(0)}KB → ${(compressed.size / 1024).toFixed(0)}KB`);
+      toast.success(
+        `Compressed: ${(file.size / 1024).toFixed(0)}KB → ${(compressed.size / 1024).toFixed(0)}KB`,
+      );
     } catch {
       toast.error("Failed to compress image");
     } finally {
@@ -87,7 +106,11 @@ function ImageUpload({ label, preview, onFile, onClear }: ImageUploadProps) {
       <Label>{label}</Label>
       {preview ? (
         <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
-          <img src={preview} alt={label} className="w-full h-full object-cover" />
+          <img
+            src={preview}
+            alt={label}
+            className="w-full h-full object-cover"
+          />
           <button
             type="button"
             onClick={onClear}
@@ -102,7 +125,9 @@ function ImageUpload({ label, preview, onFile, onClear }: ImageUploadProps) {
           <span className="text-sm text-slate-500">
             {compressing ? "Compressing…" : "Click to upload"}
           </span>
-          <span className="text-xs text-slate-400 mt-1">Auto-compressed to WebP ≤200KB</span>
+          <span className="text-xs text-slate-400 mt-1">
+            Auto-compressed to WebP ≤200KB
+          </span>
           <input
             type="file"
             accept="image/*"
@@ -159,8 +184,8 @@ export default function DashboardAddPin() {
       neighborhood: neighborhood,
       review_text: privacyMode ? "" : reviewText,
       stars: privacyMode ? 0 : stars,
-      before_img_url: privacyMode ? "" : (beforePreview || ""),
-      after_img_url: privacyMode ? "" : (afterPreview || ""),
+      before_img_url: privacyMode ? "" : beforePreview || "",
+      after_img_url: privacyMode ? "" : afterPreview || "",
       created_at: new Date().toISOString(),
       work_type: (workType || "Shingle") as import("@/types").WorkType,
       date_completed: month && year ? `${month} ${year}` : "January 2024",
@@ -201,7 +226,9 @@ export default function DashboardAddPin() {
                     setAddress(e.target.value);
                     setShowSuggestions(e.target.value.length > 3);
                   }}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                  onBlur={() =>
+                    setTimeout(() => setShowSuggestions(false), 150)
+                  }
                 />
                 {showSuggestions && (
                   <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
@@ -221,7 +248,9 @@ export default function DashboardAddPin() {
                       </button>
                     ))}
                     <div className="px-3 py-1.5 border-t border-slate-100 bg-slate-50">
-                      <p className="text-[10px] text-slate-400">Powered by Mapbox</p>
+                      <p className="text-[10px] text-slate-400">
+                        Powered by Mapbox
+                      </p>
                     </div>
                   </div>
                 )}
@@ -248,7 +277,10 @@ export default function DashboardAddPin() {
             </h2>
             <div className="space-y-2">
               <Label>Work Type</Label>
-              <Select value={workType} onValueChange={(v) => setWorkType(v as WorkType)}>
+              <Select
+                value={workType}
+                onValueChange={(v) => setWorkType(v as WorkType)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select work type" />
                 </SelectTrigger>
@@ -298,7 +330,8 @@ export default function DashboardAddPin() {
               <div>
                 <Label className="text-sm font-semibold">Privacy Mode</Label>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Anonymize this project? Pin will show in the general area, no customer details shown.
+                  Anonymize this project? Pin will show in the general area, no
+                  customer details shown.
                 </p>
               </div>
               <Switch checked={privacyMode} onCheckedChange={setPrivacyMode} />

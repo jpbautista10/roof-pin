@@ -1,3 +1,4 @@
+// TODO: Generic placeholder helper page currently unused. Keep only if upcoming routes will use it.
 import { Construction } from "lucide-react";
 
 interface PlaceholderProps {
@@ -14,7 +15,8 @@ export default function Placeholder({ title, description }: PlaceholderProps) {
         </div>
         <h2 className="text-xl font-bold text-slate-900 mb-2">{title}</h2>
         <p className="text-sm text-slate-500 leading-relaxed">
-          {description || "This page is coming soon. Continue prompting to build out this section."}
+          {description ||
+            "This page is coming soon. Continue prompting to build out this section."}
         </p>
       </div>
     </div>
