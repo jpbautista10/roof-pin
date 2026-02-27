@@ -30,5 +30,5 @@ export interface PublicLocation {
   longitude: number;
   created_at: string;
   images: PublicLocationImage[];
-  review: PublicLocationReview | null;
+  reviews: PublicLocationReview[];
 }

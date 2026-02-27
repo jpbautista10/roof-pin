@@ -38,7 +38,8 @@ export default function StatsView({
     <div className="absolute inset-0 bg-slate-50 overflow-y-auto">
       <div className="mx-auto max-w-3xl px-4 py-6 space-y-3">
         {sortedLocations.map((location) => {
-          const hasReview = Boolean(location.review?.review_text);
+          const firstReview = location.reviews[0] ?? null;
+          const hasReview = Boolean(firstReview?.review_text);
 
           return (
             <button
@@ -56,17 +57,17 @@ export default function StatsView({
                     {location.place_label}
                   </p>
                 </div>
-                {typeof location.review?.stars === "number" ? (
+                {typeof firstReview?.stars === "number" ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                     <Star className="h-3.5 w-3.5 fill-current" />
-                    {location.review.stars}
+                    {firstReview.stars}
                   </span>
                 ) : null}
               </div>
 
               {hasReview ? (
                 <p className="mt-2 line-clamp-2 text-xs italic text-slate-600">
-                  "{location.review?.review_text}"
+                  "{firstReview?.review_text}"
                 </p>
               ) : null}
             </button>

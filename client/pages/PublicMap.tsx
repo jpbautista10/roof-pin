@@ -50,6 +50,160 @@ interface LocationQueryRow {
     | null;
 }
 
+const DEMO_SLUGS = new Set(["demo"]);
+
+const demoCompany: PublicCompany = {
+  id: "demo-company",
+  name: "Neighborhood Roofing Co.",
+  slug: "demo",
+  logo_url: null,
+  cta_url: "https://example.com/contact",
+  brand_primary_color: "#0f766e",
+  brand_secondary_color: "#0ea5e9",
+  brand_accent_color: "#f59e0b",
+};
+
+const demoLocations: PublicLocation[] = [
+  {
+    id: "demo-1",
+    project_name: "Buckhead Full Roof Replacement",
+    place_label: "Buckhead, Atlanta, GA",
+    latitude: 33.8462,
+    longitude: -84.3713,
+    created_at: new Date("2026-01-18").toISOString(),
+    images: [
+      {
+        id: "demo-1-before",
+        kind: "before",
+        public_url: "/row-1-column-1.jpg",
+        sort_order: 0,
+      },
+      {
+        id: "demo-1-after",
+        kind: "after",
+        public_url: "/row-1-column-2.jpg",
+        sort_order: 0,
+      },
+    ],
+    reviews: [
+      {
+        customer_name: "Marcus T.",
+        review_text:
+          "Crew arrived early, explained everything clearly, and the cleanup was perfect.",
+        stars: 5,
+      },
+      {
+        customer_name: "Angela P.",
+        review_text:
+          "Fast quote turnaround and super professional install team.",
+        stars: 5,
+      },
+      {
+        customer_name: "Derrick H.",
+        review_text:
+          "Excellent communication from first inspection to final walkthrough.",
+        stars: 5,
+      },
+      {
+        customer_name: "Rita C.",
+        review_text: "They handled insurance paperwork better than expected.",
+        stars: 4,
+      },
+      {
+        customer_name: "Kevin J.",
+        review_text: "Clean crew, no nails left around, very detail-oriented.",
+        stars: 5,
+      },
+      {
+        customer_name: "Sophia M.",
+        review_text:
+          "The new shingles look great and match the house perfectly.",
+        stars: 5,
+      },
+      {
+        customer_name: "Brian O.",
+        review_text: "Work was done on schedule even with weather delays.",
+        stars: 4,
+      },
+      {
+        customer_name: "Elaine V.",
+        review_text: "Very respectful crew and constant photo updates.",
+        stars: 5,
+      },
+      {
+        customer_name: "Trevor S.",
+        review_text: "Pricing was clear and no surprise charges at the end.",
+        stars: 5,
+      },
+      {
+        customer_name: "Monica D.",
+        review_text: "Would definitely hire again for future exterior work.",
+        stars: 5,
+      },
+    ],
+  },
+  {
+    id: "demo-2",
+    project_name: "East Atlanta Storm Repair",
+    place_label: "East Atlanta Village, Atlanta, GA",
+    latitude: 33.7402,
+    longitude: -84.3458,
+    created_at: new Date("2026-02-04").toISOString(),
+    images: [
+      {
+        id: "demo-2-before",
+        kind: "before",
+        public_url: "/row-1-column-1.jpg",
+        sort_order: 0,
+      },
+      {
+        id: "demo-2-after",
+        kind: "after",
+        public_url: "/row-1-column-2.jpg",
+        sort_order: 0,
+      },
+    ],
+    reviews: [
+      {
+        customer_name: "Andrea L.",
+        review_text:
+          "We had active leaks after a storm and they got us watertight fast. Great communication.",
+        stars: 5,
+      },
+    ],
+  },
+  {
+    id: "demo-3",
+    project_name: "Decatur Architectural Shingle Upgrade",
+    place_label: "Decatur, GA",
+    latitude: 33.7748,
+    longitude: -84.2963,
+    created_at: new Date("2026-02-20").toISOString(),
+    images: [
+      {
+        id: "demo-3-before",
+        kind: "before",
+        public_url: "/row-1-column-1.jpg",
+        sort_order: 0,
+      },
+      {
+        id: "demo-3-after",
+        kind: "after",
+        public_url: "/row-1-column-2.jpg",
+        sort_order: 0,
+      },
+    ],
+    reviews: [
+      {
+        customer_name: "Priya K.",
+        review_text:
+          "The before/after difference is huge. The team was respectful and finished on schedule.",
+        stars: 4,
+      },
+    ],
+  },
+];
+
 function normalizeLocations(rows: LocationQueryRow[]): PublicLocation[] {
   return rows.map((row) => ({
     id: row.id,
@@ -59,14 +213,17 @@ function normalizeLocations(rows: LocationQueryRow[]): PublicLocation[] {
     longitude: row.longitude,
     created_at: row.created_at,
     images: row.location_images ?? [],
-    review: Array.isArray(row.location_reviews)
-      ? (row.location_reviews[0] ?? null)
-      : row.location_reviews,
+    reviews: Array.isArray(row.location_reviews)
+      ? row.location_reviews.filter(Boolean)
+      : row.location_reviews
+        ? [row.location_reviews]
+        : [],
   }));
 }
 
 export default function PublicMap() {
   const { slug } = useParams<{ slug: string }>();
+  const isDemoMode = DEMO_SLUGS.has(slug ?? "");
   const [activeTab, setActiveTab] = useState("map");
   const [selectedLocation, setSelectedLocation] =
     useState<PublicLocation | null>(null);
@@ -74,7 +231,7 @@ export default function PublicMap() {
 
   const companyQuery = useQuery({
     queryKey: ["public-map", "company", slug],
-    enabled: Boolean(slug),
+    enabled: Boolean(slug) && !isDemoMode,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("companies")
@@ -94,7 +251,7 @@ export default function PublicMap() {
 
   const locationsQuery = useQuery({
     queryKey: ["public-map", "locations", companyQuery.data?.id],
-    enabled: Boolean(companyQuery.data?.id),
+    enabled: Boolean(companyQuery.data?.id) && !isDemoMode,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("locations")
@@ -112,12 +269,14 @@ export default function PublicMap() {
     },
   });
 
-  const company = companyQuery.data;
-  const locations = locationsQuery.data ?? [];
+  const company = isDemoMode ? demoCompany : companyQuery.data;
+  const locations = isDemoMode ? demoLocations : (locationsQuery.data ?? []);
 
   const mapSummary = useMemo(() => {
     const ratings = locations
-      .map((location) => location.review?.stars ?? null)
+      .flatMap((location) =>
+        location.reviews.map((review) => review.stars ?? null),
+      )
       .filter((value): value is number => typeof value === "number");
 
     const averageRating =
@@ -136,7 +295,7 @@ export default function PublicMap() {
     setDrawerOpen(true);
   }
 
-  if (companyQuery.isLoading || locationsQuery.isLoading) {
+  if (!isDemoMode && (companyQuery.isLoading || locationsQuery.isLoading)) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-slate-50">
         <p className="text-sm text-slate-600">Loading public map...</p>
@@ -167,6 +326,12 @@ export default function PublicMap() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
+
+      {isDemoMode ? (
+        <div className="absolute left-4 top-[4.5rem] z-[500] rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+          Live Demo Mode
+        </div>
+      ) : null}
 
       <div className="relative flex-1 overflow-hidden">
         {activeTab === "map" ? (

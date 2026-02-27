@@ -42,6 +42,7 @@ export default function ProjectDrawer({
   const beforeImage = location.images.find((image) => image.kind === "before");
   const afterImage = location.images.find((image) => image.kind === "after");
   const ctaUrl = company.cta_url;
+  const reviews = location.reviews;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -86,19 +87,28 @@ export default function ProjectDrawer({
             </span>
           </div>
 
-          {location.review?.review_text ? (
-            <div className="px-6 pb-6">
-              {typeof location.review.stars === "number" ? (
-                <div className="mb-3">
-                  <StarRow stars={location.review.stars} />
+          {reviews.length > 0 ? (
+            <div className="px-6 pb-6 space-y-4">
+              {reviews.map((review, index) => (
+                <div
+                  key={`${review.customer_name ?? "review"}-${index}`}
+                  className="rounded-lg bg-slate-50 p-3"
+                >
+                  {typeof review.stars === "number" ? (
+                    <div className="mb-2">
+                      <StarRow stars={review.stars} />
+                    </div>
+                  ) : null}
+                  {review.review_text ? (
+                    <blockquote className="text-sm text-slate-700 leading-relaxed italic">
+                      "{review.review_text}"
+                    </blockquote>
+                  ) : null}
+                  <p className="mt-2 text-xs font-medium text-slate-500">
+                    - {review.customer_name || "Customer"}
+                  </p>
                 </div>
-              ) : null}
-              <blockquote className="text-sm text-slate-700 leading-relaxed italic">
-                "{location.review.review_text}"
-              </blockquote>
-              <p className="mt-2 text-sm font-medium text-slate-500">
-                - {location.review.customer_name || "Customer"}
-              </p>
+              ))}
             </div>
           ) : null}
         </div>

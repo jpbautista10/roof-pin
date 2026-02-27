@@ -38,7 +38,7 @@ export default function Hero() {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              to="/s/smithroofing"
+              to="/s/demo"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-3 text-base font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
             >
               See live demo
