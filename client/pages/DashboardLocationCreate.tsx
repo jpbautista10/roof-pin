@@ -9,6 +9,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 import L from "leaflet";
+import imageCompression from "browser-image-compression";
 import { ArrowLeft, Loader2, MapPin, Star } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,10 @@ async function uploadLocationImage(params: {
   file: File;
   kind: "before" | "after";
 }) {
-  const ext = params.file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const ext =
+    params.file.type === "image/webp"
+      ? "webp"
+      : (params.file.name.split(".").pop()?.toLowerCase() ?? "jpg");
   const filePath = `${params.userId}/${params.locationId}/${params.kind}-${Date.now()}.${ext}`;
 
   const uploadResult = await supabase.storage
@@ -90,6 +94,16 @@ async function uploadLocationImage(params: {
   };
 }
 
+async function compressImage(file: File) {
+  return imageCompression(file, {
+    maxSizeMB: 0.3,
+    maxWidthOrHeight: 1600,
+    useWebWorker: true,
+    fileType: "image/webp",
+    initialQuality: 0.8,
+  });
+}
+
 export default function DashboardLocationCreate() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -106,6 +120,8 @@ export default function DashboardLocationCreate() {
 
   const [beforeImage, setBeforeImage] = useState<File | null>(null);
   const [afterImage, setAfterImage] = useState<File | null>(null);
+  const [compressingBefore, setCompressingBefore] = useState(false);
+  const [compressingAfter, setCompressingAfter] = useState(false);
 
   const [customerName, setCustomerName] = useState("");
   const [reviewText, setReviewText] = useState("");
@@ -255,6 +271,52 @@ export default function DashboardLocationCreate() {
     return null;
   }
 
+  async function handleSelectImage(
+    kind: "before" | "after",
+    nextFile: File | null,
+  ) {
+    if (!nextFile) {
+      if (kind === "before") {
+        setBeforeImage(null);
+      } else {
+        setAfterImage(null);
+      }
+      return;
+    }
+
+    if (kind === "before") {
+      setCompressingBefore(true);
+    } else {
+      setCompressingAfter(true);
+    }
+
+    try {
+      const compressed = await compressImage(nextFile);
+      if (kind === "before") {
+        setBeforeImage(compressed);
+      } else {
+        setAfterImage(compressed);
+      }
+
+      toast.success(
+        `${kind === "before" ? "Before" : "After"} image compressed: ${Math.round(nextFile.size / 1024)}KB -> ${Math.round(compressed.size / 1024)}KB`,
+      );
+    } catch {
+      toast.error("Image compression failed. Using original image.");
+      if (kind === "before") {
+        setBeforeImage(nextFile);
+      } else {
+        setAfterImage(nextFile);
+      }
+    } finally {
+      if (kind === "before") {
+        setCompressingBefore(false);
+      } else {
+        setCompressingAfter(false);
+      }
+    }
+  }
+
   return (
     <section className="space-y-6">
       <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -335,10 +397,18 @@ export default function DashboardLocationCreate() {
                 id="before-image"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                onChange={(event) =>
-                  setBeforeImage(event.target.files?.[0] ?? null)
-                }
+                onChange={(event) => {
+                  void handleSelectImage(
+                    "before",
+                    event.target.files?.[0] ?? null,
+                  );
+                }}
               />
+              {compressingBefore ? (
+                <p className="text-xs text-slate-500">
+                  Compressing before image...
+                </p>
+              ) : null}
               {beforePreview ? (
                 <img
                   src={beforePreview}
@@ -354,10 +424,18 @@ export default function DashboardLocationCreate() {
                 id="after-image"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                onChange={(event) =>
-                  setAfterImage(event.target.files?.[0] ?? null)
-                }
+                onChange={(event) => {
+                  void handleSelectImage(
+                    "after",
+                    event.target.files?.[0] ?? null,
+                  );
+                }}
               />
+              {compressingAfter ? (
+                <p className="text-xs text-slate-500">
+                  Compressing after image...
+                </p>
+              ) : null}
               {afterPreview ? (
                 <img
                   src={afterPreview}
@@ -412,7 +490,9 @@ export default function DashboardLocationCreate() {
 
           <Button
             onClick={() => createMutation.mutate()}
-            disabled={createMutation.isPending}
+            disabled={
+              createMutation.isPending || compressingBefore || compressingAfter
+            }
             className="w-full"
           >
             {createMutation.isPending ? (
