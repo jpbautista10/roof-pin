@@ -335,7 +335,10 @@ export default function DashboardLocationCreate() {
           });
 
       if (!privacyMode) {
-        if (!isEditMode && (!beforeFile || !afterFile)) {
+        const hasBeforeImage = Boolean(beforeFile || beforePreview);
+        const hasAfterImage = Boolean(afterFile || afterPreview);
+
+        if (!hasBeforeImage || !hasAfterImage) {
           throw new Error("Upload before and after images.");
         }
 
