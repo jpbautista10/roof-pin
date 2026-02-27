@@ -13,6 +13,8 @@ import Onboarding from "./pages/Onboarding";
 import PublicMap from "./pages/PublicMap";
 import Dashboard from "./pages/Dashboard";
 import DashboardRedirect from "./pages/DashboardRedirect";
+import DashboardLayout from "./components/layout/DashboardLayout";
+import DashboardLocationCreate from "./pages/DashboardLocationCreate";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,8 +39,14 @@ export default function App() {
                 <Route element={<RequireOnboarding />}>
                   <Route
                     path="/dashboard/:companySlug"
-                    element={<Dashboard />}
-                  />
+                    element={<DashboardLayout />}
+                  >
+                    <Route index element={<Dashboard />} />
+                    <Route
+                      path="locations/new"
+                      element={<DashboardLocationCreate />}
+                    />
+                  </Route>
                 </Route>
               </Route>
 

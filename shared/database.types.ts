@@ -78,6 +78,132 @@ export type Database = {
         }
         Relationships: []
       }
+      location_images: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          location_id: string
+          public_url: string
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          location_id: string
+          public_url: string
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          location_id?: string
+          public_url?: string
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_images_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      location_reviews: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          location_id: string
+          review_text: string | null
+          stars: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          location_id: string
+          review_text?: string | null
+          stars?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          location_id?: string
+          review_text?: string | null
+          stars?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_reviews_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: true
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          address_json: Json | null
+          company_id: string
+          created_at: string
+          created_by_user_id: string
+          geocode_latitude: number
+          geocode_longitude: number
+          id: string
+          latitude: number
+          longitude: number
+          place_label: string
+          project_name: string
+          updated_at: string
+        }
+        Insert: {
+          address_json?: Json | null
+          company_id: string
+          created_at?: string
+          created_by_user_id: string
+          geocode_latitude: number
+          geocode_longitude: number
+          id?: string
+          latitude: number
+          longitude: number
+          place_label: string
+          project_name: string
+          updated_at?: string
+        }
+        Update: {
+          address_json?: Json | null
+          company_id?: string
+          created_at?: string
+          created_by_user_id?: string
+          geocode_latitude?: number
+          geocode_longitude?: number
+          id?: string
+          latitude?: number
+          longitude?: number
+          place_label?: string
+          project_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           company_id: string | null
