@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import imageCompression from "browser-image-compression";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { useData } from "@/data/DataContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -115,6 +117,8 @@ function ImageUpload({ label, preview, onFile, onClear }: ImageUploadProps) {
 }
 
 export default function DashboardAddPin() {
+  const { tenant, addPin } = useData();
+  const navigate = useNavigate();
   const [address, setAddress] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [workType, setWorkType] = useState<WorkType | "">("");
@@ -134,24 +138,31 @@ export default function DashboardAddPin() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const pinData = {
-      address,
-      neighborhood,
-      work_type: workType,
-      date_completed: month && year ? `${month} ${year}` : "",
+    // Mock lat/lng — in production, geocode from address via Mapbox
+    const mockLat = 33.749 + (Math.random() - 0.5) * 0.08;
+    const mockLng = -84.388 + (Math.random() - 0.5) * 0.08;
+
+    const newPin = {
+      id: `p${Date.now()}`,
+      tenant_id: tenant.id,
+      lat: mockLat,
+      lng: mockLng,
+      zip_code: address,
+      customer_name: privacyMode ? "" : customerName,
+      neighborhood: neighborhood,
+      review_text: privacyMode ? "" : reviewText,
+      stars: privacyMode ? 0 : stars,
+      before_img_url: privacyMode ? "" : (beforePreview || ""),
+      after_img_url: privacyMode ? "" : (afterPreview || ""),
+      created_at: new Date().toISOString(),
+      work_type: (workType || "Shingle") as import("@/types").WorkType,
+      date_completed: month && year ? `${month} ${year}` : "January 2024",
       privacy_mode: privacyMode,
-      ...(privacyMode
-        ? {}
-        : {
-            customer_name: customerName,
-            review_text: reviewText,
-            stars,
-            // In production: upload beforeFile/afterFile to S3 and use the returned URLs
-          }),
     };
 
-    console.log("Pin data (mock):", pinData);
-    toast.success("Pin saved (mock)");
+    addPin(newPin);
+    toast.success("Pin added successfully!");
+    navigate("/dashboard");
   }
 
   return (

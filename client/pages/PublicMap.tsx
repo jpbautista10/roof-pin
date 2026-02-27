@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { getTenantBySlug, getPinsForTenant } from "@/data/mock";
+import { useData } from "@/data/DataContext";
 import MapView from "@/components/map/MapView";
 import MapHeader from "@/components/map/MapHeader";
 import StatsView from "@/components/map/StatsView";
 
 export default function PublicMap() {
   const { slug } = useParams<{ slug: string }>();
-  const tenant = slug ? getTenantBySlug(slug) : undefined;
+  const { tenant, pins } = useData();
   const [activeTab, setActiveTab] = useState("map");
 
-  if (!tenant) {
+  const isMatch = slug && tenant.slug === slug;
+
+  if (!isMatch) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
         <div className="text-center px-6">
@@ -29,21 +31,22 @@ export default function PublicMap() {
     );
   }
 
-  const pins = getPinsForTenant(tenant.id);
+  const tenantPins = pins.filter((p) => p.tenant_id === tenant.id);
 
   return (
-    <div className="h-screen w-screen overflow-hidden relative">
+    <div className="h-screen w-screen flex flex-col overflow-hidden">
       <MapHeader
         tenant={tenant}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
-
-      {activeTab === "map" ? (
-        <MapView tenant={tenant} pins={pins} />
-      ) : (
-        <StatsView tenant={tenant} pins={pins} />
-      )}
+      <div className="flex-1 relative overflow-hidden">
+        {activeTab === "map" ? (
+          <MapView tenant={tenant} pins={tenantPins} />
+        ) : (
+          <StatsView tenant={tenant} pins={tenantPins} />
+        )}
+      </div>
     </div>
   );
 }

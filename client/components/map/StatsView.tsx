@@ -49,8 +49,8 @@ export default function StatsView({ tenant, pins }: StatsViewProps) {
   });
 
   return (
-    <div className="absolute inset-0 z-10 bg-slate-50 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 pt-24 pb-8 space-y-6">
+    <div className="absolute inset-0 bg-slate-50 overflow-y-auto">
+      <div className="max-w-2xl mx-auto px-4 pt-6 pb-8 space-y-6">
         {/* Stat Cards */}
         <div className="grid grid-cols-3 gap-3">
           <Card className="border-slate-200/80 shadow-sm">

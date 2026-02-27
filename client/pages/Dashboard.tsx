@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Copy, Check, MapPin, Code2 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { mockTenants, mockPins } from "@/data/mock";
+import { useData } from "@/data/DataContext";
 
 export default function Dashboard() {
-  const tenant = mockTenants[0];
-  const tenantPins = mockPins.filter((p) => p.tenant_id === tenant.id);
+  const { tenant, pins } = useData();
+  const tenantPins = pins.filter((p) => p.tenant_id === tenant.id);
   const embedCode = `<iframe src="https://${tenant.slug}.neighborhoodproof.com" width="100%" height="500" frameborder="0"></iframe>`;
 
   const [copied, setCopied] = useState(false);

@@ -4,11 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { mockTenants } from "@/data/mock";
+import { useData } from "@/data/DataContext";
 import { ImagePlus, X } from "lucide-react";
 
 export default function DashboardSettings() {
-  const tenant = mockTenants[0];
+  const { tenant, updateTenant } = useData();
 
   const [companyName, setCompanyName] = useState(tenant.company_name);
   const [slug, setSlug] = useState(tenant.slug);
@@ -25,15 +25,14 @@ export default function DashboardSettings() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const settingsData = {
+    updateTenant({
       company_name: companyName,
       slug,
       cta_link: ctaLink,
       brand_color: brandColor,
-      // In production: upload logo file to S3 and store the URL
-    };
-    console.log("Settings data (mock):", settingsData);
-    toast.success("Settings saved (mock)");
+      logo_url: logoPreview || "",
+    });
+    toast.success("Settings saved!");
   }
 
   return (
