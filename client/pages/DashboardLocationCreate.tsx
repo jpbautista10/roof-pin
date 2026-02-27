@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   MapContainer,
@@ -25,7 +25,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/auth/AuthProvider";
-import { createLocation } from "@/lib/locations";
+import {
+  createLocation,
+  fetchLocationById,
+  updateLocation,
+} from "@/lib/locations";
 import { supabase } from "@/lib/supabase";
 import { GeocodeSuggestResponse, GeocodeSuggestion } from "@shared/api";
 
@@ -226,8 +230,10 @@ async function uploadLocationImage(params: {
 
 export default function DashboardLocationCreate() {
   const navigate = useNavigate();
+  const params = useParams<{ locationId: string }>();
   const queryClient = useQueryClient();
   const { user, company } = useAuth();
+  const isEditMode = Boolean(params.locationId);
 
   const [address, setAddress] = useState("");
   const [debouncedAddress, setDebouncedAddress] = useState("");
@@ -256,6 +262,12 @@ export default function DashboardLocationCreate() {
   const [latitude, setLatitude] = useState(INITIAL_COORDS.lat);
   const [longitude, setLongitude] = useState(INITIAL_COORDS.lng);
 
+  const editLocationQuery = useQuery({
+    queryKey: ["locations", "single", params.locationId],
+    enabled: isEditMode && Boolean(params.locationId),
+    queryFn: async () => fetchLocationById(params.locationId!),
+  });
+
   useEffect(() => {
     const timeout = window.setTimeout(
       () => setDebouncedAddress(address.trim()),
@@ -279,6 +291,38 @@ export default function DashboardLocationCreate() {
   });
 
   useEffect(() => {
+    const location = editLocationQuery.data;
+    if (!location) {
+      return;
+    }
+
+    setProjectName(location.project_name ?? "");
+    setAddress(location.place_label ?? "");
+    setNeighborhood(location.place_label ?? "");
+    setLatitude(location.latitude);
+    setLongitude(location.longitude);
+    setWorkType(
+      (location.work_type as (typeof WORK_TYPES)[number] | null) ?? "",
+    );
+    setPrivacyMode(location.privacy_mode ?? false);
+
+    if (location.date_completed) {
+      const [savedMonth, savedYear] = location.date_completed.split(" ");
+      setMonth(savedMonth ?? "");
+      setYear(savedYear ?? "");
+    }
+
+    setCustomerName(location.review?.customer_name ?? "");
+    setReviewText(location.review?.review_text ?? "");
+    setStars(location.review?.stars ?? 5);
+
+    const before = location.images.find((image) => image.kind === "before");
+    const after = location.images.find((image) => image.kind === "after");
+    setBeforePreview(before?.public_url ?? null);
+    setAfterPreview(after?.public_url ?? null);
+  }, [editLocationQuery.data]);
+
+  useEffect(() => {
     return () => {
       if (beforePreview) URL.revokeObjectURL(beforePreview);
       if (afterPreview) URL.revokeObjectURL(afterPreview);
@@ -295,7 +339,7 @@ export default function DashboardLocationCreate() {
         throw new Error("Project name is required.");
       }
 
-      if (!selectedSuggestion) {
+      if (!selectedSuggestion && !isEditMode) {
         throw new Error("Please pick a location from suggestions.");
       }
 
@@ -303,76 +347,140 @@ export default function DashboardLocationCreate() {
         throw new Error("Upload before and after images.");
       }
 
-      const location = await createLocation({
-        company_id: company.id,
-        created_by_user_id: user.id,
+      const locationPayload = {
         project_name: projectName.trim(),
-        place_label: neighborhood.trim() || selectedSuggestion.label,
+        place_label:
+          neighborhood.trim() || selectedSuggestion?.label || address.trim(),
         latitude,
         longitude,
-        geocode_latitude: selectedSuggestion.latitude,
-        geocode_longitude: selectedSuggestion.longitude,
+        geocode_latitude:
+          selectedSuggestion?.latitude ??
+          editLocationQuery.data?.geocode_latitude ??
+          latitude,
+        geocode_longitude:
+          selectedSuggestion?.longitude ??
+          editLocationQuery.data?.geocode_longitude ??
+          longitude,
         work_type: workType || null,
         date_completed: month && year ? `${month} ${year}` : null,
         privacy_mode: privacyMode,
         address_json: {
-          city: selectedSuggestion.city,
-          state: selectedSuggestion.state,
-          country: selectedSuggestion.country,
-          postcode: selectedSuggestion.postcode,
-          full_address: selectedSuggestion.label,
+          city: selectedSuggestion?.city ?? null,
+          state: selectedSuggestion?.state ?? null,
+          country: selectedSuggestion?.country ?? null,
+          postcode: selectedSuggestion?.postcode ?? null,
+          full_address: selectedSuggestion?.label ?? address.trim(),
           neighborhood: neighborhood || null,
         },
-      });
+      };
 
-      if (!privacyMode && beforeFile && afterFile) {
-        const [beforeUpload, afterUpload] = await Promise.all([
-          uploadLocationImage({
+      const location = isEditMode
+        ? await updateLocation(params.locationId!, locationPayload)
+        : await createLocation({
+            company_id: company.id,
+            created_by_user_id: user.id,
+            ...locationPayload,
+          });
+
+      const existingBefore = editLocationQuery.data?.images.find(
+        (image) => image.kind === "before",
+      );
+      const existingAfter = editLocationQuery.data?.images.find(
+        (image) => image.kind === "after",
+      );
+
+      if (!privacyMode) {
+        if (!isEditMode && (!beforeFile || !afterFile)) {
+          throw new Error("Upload before and after images.");
+        }
+
+        if (beforeFile) {
+          const beforeUpload = await uploadLocationImage({
             userId: user.id,
             locationId: location.id,
             file: beforeFile,
             kind: "before",
-          }),
-          uploadLocationImage({
+          });
+
+          const upsertBefore = await supabase.from("location_images").upsert(
+            {
+              location_id: location.id,
+              kind: "before",
+              public_url: beforeUpload.public_url,
+              storage_path: beforeUpload.storage_path,
+              sort_order: 0,
+            },
+            { onConflict: "location_id,kind,sort_order" },
+          );
+
+          if (upsertBefore.error) {
+            throw upsertBefore.error;
+          }
+        }
+
+        if (afterFile) {
+          const afterUpload = await uploadLocationImage({
             userId: user.id,
             locationId: location.id,
             file: afterFile,
             kind: "after",
-          }),
-        ]);
+          });
 
-        const insertImages = await supabase.from("location_images").insert([
-          {
-            location_id: location.id,
-            kind: "before",
-            public_url: beforeUpload.public_url,
-            storage_path: beforeUpload.storage_path,
-            sort_order: 0,
-          },
-          {
-            location_id: location.id,
-            kind: "after",
-            public_url: afterUpload.public_url,
-            storage_path: afterUpload.storage_path,
-            sort_order: 0,
-          },
-        ]);
+          const upsertAfter = await supabase.from("location_images").upsert(
+            {
+              location_id: location.id,
+              kind: "after",
+              public_url: afterUpload.public_url,
+              storage_path: afterUpload.storage_path,
+              sort_order: 0,
+            },
+            { onConflict: "location_id,kind,sort_order" },
+          );
 
-        if (insertImages.error) {
-          throw insertImages.error;
+          if (upsertAfter.error) {
+            throw upsertAfter.error;
+          }
+        }
+
+        if (isEditMode && !beforePreview && existingBefore) {
+          const deleteBefore = await supabase
+            .from("location_images")
+            .delete()
+            .eq("location_id", location.id)
+            .eq("kind", "before")
+            .eq("sort_order", 0);
+          if (deleteBefore.error) throw deleteBefore.error;
+        }
+
+        if (isEditMode && !afterPreview && existingAfter) {
+          const deleteAfter = await supabase
+            .from("location_images")
+            .delete()
+            .eq("location_id", location.id)
+            .eq("kind", "after")
+            .eq("sort_order", 0);
+          if (deleteAfter.error) throw deleteAfter.error;
         }
       }
 
-      if (!privacyMode && (reviewText.trim() || customerName.trim())) {
-        const insertReview = await supabase.from("location_reviews").upsert({
-          location_id: location.id,
-          customer_name: customerName.trim() || null,
-          review_text: reviewText.trim() || null,
-          stars,
-        });
+      if (!privacyMode) {
+        if (reviewText.trim() || customerName.trim()) {
+          const insertReview = await supabase.from("location_reviews").upsert({
+            location_id: location.id,
+            customer_name: customerName.trim() || null,
+            review_text: reviewText.trim() || null,
+            stars,
+          });
 
-        if (insertReview.error) {
-          throw insertReview.error;
+          if (insertReview.error) {
+            throw insertReview.error;
+          }
+        } else if (isEditMode && editLocationQuery.data?.review) {
+          const deleteReview = await supabase
+            .from("location_reviews")
+            .delete()
+            .eq("location_id", location.id);
+          if (deleteReview.error) throw deleteReview.error;
         }
       }
     },
@@ -382,7 +490,7 @@ export default function DashboardLocationCreate() {
           queryKey: ["locations", company.id],
         });
       }
-      toast.success("Location created.");
+      toast.success(isEditMode ? "Location updated." : "Location created.");
       navigate(`/dashboard/${company?.slug}`);
     },
     onError: (error) => {
@@ -396,15 +504,27 @@ export default function DashboardLocationCreate() {
     return null;
   }
 
+  if (isEditMode && editLocationQuery.isLoading) {
+    return (
+      <section className="max-w-2xl mx-auto px-4 sm:px-6 py-6 text-sm text-slate-600">
+        Loading location...
+      </section>
+    );
+  }
+
   const suggestions = suggestQuery.data?.suggestions ?? [];
 
   return (
     <section className="max-w-full mx-auto px-4 sm:px-6 py-2">
       <div className="mb-8 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Add a New Pin</h1>
+          <h1 className="text-2xl font-bold text-slate-900">
+            {isEditMode ? "Edit Location" : "Add a New Pin"}
+          </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Add a completed project to your public map.
+            {isEditMode
+              ? "Update your location details and project media."
+              : "Add a completed project to your public map."}
           </p>
         </div>
         <Button variant="ghost" asChild>
@@ -663,6 +783,8 @@ export default function DashboardLocationCreate() {
               <Loader2 className="h-4 w-4 animate-spin" />
               Saving location...
             </>
+          ) : isEditMode ? (
+            "Save Changes"
           ) : (
             "Save Pin"
           )}

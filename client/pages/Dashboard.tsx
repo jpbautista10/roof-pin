@@ -1,9 +1,21 @@
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { MapPin, PlusCircle, Star } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MapPin, Pencil, PlusCircle, Star, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
-import { fetchLocationsByCompany } from "@/lib/locations";
+import { deleteLocation, fetchLocationsByCompany } from "@/lib/locations";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -15,6 +27,8 @@ function formatDate(value: string) {
 
 export default function Dashboard() {
   const { company } = useAuth();
+  const queryClient = useQueryClient();
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const locationsQuery = useQuery({
     queryKey: ["locations", company?.id],
@@ -28,6 +42,21 @@ export default function Dashboard() {
 
   const createLink = `/dashboard/${company.slug}/locations/new`;
   const locations = locationsQuery.data ?? [];
+  const deleteMutation = useMutation({
+    mutationFn: async (locationId: string) => deleteLocation(locationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["locations", company.id],
+      });
+      toast.success("Location deleted.");
+      setDeleteTargetId(null);
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to delete location.",
+      );
+    },
+  });
 
   return (
     <section className="space-y-6">
@@ -122,12 +151,64 @@ export default function Dashboard() {
                       </span>
                     ) : null}
                   </div>
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link
+                        to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setDeleteTargetId(location.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               </article>
             );
           })}
         </div>
       )}
+
+      <AlertDialog
+        open={Boolean(deleteTargetId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTargetId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete location?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the location, review, and image
+              references.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (deleteTargetId) {
+                  deleteMutation.mutate(deleteTargetId);
+                }
+              }}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

@@ -56,6 +56,10 @@ export default function App() {
                       path="locations/new"
                       element={<DashboardLocationCreate />}
                     />
+                    <Route
+                      path="locations/:locationId/edit"
+                      element={<DashboardLocationCreate />}
+                    />
                     <Route path="settings" element={<DashboardSettings />} />
                   </Route>
                 </Route>
