@@ -1,6 +1,10 @@
-import { FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Loader2, MapPin } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,15 +21,27 @@ import { supabase } from "@/lib/supabase";
 
 type AuthMode = "sign-in" | "sign-up";
 
+const authSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+type AuthFormValues = z.infer<typeof authSchema>;
+
 export default function Login() {
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, isLoading } = useAuth();
-
   const [mode, setMode] = useState<AuthMode>("sign-in");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<AuthFormValues>({
+    resolver: zodResolver(authSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
   const redirectPath = useMemo(() => {
     const next = (location.state as { from?: string } | null)?.from;
@@ -35,52 +51,65 @@ export default function Login() {
     return next;
   }, [location.state]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      if (mode === "sign-up") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: import.meta.env.VITE_APP_URL
-              ? `${import.meta.env.VITE_APP_URL}/auth/login`
-              : undefined,
-          },
-        });
-
-        if (error) {
-          throw error;
-        }
-
-        toast.success(
-          "Account created. Check your email to confirm your account.",
-        );
-        setMode("sign-in");
-        return;
-      }
-
+  const signInMutation = useMutation({
+    mutationFn: async (values: AuthFormValues) => {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: values.email,
+        password: values.password,
+      });
+      if (error) {
+        throw error;
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+      toast.success("Signed in successfully.");
+      navigate(redirectPath, { replace: true });
+    },
+    onError: (error) => {
+      const message =
+        error instanceof Error ? error.message : "Authentication failed";
+      toast.error(message);
+    },
+  });
+
+  const signUpMutation = useMutation({
+    mutationFn: async (values: AuthFormValues) => {
+      const { error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          emailRedirectTo: import.meta.env.VITE_APP_URL
+            ? `${import.meta.env.VITE_APP_URL}/auth/login`
+            : undefined,
+        },
       });
 
       if (error) {
         throw error;
       }
-
-      toast.success("Signed in successfully.");
-      navigate(redirectPath, { replace: true });
-    } catch (error) {
+    },
+    onSuccess: () => {
+      toast.success("Account created. You can now sign in.");
+      setMode("sign-in");
+    },
+    onError: (error) => {
       const message =
         error instanceof Error ? error.message : "Authentication failed";
       toast.error(message);
-    } finally {
-      setIsSubmitting(false);
+    },
+  });
+
+  const isSubmitting = signInMutation.isPending || signUpMutation.isPending;
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    if (mode === "sign-in") {
+      await signInMutation.mutateAsync(values);
+      return;
     }
-  }
+
+    await signUpMutation.mutateAsync(values);
+  });
 
   if (isLoading) {
     return (
@@ -145,7 +174,7 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-4" onSubmit={onSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -153,11 +182,15 @@ export default function Login() {
                   type="email"
                   autoComplete="email"
                   placeholder="you@company.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
+                  {...form.register("email")}
                 />
+                {form.formState.errors.email ? (
+                  <p className="text-xs text-red-600">
+                    {form.formState.errors.email.message}
+                  </p>
+                ) : null}
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -167,11 +200,13 @@ export default function Login() {
                     mode === "sign-in" ? "current-password" : "new-password"
                   }
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  minLength={6}
-                  required
+                  {...form.register("password")}
                 />
+                {form.formState.errors.password ? (
+                  <p className="text-xs text-red-600">
+                    {form.formState.errors.password.message}
+                  </p>
+                ) : null}
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>

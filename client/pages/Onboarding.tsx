@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import slugify from "slugify";
 import { Loader2, Upload } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,115 +26,154 @@ const DEFAULT_COLORS = {
   accent: "#f59e0b",
 };
 
+const onboardingSchema = z.object({
+  companyName: z.string().min(2, "Company name must be at least 2 characters"),
+  slug: z
+    .string()
+    .min(2, "Slug must be at least 2 characters")
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Use lowercase letters, numbers, and hyphens only",
+    ),
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
+  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
+  logoFile: z.any().optional(),
+});
+
+type OnboardingValues = z.infer<typeof onboardingSchema>;
+
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { user, dbUser, company, refreshProfile } = useAuth();
-
-  const [companyName, setCompanyName] = useState(company?.name ?? "");
-  const [slug, setSlug] = useState(company?.slug ?? "");
+  const queryClient = useQueryClient();
+  const { user, company, refreshProfile } = useAuth();
   const [slugTouched, setSlugTouched] = useState(false);
-  const [primaryColor, setPrimaryColor] = useState(
-    company?.brand_primary_color ?? DEFAULT_COLORS.primary,
-  );
-  const [secondaryColor, setSecondaryColor] = useState(
-    company?.brand_secondary_color ?? DEFAULT_COLORS.secondary,
-  );
-  const [accentColor, setAccentColor] = useState(
-    company?.brand_accent_color ?? DEFAULT_COLORS.accent,
-  );
-  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState(company?.logo_url ?? "");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<OnboardingValues>({
+    resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      companyName: company?.name ?? "",
+      slug: company?.slug ?? "",
+      primaryColor: company?.brand_primary_color ?? DEFAULT_COLORS.primary,
+      secondaryColor:
+        company?.brand_secondary_color ?? DEFAULT_COLORS.secondary,
+      accentColor: company?.brand_accent_color ?? DEFAULT_COLORS.accent,
+    },
+  });
+
+  const watchedCompanyName = form.watch("companyName");
+  const watchedSlug = form.watch("slug");
 
   useEffect(() => {
     if (slugTouched) {
       return;
     }
 
-    setSlug(
-      slugify(companyName, {
+    form.setValue(
+      "slug",
+      slugify(watchedCompanyName || "", {
         lower: true,
         strict: true,
         trim: true,
       }),
     );
-  }, [companyName, slugTouched]);
+  }, [watchedCompanyName, slugTouched, form]);
 
-  const isValid = useMemo(() => {
-    return companyName.trim().length > 1 && slug.trim().length > 1;
-  }, [companyName, slug]);
-
-  async function uploadLogo(nextSlug: string) {
-    if (!user || !logoFile) {
-      return company?.logo_url ?? null;
-    }
-
-    const fileExt = logoFile.name.split(".").pop()?.toLowerCase() ?? "png";
-    const filePath = `${user.id}/${nextSlug}-${Date.now()}.${fileExt}`;
-
-    const uploadResult = await supabase.storage
-      .from("company-logos")
-      .upload(filePath, logoFile, { upsert: true });
-
-    if (uploadResult.error) {
-      throw uploadResult.error;
-    }
-
-    const { data } = supabase.storage
-      .from("company-logos")
-      .getPublicUrl(filePath);
-    return data.publicUrl;
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!user || !isValid) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const formattedSlug = slugify(slug, {
+  const formattedSlug = useMemo(
+    () =>
+      slugify(watchedSlug || "", {
         lower: true,
         strict: true,
         trim: true,
-      });
+      }),
+    [watchedSlug],
+  );
 
-      if (!formattedSlug) {
-        throw new Error("Please provide a valid company slug.");
-      }
-
-      const slugCheck = await supabase
+  const slugCheckQuery = useQuery({
+    queryKey: ["companies", "slug-check", formattedSlug],
+    enabled: formattedSlug.length > 1,
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("companies")
         .select("id")
         .eq("slug", formattedSlug)
         .maybeSingle<{ id: string }>();
 
-      if (slugCheck.error) {
-        throw slugCheck.error;
+      if (error) {
+        throw error;
       }
 
-      if (slugCheck.data && slugCheck.data.id !== company?.id) {
+      return data;
+    },
+  });
+
+  const onboardingMutation = useMutation({
+    mutationFn: async (values: OnboardingValues) => {
+      if (!user) {
+        throw new Error("You must be signed in.");
+      }
+
+      const nextSlug = slugify(values.slug, {
+        lower: true,
+        strict: true,
+        trim: true,
+      });
+
+      if (!nextSlug) {
+        throw new Error("Please provide a valid company slug.");
+      }
+
+      const slugExists = await supabase
+        .from("companies")
+        .select("id")
+        .eq("slug", nextSlug)
+        .maybeSingle<{ id: string }>();
+
+      if (slugExists.error) {
+        throw slugExists.error;
+      }
+
+      if (slugExists.data && slugExists.data.id !== company?.id) {
         throw new Error("That slug is already in use. Try another one.");
       }
 
-      const logoUrl = await uploadLogo(formattedSlug);
+      const logoFileList = values.logoFile as FileList | undefined;
+      const logoFile = logoFileList?.[0] ?? null;
+      let logoUrl = company?.logo_url ?? null;
 
-      let savedCompanyId = company?.id ?? null;
+      if (logoFile) {
+        const fileExt = logoFile.name.split(".").pop()?.toLowerCase() ?? "png";
+        const filePath = `${user.id}/${nextSlug}-${Date.now()}.${fileExt}`;
 
-      if (savedCompanyId) {
+        const uploadResult = await supabase.storage
+          .from("company-logos")
+          .upload(filePath, logoFile, { upsert: true });
+
+        if (uploadResult.error) {
+          throw uploadResult.error;
+        }
+
+        const { data } = supabase.storage
+          .from("company-logos")
+          .getPublicUrl(filePath);
+        logoUrl = data.publicUrl;
+      }
+
+      let companyId = company?.id ?? null;
+
+      if (companyId) {
         const updated = await supabase
           .from("companies")
           .update({
-            name: companyName.trim(),
-            slug: formattedSlug,
+            name: values.companyName.trim(),
+            slug: nextSlug,
             logo_url: logoUrl,
-            brand_primary_color: primaryColor,
-            brand_secondary_color: secondaryColor,
-            brand_accent_color: accentColor,
+            brand_primary_color: values.primaryColor,
+            brand_secondary_color: values.secondaryColor,
+            brand_accent_color: values.accentColor,
           })
-          .eq("id", savedCompanyId)
+          .eq("id", companyId)
           .select("id")
           .single<{ id: string }>();
 
@@ -138,18 +181,18 @@ export default function Onboarding() {
           throw updated.error;
         }
 
-        savedCompanyId = updated.data.id;
+        companyId = updated.data.id;
       } else {
         const inserted = await supabase
           .from("companies")
           .insert({
             owner_user_id: user.id,
-            name: companyName.trim(),
-            slug: formattedSlug,
+            name: values.companyName.trim(),
+            slug: nextSlug,
             logo_url: logoUrl,
-            brand_primary_color: primaryColor,
-            brand_secondary_color: secondaryColor,
-            brand_accent_color: accentColor,
+            brand_primary_color: values.primaryColor,
+            brand_secondary_color: values.secondaryColor,
+            brand_accent_color: values.accentColor,
           })
           .select("id")
           .single<{ id: string }>();
@@ -158,13 +201,13 @@ export default function Onboarding() {
           throw inserted.error;
         }
 
-        savedCompanyId = inserted.data.id;
+        companyId = inserted.data.id;
       }
 
       const profileUpdate = await supabase
         .from("users")
         .update({
-          company_id: savedCompanyId,
+          company_id: companyId,
           onboarding_completed_at: new Date().toISOString(),
         })
         .eq("id", user.id);
@@ -173,19 +216,37 @@ export default function Onboarding() {
         throw profileUpdate.error;
       }
 
-      await refreshProfile();
+      return nextSlug;
+    },
+    onSuccess: async (nextSlug) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["companies", "slug-check"],
+        }),
+        queryClient.invalidateQueries({ queryKey: ["auth", "profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["auth", "company"] }),
+        refreshProfile(),
+      ]);
       toast.success("Onboarding complete.");
-      navigate(`/dashboard/${formattedSlug}`, { replace: true });
-    } catch (error) {
+      navigate(`/dashboard/${nextSlug}`, { replace: true });
+    },
+    onError: (error) => {
       const message =
         error instanceof Error
           ? error.message
           : "Unable to complete onboarding.";
       toast.error(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+    },
+  });
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    await onboardingMutation.mutateAsync(values);
+  });
+
+  const slugTaken = Boolean(
+    slugCheckQuery.data &&
+      (!company?.id || slugCheckQuery.data.id !== company.id),
+  );
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
@@ -199,33 +260,46 @@ export default function Onboarding() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={onSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="companyName">Company name</Label>
                 <Input
                   id="companyName"
-                  value={companyName}
-                  onChange={(event) => setCompanyName(event.target.value)}
                   placeholder="Acme Roofing"
-                  required
+                  {...form.register("companyName")}
                 />
+                {form.formState.errors.companyName ? (
+                  <p className="text-xs text-red-600">
+                    {form.formState.errors.companyName.message}
+                  </p>
+                ) : null}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="slug">Company slug</Label>
                 <Input
                   id="slug"
-                  value={slug}
+                  placeholder="acme-roofing"
+                  {...form.register("slug")}
                   onChange={(event) => {
                     setSlugTouched(true);
-                    setSlug(event.target.value);
+                    form.register("slug").onChange(event);
                   }}
-                  placeholder="acme-roofing"
-                  required
                 />
-                <p className="text-xs text-slate-500">
-                  Your dashboard URL will be `/dashboard/{slug || "company"}`.
-                </p>
+                {slugCheckQuery.isFetching ? (
+                  <p className="text-xs text-slate-500">
+                    Checking slug availability...
+                  </p>
+                ) : slugTaken ? (
+                  <p className="text-xs text-red-600">
+                    That slug is already in use.
+                  </p>
+                ) : null}
+                {form.formState.errors.slug ? (
+                  <p className="text-xs text-red-600">
+                    {form.formState.errors.slug.message}
+                  </p>
+                ) : null}
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
@@ -234,8 +308,7 @@ export default function Onboarding() {
                   <Input
                     id="primaryColor"
                     type="color"
-                    value={primaryColor}
-                    onChange={(event) => setPrimaryColor(event.target.value)}
+                    {...form.register("primaryColor")}
                   />
                 </div>
                 <div className="space-y-2">
@@ -243,8 +316,7 @@ export default function Onboarding() {
                   <Input
                     id="secondaryColor"
                     type="color"
-                    value={secondaryColor}
-                    onChange={(event) => setSecondaryColor(event.target.value)}
+                    {...form.register("secondaryColor")}
                   />
                 </div>
                 <div className="space-y-2">
@@ -252,24 +324,22 @@ export default function Onboarding() {
                   <Input
                     id="accentColor"
                     type="color"
-                    value={accentColor}
-                    onChange={(event) => setAccentColor(event.target.value)}
+                    {...form.register("accentColor")}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="logo">Company logo</Label>
+                <Label htmlFor="logoFile">Company logo</Label>
                 <Input
-                  id="logo"
+                  id="logoFile"
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  {...form.register("logoFile")}
                   onChange={(event) => {
-                    const file = event.target.files?.[0] ?? null;
-                    setLogoFile(file);
-                    if (file) {
-                      setLogoPreview(URL.createObjectURL(file));
-                    }
+                    form.register("logoFile").onChange(event);
+                    const file = event.target.files?.[0];
+                    setLogoPreview(file ? URL.createObjectURL(file) : "");
                   }}
                 />
                 {logoPreview ? (
@@ -287,10 +357,14 @@ export default function Onboarding() {
 
               <Button
                 type="submit"
-                disabled={!isValid || isSubmitting}
                 className="w-full"
+                disabled={
+                  onboardingMutation.isPending ||
+                  slugTaken ||
+                  slugCheckQuery.isFetching
+                }
               >
-                {isSubmitting ? (
+                {onboardingMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Saving...
