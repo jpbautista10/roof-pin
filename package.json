@@ -12,19 +12,23 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:client && npm run build:server",
+    "build": "pnpm run build:client && pnpm run build:server",
     "build:client": "vite build",
     "build:server": "vite build --config vite.config.server.ts",
     "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "db:push": "supabase db push",
+    "db:migrate:new": "supabase migration new",
+    "db:types": "supabase gen types typescript --linked > shared/database.types.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
     "browser-image-compression": "^2.0.2",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "slugify": "^1.6.6",
     "zod": "^3.25.76"
   },
   "devDependencies": {

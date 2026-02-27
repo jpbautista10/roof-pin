@@ -1,3 +1,4 @@
+import { Database } from "@shared/database.types";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -9,4 +10,4 @@ if (!supabaseUrl || !supabasePublishableKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabasePublishableKey);
+export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey);
