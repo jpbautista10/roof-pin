@@ -168,8 +168,10 @@ export default function DashboardAddPin() {
     };
 
     addPin(newPin);
-    toast.success("Pin added successfully!");
-    setTimeout(() => navigate("/dashboard"), 800);
+    toast.success("Pin added successfully!", {
+      description: `"${neighborhood || "New project"}" is now live on your public map.`,
+    });
+    setTimeout(() => navigate("/dashboard"), 1200);
   }
 
   return (
