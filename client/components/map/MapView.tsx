@@ -13,6 +13,28 @@ interface MapViewProps {
  * Positions pins on a styled container using normalized lat/lng offsets.
  * Designed to be swapped with react-map-gl + Mapbox when API key is available.
  */
+// Map zoom constraints — pass to react-map-gl <Map> when connected
+const MIN_ZOOM = 9;
+const MAX_ZOOM = 18;
+
+/*
+ * Auto-fit bounds (for react-map-gl integration):
+ * When the map loads, calculate the bounding box of all pins
+ * and zoom to fit them:
+ *
+ * const bounds = pins.reduce(
+ *   (acc, pin) => {
+ *     const { lat, lng } = getDisplayCoords(pin);
+ *     return [
+ *       [Math.min(acc[0][0], lng), Math.min(acc[0][1], lat)],
+ *       [Math.max(acc[1][0], lng), Math.max(acc[1][1], lat)],
+ *     ];
+ *   },
+ *   [[Infinity, Infinity], [-Infinity, -Infinity]]
+ * );
+ * map.fitBounds(bounds, { padding: 60, maxZoom: MAX_ZOOM, minZoom: MIN_ZOOM });
+ */
+
 export default function MapView({ tenant, pins }: MapViewProps) {
   const [selectedPin, setSelectedPin] = useState<Pin | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -33,7 +55,7 @@ export default function MapView({ tenant, pins }: MapViewProps) {
   const latRange = maxLat - minLat || 0.01;
   const lngRange = maxLng - minLng || 0.01;
 
-  const padding = 0.15;
+  const padding = 0.12;
 
   function pinPosition(lat: number, lng: number) {
     const normX = (lng - minLng) / lngRange;
@@ -88,29 +110,39 @@ export default function MapView({ tenant, pins }: MapViewProps) {
         return (
           <button
             key={pin.id}
-            className="absolute -translate-x-1/2 -translate-y-1/2 z-10 group"
+            className="absolute -translate-x-1/2 -translate-y-full z-10 group"
             style={{ left: pos.left, top: pos.top }}
             onClick={() => handlePinClick(pin)}
           >
-            {/* Pulse ring */}
-            <span
-              className="absolute inset-0 rounded-full animate-ping opacity-20"
-              style={{ backgroundColor: tenant.brand_color }}
-            />
-            {/* Marker dot */}
-            <span
-              className={`relative block w-5 h-5 rounded-full border-[3px] border-white shadow-lg transition-transform group-hover:scale-125 ${isPrivacy ? "opacity-70" : ""}`}
+            {/* SVG Teardrop Pin with House Icon */}
+            <svg
+              width="36"
+              height="46"
+              viewBox="0 0 36 46"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className={`transition-transform duration-200 group-hover:scale-110 ${
+                isSelected ? "scale-125" : ""
+              } ${isPrivacy ? "opacity-70" : ""}`}
               style={{
-                backgroundColor: tenant.brand_color,
-                boxShadow: isSelected
-                  ? `0 0 0 4px ${tenant.brand_color}40, 0 4px 12px ${tenant.brand_color}50`
-                  : `0 2px 8px ${tenant.brand_color}40`,
-                transform: isSelected ? "scale(1.3)" : undefined,
-                border: isPrivacy ? `3px dashed white` : undefined,
+                filter: isSelected
+                  ? `drop-shadow(0 4px 8px ${tenant.brand_color}50)`
+                  : `drop-shadow(0 2px 4px rgba(0,0,0,0.25))`,
               }}
-            />
+            >
+              {/* Teardrop body */}
+              <path
+                d="M18 0C8.059 0 0 8.059 0 18c0 12.627 16.5 27 17.25 27.656a1.125 1.125 0 001.5 0C19.5 45 36 30.627 36 18 36 8.059 27.941 0 18 0z"
+                fill={tenant.brand_color}
+              />
+              {/* White house/roof icon */}
+              <path
+                d="M18 9l-8 7h3v6h4v-4h2v4h4v-6h3l-8-7z"
+                fill="white"
+              />
+            </svg>
             {/* Tooltip */}
-            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-medium rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-medium rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               {pin.neighborhood}
               {isPrivacy && (
                 <span className="ml-1 text-slate-400">· Area</span>

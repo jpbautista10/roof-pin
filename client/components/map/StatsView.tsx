@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Pin, Tenant, WorkType } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -9,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Hammer, Star, CheckCircle2 } from "lucide-react";
+import ProjectDrawer from "./ProjectDrawer";
 
 interface StatsViewProps {
   tenant: Tenant;
@@ -16,6 +18,9 @@ interface StatsViewProps {
 }
 
 export default function StatsView({ tenant, pins }: StatsViewProps) {
+  const [selectedPin, setSelectedPin] = useState<Pin | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   const totalProjects = pins.length;
 
   // Top work type
@@ -125,7 +130,14 @@ export default function StatsView({ tenant, pins }: StatsViewProps) {
             </TableHeader>
             <TableBody>
               {sortedPins.map((pin) => (
-                <TableRow key={pin.id}>
+                <TableRow
+                  key={pin.id}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => {
+                    setSelectedPin(pin);
+                    setDrawerOpen(true);
+                  }}
+                >
                   <TableCell className="font-medium text-sm text-slate-900">
                     {pin.neighborhood}
                   </TableCell>
@@ -143,6 +155,13 @@ export default function StatsView({ tenant, pins }: StatsViewProps) {
           </Table>
         </Card>
       </div>
+
+      <ProjectDrawer
+        pin={selectedPin}
+        tenant={tenant}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+      />
     </div>
   );
 }

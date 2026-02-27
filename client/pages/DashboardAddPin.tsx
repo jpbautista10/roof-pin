@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, X, MapPin } from "lucide-react";
 import type { WorkType } from "@/types";
 
 const WORK_TYPES: WorkType[] = ["Shingle", "Flat", "Tile", "Metal"];
@@ -134,6 +134,13 @@ export default function DashboardAddPin() {
   const [afterPreview, setAfterPreview] = useState<string | null>(null);
   const [_beforeFile, setBeforeFile] = useState<File | null>(null);
   const [_afterFile, setAfterFile] = useState<File | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const MOCK_SUGGESTIONS = [
+    "123 Main St, Atlanta, GA 30303",
+    "456 Peachtree Rd, Atlanta, GA 30308",
+    "789 Oak Ave, Decatur, GA 30030",
+  ];
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -162,7 +169,7 @@ export default function DashboardAddPin() {
 
     addPin(newPin);
     toast.success("Pin added successfully!");
-    navigate("/dashboard");
+    setTimeout(() => navigate("/dashboard"), 800);
   }
 
   return (
@@ -183,12 +190,40 @@ export default function DashboardAddPin() {
             </h2>
             <div className="space-y-2">
               <Label htmlFor="address">Address / Zip Code</Label>
-              <Input
-                id="address"
-                placeholder="e.g. 30303 or 123 Main St, Atlanta GA"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="address"
+                  placeholder="e.g. 30303 or 123 Main St, Atlanta GA"
+                  value={address}
+                  onChange={(e) => {
+                    setAddress(e.target.value);
+                    setShowSuggestions(e.target.value.length > 3);
+                  }}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                />
+                {showSuggestions && (
+                  <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden">
+                    {MOCK_SUGGESTIONS.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        className="flex items-center gap-2.5 w-full text-left px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setAddress(suggestion);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                        {suggestion}
+                      </button>
+                    ))}
+                    <div className="px-3 py-1.5 border-t border-slate-100 bg-slate-50">
+                      <p className="text-[10px] text-slate-400">Powered by Mapbox</p>
+                    </div>
+                  </div>
+                )}
+              </div>
               <p className="text-xs text-slate-400">
                 Will be geocoded to lat/lng via Mapbox when connected.
               </p>

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sheet";
 import BeforeAfterSlider from "./BeforeAfterSlider";
 import { Pin, Tenant } from "@/types";
-import { MapPin, Calendar, Hammer } from "lucide-react";
+import { MapPin, Calendar, Hammer, ImageOff } from "lucide-react";
 
 interface ProjectDrawerProps {
   pin: Pin | null;
@@ -93,12 +93,19 @@ export default function ProjectDrawer({ pin, tenant, open, onOpenChange }: Proje
           ) : (
             /* ── Full Mode: images, review, social proof ── */
             <>
-              {/* Before/After Slider */}
+              {/* Before/After Slider or Placeholder */}
               <div className="px-6 pb-6">
-                <BeforeAfterSlider
-                  beforeImg={pin.before_img_url}
-                  afterImg={pin.after_img_url}
-                />
+                {pin.before_img_url && pin.after_img_url ? (
+                  <BeforeAfterSlider
+                    beforeImg={pin.before_img_url}
+                    afterImg={pin.after_img_url}
+                  />
+                ) : (
+                  <div className="bg-slate-100 rounded-xl aspect-[4/3] flex flex-col items-center justify-center gap-2">
+                    <ImageOff className="w-8 h-8 text-slate-300" />
+                    <p className="text-sm text-slate-400 font-medium">Images coming soon</p>
+                  </div>
+                )}
               </div>
 
               {/* Project details badges */}
