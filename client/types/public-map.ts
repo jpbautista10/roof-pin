@@ -28,6 +28,7 @@ export interface PublicLocation {
   place_label: string;
   latitude: number;
   longitude: number;
+  privacy_mode: boolean;
   created_at: string;
   images: PublicLocationImage[];
   reviews: PublicLocationReview[];

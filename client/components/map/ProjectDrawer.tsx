@@ -42,7 +42,7 @@ export default function ProjectDrawer({
   const beforeImage = location.images.find((image) => image.kind === "before");
   const afterImage = location.images.find((image) => image.kind === "after");
   const ctaUrl = company.cta_url;
-  const reviews = location.reviews;
+  const reviews = location.privacy_mode ? [] : location.reviews;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -61,7 +61,17 @@ export default function ProjectDrawer({
           </SheetHeader>
 
           <div className="px-6 pb-5">
-            {beforeImage?.public_url && afterImage?.public_url ? (
+            {location.privacy_mode ? (
+              <div className="bg-slate-100 rounded-xl aspect-[4/3] flex flex-col items-center justify-center gap-2">
+                <ImageOff className="w-8 h-8 text-slate-300" />
+                <p className="text-sm text-slate-500 font-medium">
+                  Private project
+                </p>
+                <p className="text-xs text-slate-400">
+                  Images and customer details are hidden.
+                </p>
+              </div>
+            ) : beforeImage?.public_url && afterImage?.public_url ? (
               <BeforeAfterSlider
                 beforeImg={beforeImage.public_url}
                 afterImg={afterImage.public_url}
@@ -79,7 +89,9 @@ export default function ProjectDrawer({
           <div className="px-6 pb-4 flex gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-700">
               <MapPin className="w-3 h-3" />
-              {location.place_label}
+              {location.privacy_mode
+                ? `Approx area · ${location.place_label}`
+                : location.place_label}
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-700">
               <Calendar className="w-3 h-3" />

@@ -29,6 +29,9 @@ interface LocationQueryRow {
   place_label: string;
   latitude: number;
   longitude: number;
+  geocode_latitude: number;
+  geocode_longitude: number;
+  privacy_mode: boolean;
   created_at: string;
   location_images: Array<{
     id: string;
@@ -70,6 +73,7 @@ const demoLocations: PublicLocation[] = [
     place_label: "Buckhead, Atlanta, GA",
     latitude: 33.8462,
     longitude: -84.3713,
+    privacy_mode: false,
     created_at: new Date("2026-01-18").toISOString(),
     images: [
       {
@@ -100,6 +104,7 @@ const demoLocations: PublicLocation[] = [
     place_label: "East Atlanta Village, Atlanta, GA",
     latitude: 33.7402,
     longitude: -84.3458,
+    privacy_mode: true,
     created_at: new Date("2026-02-04").toISOString(),
     images: [
       {
@@ -130,6 +135,7 @@ const demoLocations: PublicLocation[] = [
     place_label: "Decatur, GA",
     latitude: 33.7748,
     longitude: -84.2963,
+    privacy_mode: false,
     created_at: new Date("2026-02-20").toISOString(),
     images: [
       {
@@ -161,8 +167,9 @@ function normalizeLocations(rows: LocationQueryRow[]): PublicLocation[] {
     id: row.id,
     project_name: row.project_name,
     place_label: row.place_label,
-    latitude: row.latitude,
-    longitude: row.longitude,
+    latitude: row.privacy_mode ? row.geocode_latitude : row.latitude,
+    longitude: row.privacy_mode ? row.geocode_longitude : row.longitude,
+    privacy_mode: row.privacy_mode,
     created_at: row.created_at,
     images: row.location_images ?? [],
     reviews: Array.isArray(row.location_reviews)
@@ -210,7 +217,7 @@ export default function PublicMap() {
       const { data, error } = await supabase
         .from("locations")
         .select(
-          "id, project_name, place_label, latitude, longitude, created_at, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
+          "id, project_name, place_label, latitude, longitude, geocode_latitude, geocode_longitude, privacy_mode, created_at, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
         )
         .eq("company_id", companyQuery.data!.id)
         .order("created_at", { ascending: false });
@@ -229,7 +236,9 @@ export default function PublicMap() {
   const mapSummary = useMemo(() => {
     const ratings = locations
       .flatMap((location) =>
-        location.reviews.map((review) => review.stars ?? null),
+        location.privacy_mode
+          ? []
+          : location.reviews.map((review) => review.stars ?? null),
       )
       .filter((value): value is number => typeof value === "number");
 

@@ -39,7 +39,8 @@ export default function StatsView({
       <div className="mx-auto max-w-3xl px-4 py-6 space-y-3">
         {sortedLocations.map((location) => {
           const firstReview = location.reviews[0] ?? null;
-          const hasReview = Boolean(firstReview?.review_text);
+          const hasReview =
+            !location.privacy_mode && Boolean(firstReview?.review_text);
 
           return (
             <button
@@ -57,10 +58,15 @@ export default function StatsView({
                     {location.place_label}
                   </p>
                 </div>
-                {typeof firstReview?.stars === "number" ? (
+                {!location.privacy_mode &&
+                typeof firstReview?.stars === "number" ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                     <Star className="h-3.5 w-3.5 fill-current" />
                     {firstReview.stars}
+                  </span>
+                ) : location.privacy_mode ? (
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                    Private
                   </span>
                 ) : null}
               </div>
