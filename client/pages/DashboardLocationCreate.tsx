@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,12 +10,20 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import imageCompression from "browser-image-compression";
-import { ArrowLeft, Loader2, MapPin, Star } from "lucide-react";
+import { ArrowLeft, ImagePlus, Loader2, MapPin, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/auth/AuthProvider";
 import { createLocation } from "@/lib/locations";
 import { supabase } from "@/lib/supabase";
@@ -33,6 +41,25 @@ L.Icon.Default.mergeOptions({
   iconUrl: markerIcon,
   shadowUrl: markerShadow,
 });
+
+const WORK_TYPES = ["Shingle", "Flat", "Tile", "Metal"] as const;
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+const YEARS = Array.from({ length: 8 }, (_, i) =>
+  String(new Date().getFullYear() - i),
+);
 
 const INITIAL_COORDS = {
   lat: 33.749,
@@ -63,6 +90,110 @@ function MapClickSetter({
   return null;
 }
 
+function StarSelector({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star)}
+          className="focus:outline-none transition-transform hover:scale-110"
+        >
+          <svg
+            className={`w-7 h-7 ${star <= value ? "text-amber-400" : "text-slate-300"}`}
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+interface ImageUploadProps {
+  label: string;
+  preview: string | null;
+  onFile: (file: File, preview: string) => void;
+  onClear: () => void;
+}
+
+function ImageUpload({ label, preview, onFile, onClear }: ImageUploadProps) {
+  const [compressing, setCompressing] = useState(false);
+
+  async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCompressing(true);
+    try {
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.3,
+        maxWidthOrHeight: 1600,
+        useWebWorker: true,
+        fileType: "image/webp",
+        initialQuality: 0.8,
+      });
+      const url = URL.createObjectURL(compressed);
+      onFile(compressed, url);
+      toast.success(
+        `Compressed: ${Math.round(file.size / 1024)}KB -> ${Math.round(compressed.size / 1024)}KB`,
+      );
+    } catch {
+      toast.error("Failed to compress image");
+    } finally {
+      setCompressing(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      {preview ? (
+        <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
+          <img
+            src={preview}
+            alt={label}
+            className="w-full h-full object-cover"
+          />
+          <button
+            type="button"
+            onClick={onClear}
+            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
+        <label className="flex flex-col items-center justify-center w-full aspect-video rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-colors">
+          <ImagePlus className="w-8 h-8 text-slate-400 mb-2" />
+          <span className="text-sm text-slate-500">
+            {compressing ? "Compressing..." : "Click to upload"}
+          </span>
+          <span className="text-xs text-slate-400 mt-1">
+            Auto-compressed to WebP
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleChange}
+            className="hidden"
+            disabled={compressing}
+          />
+        </label>
+      )}
+    </div>
+  );
+}
+
 async function uploadLocationImage(params: {
   userId: string;
   locationId: string;
@@ -88,20 +219,9 @@ async function uploadLocationImage(params: {
     .getPublicUrl(filePath);
 
   return {
-    kind: params.kind,
     storage_path: filePath,
     public_url: data.publicUrl,
   };
-}
-
-async function compressImage(file: File) {
-  return imageCompression(file, {
-    maxSizeMB: 0.3,
-    maxWidthOrHeight: 1600,
-    useWebWorker: true,
-    fileType: "image/webp",
-    initialQuality: 0.8,
-  });
 }
 
 export default function DashboardLocationCreate() {
@@ -109,38 +229,47 @@ export default function DashboardLocationCreate() {
   const queryClient = useQueryClient();
   const { user, company } = useAuth();
 
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [address, setAddress] = useState("");
+  const [debouncedAddress, setDebouncedAddress] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] =
     useState<GeocodeSuggestion | null>(null);
+  const [neighborhood, setNeighborhood] = useState("");
 
   const [projectName, setProjectName] = useState("");
-  const [latitude, setLatitude] = useState(INITIAL_COORDS.lat);
-  const [longitude, setLongitude] = useState(INITIAL_COORDS.lng);
-
-  const [beforeImage, setBeforeImage] = useState<File | null>(null);
-  const [afterImage, setAfterImage] = useState<File | null>(null);
-  const [compressingBefore, setCompressingBefore] = useState(false);
-  const [compressingAfter, setCompressingAfter] = useState(false);
+  const [workType, setWorkType] = useState<(typeof WORK_TYPES)[number] | "">(
+    "",
+  );
+  const [month, setMonth] = useState("");
+  const [year, setYear] = useState("");
+  const [privacyMode, setPrivacyMode] = useState(false);
 
   const [customerName, setCustomerName] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [stars, setStars] = useState(5);
 
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setDebouncedQuery(query.trim());
-    }, 250);
+  const [beforePreview, setBeforePreview] = useState<string | null>(null);
+  const [afterPreview, setAfterPreview] = useState<string | null>(null);
+  const [beforeFile, setBeforeFile] = useState<File | null>(null);
+  const [afterFile, setAfterFile] = useState<File | null>(null);
 
+  const [latitude, setLatitude] = useState(INITIAL_COORDS.lat);
+  const [longitude, setLongitude] = useState(INITIAL_COORDS.lng);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(
+      () => setDebouncedAddress(address.trim()),
+      250,
+    );
     return () => window.clearTimeout(timeout);
-  }, [query]);
+  }, [address]);
 
   const suggestQuery = useQuery({
-    queryKey: ["geocode", "suggest", debouncedQuery],
-    enabled: debouncedQuery.length >= 2,
+    queryKey: ["geocode", "suggest", debouncedAddress],
+    enabled: debouncedAddress.length >= 2,
     queryFn: async () => {
       const response = await fetch(
-        `/api/geocode/suggest?q=${encodeURIComponent(debouncedQuery)}&limit=6`,
+        `/api/geocode/suggest?q=${encodeURIComponent(debouncedAddress)}&limit=6`,
       );
       if (!response.ok) {
         throw new Error("Could not fetch location suggestions.");
@@ -148,17 +277,6 @@ export default function DashboardLocationCreate() {
       return (await response.json()) as GeocodeSuggestResponse;
     },
   });
-
-  const suggestions = suggestQuery.data?.suggestions ?? [];
-
-  const beforePreview = useMemo(
-    () => (beforeImage ? URL.createObjectURL(beforeImage) : ""),
-    [beforeImage],
-  );
-  const afterPreview = useMemo(
-    () => (afterImage ? URL.createObjectURL(afterImage) : ""),
-    [afterImage],
-  );
 
   useEffect(() => {
     return () => {
@@ -178,67 +296,74 @@ export default function DashboardLocationCreate() {
       }
 
       if (!selectedSuggestion) {
-        throw new Error("Please select a location from suggestions first.");
+        throw new Error("Please pick a location from suggestions.");
       }
 
-      if (!beforeImage || !afterImage) {
-        throw new Error("Upload both before and after images.");
+      if (!privacyMode && (!beforeFile || !afterFile)) {
+        throw new Error("Upload before and after images.");
       }
 
       const location = await createLocation({
         company_id: company.id,
         created_by_user_id: user.id,
         project_name: projectName.trim(),
-        place_label: selectedSuggestion.label,
+        place_label: neighborhood.trim() || selectedSuggestion.label,
         latitude,
         longitude,
         geocode_latitude: selectedSuggestion.latitude,
         geocode_longitude: selectedSuggestion.longitude,
+        work_type: workType || null,
+        date_completed: month && year ? `${month} ${year}` : null,
+        privacy_mode: privacyMode,
         address_json: {
           city: selectedSuggestion.city,
           state: selectedSuggestion.state,
           country: selectedSuggestion.country,
           postcode: selectedSuggestion.postcode,
+          full_address: selectedSuggestion.label,
+          neighborhood: neighborhood || null,
         },
       });
 
-      const [beforeUpload, afterUpload] = await Promise.all([
-        uploadLocationImage({
-          userId: user.id,
-          locationId: location.id,
-          file: beforeImage,
-          kind: "before",
-        }),
-        uploadLocationImage({
-          userId: user.id,
-          locationId: location.id,
-          file: afterImage,
-          kind: "after",
-        }),
-      ]);
+      if (!privacyMode && beforeFile && afterFile) {
+        const [beforeUpload, afterUpload] = await Promise.all([
+          uploadLocationImage({
+            userId: user.id,
+            locationId: location.id,
+            file: beforeFile,
+            kind: "before",
+          }),
+          uploadLocationImage({
+            userId: user.id,
+            locationId: location.id,
+            file: afterFile,
+            kind: "after",
+          }),
+        ]);
 
-      const insertImages = await supabase.from("location_images").insert([
-        {
-          location_id: location.id,
-          kind: "before",
-          public_url: beforeUpload.public_url,
-          storage_path: beforeUpload.storage_path,
-          sort_order: 0,
-        },
-        {
-          location_id: location.id,
-          kind: "after",
-          public_url: afterUpload.public_url,
-          storage_path: afterUpload.storage_path,
-          sort_order: 0,
-        },
-      ]);
+        const insertImages = await supabase.from("location_images").insert([
+          {
+            location_id: location.id,
+            kind: "before",
+            public_url: beforeUpload.public_url,
+            storage_path: beforeUpload.storage_path,
+            sort_order: 0,
+          },
+          {
+            location_id: location.id,
+            kind: "after",
+            public_url: afterUpload.public_url,
+            storage_path: afterUpload.storage_path,
+            sort_order: 0,
+          },
+        ]);
 
-      if (insertImages.error) {
-        throw insertImages.error;
+        if (insertImages.error) {
+          throw insertImages.error;
+        }
       }
 
-      if (reviewText.trim() || customerName.trim()) {
+      if (!privacyMode && (reviewText.trim() || customerName.trim())) {
         const insertReview = await supabase.from("location_reviews").upsert({
           location_id: location.id,
           customer_name: customerName.trim() || null,
@@ -271,60 +396,16 @@ export default function DashboardLocationCreate() {
     return null;
   }
 
-  async function handleSelectImage(
-    kind: "before" | "after",
-    nextFile: File | null,
-  ) {
-    if (!nextFile) {
-      if (kind === "before") {
-        setBeforeImage(null);
-      } else {
-        setAfterImage(null);
-      }
-      return;
-    }
-
-    if (kind === "before") {
-      setCompressingBefore(true);
-    } else {
-      setCompressingAfter(true);
-    }
-
-    try {
-      const compressed = await compressImage(nextFile);
-      if (kind === "before") {
-        setBeforeImage(compressed);
-      } else {
-        setAfterImage(compressed);
-      }
-
-      toast.success(
-        `${kind === "before" ? "Before" : "After"} image compressed: ${Math.round(nextFile.size / 1024)}KB -> ${Math.round(compressed.size / 1024)}KB`,
-      );
-    } catch {
-      toast.error("Image compression failed. Using original image.");
-      if (kind === "before") {
-        setBeforeImage(nextFile);
-      } else {
-        setAfterImage(nextFile);
-      }
-    } finally {
-      if (kind === "before") {
-        setCompressingBefore(false);
-      } else {
-        setCompressingAfter(false);
-      }
-    }
-  }
+  const suggestions = suggestQuery.data?.suggestions ?? [];
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section className="max-w-full mx-auto px-4 sm:px-6 py-2">
+      <div className="mb-8 flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm text-slate-500">New location</p>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Create project location
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900">Add a New Pin</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Add a completed project to your public map.
+          </p>
         </div>
         <Button variant="ghost" asChild>
           <Link to={`/dashboard/${company.slug}`}>
@@ -334,185 +415,81 @@ export default function DashboardLocationCreate() {
         </Button>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          createMutation.mutate();
+        }}
+        className="space-y-6"
+      >
+        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
+          <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+            Location
+          </h2>
           <div className="space-y-2">
-            <Label htmlFor="location-search">Location</Label>
+            <Label htmlFor="address">Address / Zip Code</Label>
             <Input
-              id="location-search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search address, neighborhood, city..."
+              id="address"
+              placeholder="e.g. 30303 or 123 Main St, Atlanta GA"
+              value={address}
+              onFocus={() => setShowSuggestions(true)}
+              onChange={(event) => {
+                setAddress(event.target.value);
+                setShowSuggestions(true);
+              }}
             />
-            {debouncedQuery.length >= 2 ? (
-              <div className="max-h-64 overflow-auto rounded-lg border border-slate-200">
+            {showSuggestions && debouncedAddress.length >= 2 ? (
+              <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                 {suggestQuery.isLoading ? (
                   <p className="px-3 py-2 text-sm text-slate-500">
                     Searching...
                   </p>
                 ) : suggestions.length === 0 ? (
                   <p className="px-3 py-2 text-sm text-slate-500">
-                    No matches found.
+                    No suggestions found.
                   </p>
                 ) : (
                   suggestions.map((suggestion) => (
                     <button
                       key={suggestion.id}
                       type="button"
+                      className="flex items-center gap-2.5 w-full text-left px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-b-0"
                       onClick={() => {
                         setSelectedSuggestion(suggestion);
-                        setQuery(suggestion.label);
+                        setAddress(suggestion.label);
                         setLatitude(suggestion.latitude);
                         setLongitude(suggestion.longitude);
+                        setShowSuggestions(false);
                       }}
-                      className="flex w-full items-start gap-2 border-b border-slate-100 px-3 py-2 text-left text-sm text-slate-700 transition-colors last:border-b-0 hover:bg-slate-50"
                     >
-                      <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" />
-                      <span>{suggestion.label}</span>
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                      {suggestion.label}
                     </button>
                   ))
                 )}
               </div>
             ) : null}
-            <p className="text-xs text-slate-500">
-              Select a suggestion first, then drag the pin or click the map to
-              refine coordinates.
+            <p className="text-xs text-slate-400">
+              Select a suggestion first, then drag pin or click map to refine.
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="project-name">Project name</Label>
+            <Label htmlFor="neighborhood">Neighborhood</Label>
             <Input
-              id="project-name"
-              value={projectName}
-              onChange={(event) => setProjectName(event.target.value)}
-              placeholder="Northside Roof Replacement"
+              id="neighborhood"
+              placeholder="e.g. Buckhead"
+              value={neighborhood}
+              onChange={(event) => setNeighborhood(event.target.value)}
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="before-image">Before image</Label>
-              <Input
-                id="before-image"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(event) => {
-                  void handleSelectImage(
-                    "before",
-                    event.target.files?.[0] ?? null,
-                  );
-                }}
-              />
-              {compressingBefore ? (
-                <p className="text-xs text-slate-500">
-                  Compressing before image...
-                </p>
-              ) : null}
-              {beforePreview ? (
-                <img
-                  src={beforePreview}
-                  alt="Before preview"
-                  className="aspect-video w-full rounded-lg border border-slate-200 object-cover"
-                />
-              ) : null}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="after-image">After image</Label>
-              <Input
-                id="after-image"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(event) => {
-                  void handleSelectImage(
-                    "after",
-                    event.target.files?.[0] ?? null,
-                  );
-                }}
-              />
-              {compressingAfter ? (
-                <p className="text-xs text-slate-500">
-                  Compressing after image...
-                </p>
-              ) : null}
-              {afterPreview ? (
-                <img
-                  src={afterPreview}
-                  alt="After preview"
-                  className="aspect-video w-full rounded-lg border border-slate-200 object-cover"
-                />
-              ) : null}
-            </div>
-          </div>
-
-          <div className="space-y-2 border-t border-slate-200 pt-4">
-            <p className="text-sm font-medium text-slate-900">
-              Optional customer review
-            </p>
-            <div className="space-y-2">
-              <Label htmlFor="customer-name">Customer name</Label>
-              <Input
-                id="customer-name"
-                value={customerName}
-                onChange={(event) => setCustomerName(event.target.value)}
-                placeholder="Jamie W."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="review-text">Review text</Label>
-              <Textarea
-                id="review-text"
-                value={reviewText}
-                onChange={(event) => setReviewText(event.target.value)}
-                placeholder="They finished quickly and left everything spotless."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Stars</Label>
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setStars(value)}
-                    className="rounded p-1"
-                    aria-label={`Set ${value} stars`}
-                  >
-                    <Star
-                      className={`h-5 w-5 ${value <= stars ? "fill-amber-400 text-amber-400" : "text-slate-300"}`}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <Button
-            onClick={() => createMutation.mutate()}
-            disabled={
-              createMutation.isPending || compressingBefore || compressingAfter
-            }
-            className="w-full"
-          >
-            {createMutation.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving location...
-              </>
-            ) : (
-              "Save location"
-            )}
-          </Button>
-        </div>
-
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-lg border border-slate-200">
             <MapContainer
               center={[latitude, longitude]}
               zoom={14}
               scrollWheelZoom
-              className="h-[420px] w-full"
+              className="h-[300px] w-full"
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -520,9 +497,9 @@ export default function DashboardLocationCreate() {
               />
               <MapCenterUpdater lat={latitude} lng={longitude} />
               <MapClickSetter
-                onSet={(nextLat, nextLng) => {
-                  setLatitude(nextLat);
-                  setLongitude(nextLng);
+                onSet={(lat, lng) => {
+                  setLatitude(lat);
+                  setLongitude(lng);
                 }}
               />
               <Marker
@@ -539,20 +516,158 @@ export default function DashboardLocationCreate() {
               />
             </MapContainer>
           </div>
+        </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
-            <p className="font-medium text-slate-900">Pin coordinates</p>
-            <p className="mt-1">Latitude: {latitude.toFixed(6)}</p>
-            <p>Longitude: {longitude.toFixed(6)}</p>
-            {selectedSuggestion ? (
-              <p className="mt-2 text-xs text-slate-500">
-                Initial suggestion: {selectedSuggestion.latitude.toFixed(6)},{" "}
-                {selectedSuggestion.longitude.toFixed(6)}
-              </p>
-            ) : null}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
+          <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+            Project Details
+          </h2>
+          <div className="space-y-2">
+            <Label htmlFor="project-name">Project Name</Label>
+            <Input
+              id="project-name"
+              placeholder="Northside Roof Replacement"
+              value={projectName}
+              onChange={(event) => setProjectName(event.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Work Type</Label>
+            <Select
+              value={workType}
+              onValueChange={(value) =>
+                setWorkType(value as (typeof WORK_TYPES)[number])
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select work type" />
+              </SelectTrigger>
+              <SelectContent>
+                {WORK_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Date Completed</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <Select value={month} onValueChange={setMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={year} onValueChange={setYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEARS.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
-      </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-sm font-semibold">Privacy Mode</Label>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Hide customer details and testimonials for this project.
+              </p>
+            </div>
+            <Switch checked={privacyMode} onCheckedChange={setPrivacyMode} />
+          </div>
+        </div>
+
+        {!privacyMode ? (
+          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
+            <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+              Customer & Review
+            </h2>
+            <div className="space-y-2">
+              <Label htmlFor="customerName">Customer Name</Label>
+              <Input
+                id="customerName"
+                placeholder="e.g. James W."
+                value={customerName}
+                onChange={(event) => setCustomerName(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reviewText">Review Text</Label>
+              <Textarea
+                id="reviewText"
+                placeholder="What did the customer say about the work?"
+                rows={4}
+                value={reviewText}
+                onChange={(event) => setReviewText(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Star Rating</Label>
+              <StarSelector value={stars} onChange={setStars} />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-5">
+              <ImageUpload
+                label="Before Image"
+                preview={beforePreview}
+                onFile={(file, url) => {
+                  setBeforeFile(file);
+                  setBeforePreview(url);
+                }}
+                onClear={() => {
+                  setBeforeFile(null);
+                  setBeforePreview(null);
+                }}
+              />
+              <ImageUpload
+                label="After Image"
+                preview={afterPreview}
+                onFile={(file, url) => {
+                  setAfterFile(file);
+                  setAfterPreview(url);
+                }}
+                onClear={() => {
+                  setAfterFile(null);
+                  setAfterPreview(null);
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
+
+        <Button
+          type="submit"
+          className="w-full h-11 text-sm font-semibold"
+          disabled={createMutation.isPending}
+        >
+          {createMutation.isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving location...
+            </>
+          ) : (
+            "Save Pin"
+          )}
+        </Button>
+      </form>
     </section>
   );
 }

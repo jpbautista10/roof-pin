@@ -160,42 +160,51 @@ export type Database = {
           company_id: string
           created_at: string
           created_by_user_id: string
+          date_completed: string | null
           geocode_latitude: number
           geocode_longitude: number
           id: string
           latitude: number
           longitude: number
           place_label: string
+          privacy_mode: boolean
           project_name: string
           updated_at: string
+          work_type: string | null
         }
         Insert: {
           address_json?: Json | null
           company_id: string
           created_at?: string
           created_by_user_id: string
+          date_completed?: string | null
           geocode_latitude: number
           geocode_longitude: number
           id?: string
           latitude: number
           longitude: number
           place_label: string
+          privacy_mode?: boolean
           project_name: string
           updated_at?: string
+          work_type?: string | null
         }
         Update: {
           address_json?: Json | null
           company_id?: string
           created_at?: string
           created_by_user_id?: string
+          date_completed?: string | null
           geocode_latitude?: number
           geocode_longitude?: number
           id?: string
           latitude?: number
           longitude?: number
           place_label?: string
+          privacy_mode?: boolean
           project_name?: string
           updated_at?: string
+          work_type?: string | null
         }
         Relationships: [
           {

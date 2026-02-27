@@ -92,54 +92,6 @@ const demoLocations: PublicLocation[] = [
           "Crew arrived early, explained everything clearly, and the cleanup was perfect.",
         stars: 5,
       },
-      {
-        customer_name: "Angela P.",
-        review_text:
-          "Fast quote turnaround and super professional install team.",
-        stars: 5,
-      },
-      {
-        customer_name: "Derrick H.",
-        review_text:
-          "Excellent communication from first inspection to final walkthrough.",
-        stars: 5,
-      },
-      {
-        customer_name: "Rita C.",
-        review_text: "They handled insurance paperwork better than expected.",
-        stars: 4,
-      },
-      {
-        customer_name: "Kevin J.",
-        review_text: "Clean crew, no nails left around, very detail-oriented.",
-        stars: 5,
-      },
-      {
-        customer_name: "Sophia M.",
-        review_text:
-          "The new shingles look great and match the house perfectly.",
-        stars: 5,
-      },
-      {
-        customer_name: "Brian O.",
-        review_text: "Work was done on schedule even with weather delays.",
-        stars: 4,
-      },
-      {
-        customer_name: "Elaine V.",
-        review_text: "Very respectful crew and constant photo updates.",
-        stars: 5,
-      },
-      {
-        customer_name: "Trevor S.",
-        review_text: "Pricing was clear and no surprise charges at the end.",
-        stars: 5,
-      },
-      {
-        customer_name: "Monica D.",
-        review_text: "Would definitely hire again for future exterior work.",
-        stars: 5,
-      },
     ],
   },
   {

@@ -17,6 +17,8 @@
     "build:server": "vite build --config vite.config.server.ts",
     "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
+    "check:unused-components": "node scripts/check-unused-components.mjs",
+    "check:unused-pages": "node scripts/check-unused-pages.mjs",
     "format.fix": "prettier --write .",
     "typecheck": "tsc",
     "db:push": "supabase db push",
