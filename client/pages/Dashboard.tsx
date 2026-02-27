@@ -1,12 +1,20 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MapPin, Pencil, PlusCircle, QrCode, Star, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
 import { deleteLocation, fetchLocationsByCompany } from "@/lib/locations";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { createOrGetReviewToken } from "@/lib/review-requests";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,9 +42,19 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+type ListFilter = "all" | "public" | "private" | "needs_review";
+
+function normalizeFilter(value: string | null): ListFilter {
+  if (value === "public" || value === "private" || value === "needs_review") {
+    return value;
+  }
+  return "all";
+}
+
 export default function Dashboard() {
   const { company } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [reviewLinkLocationId, setReviewLinkLocationId] = useState<
     string | null
@@ -56,6 +74,44 @@ export default function Dashboard() {
 
   const createLink = `/dashboard/${company.slug}/locations/new`;
   const locations = locationsQuery.data ?? [];
+  const query = searchParams.get("q") ?? "";
+  const filter = normalizeFilter(searchParams.get("filter"));
+
+  const filteredLocations = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return locations.filter((location) => {
+      if (filter === "public" && location.privacy_mode) return false;
+      if (filter === "private" && !location.privacy_mode) return false;
+      if (filter === "needs_review" && location.review) return false;
+
+      if (!normalizedQuery) return true;
+
+      return (
+        location.project_name.toLowerCase().includes(normalizedQuery) ||
+        location.place_label.toLowerCase().includes(normalizedQuery) ||
+        (location.work_type ?? "").toLowerCase().includes(normalizedQuery) ||
+        (location.date_completed ?? "").toLowerCase().includes(normalizedQuery)
+      );
+    });
+  }, [locations, query, filter]);
+
+  function updateListParams(next: { q?: string; filter?: ListFilter }) {
+    const params = new URLSearchParams(searchParams);
+
+    if (next.q !== undefined) {
+      if (next.q.trim()) params.set("q", next.q);
+      else params.delete("q");
+    }
+
+    if (next.filter !== undefined) {
+      if (next.filter === "all") params.delete("filter");
+      else params.set("filter", next.filter);
+    }
+
+    setSearchParams(params, { replace: true });
+  }
+
   const deleteMutation = useMutation({
     mutationFn: async (locationId: string) => deleteLocation(locationId),
     onSuccess: async () => {
@@ -152,89 +208,126 @@ export default function Dashboard() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {locations.map((location) => {
-            const before = location.images.find(
-              (image) => image.kind === "before",
-            );
-            const after = location.images.find(
-              (image) => image.kind === "after",
-            );
-
-            return (
-              <article
-                key={location.id}
-                className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+        <>
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Input
+                value={query}
+                onChange={(event) =>
+                  updateListParams({ q: event.target.value })
+                }
+                placeholder="Search project, location, work type..."
+                className="sm:max-w-md"
+              />
+              <Select
+                value={filter}
+                onValueChange={(value) =>
+                  updateListParams({ filter: value as ListFilter })
+                }
               >
-                <div className="grid grid-cols-2 gap-1 bg-slate-100">
-                  <div className="aspect-video bg-slate-200">
-                    {before ? (
-                      <img
-                        src={before.public_url}
-                        alt={`${location.project_name} before`}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : null}
-                  </div>
-                  <div className="aspect-video bg-slate-200">
-                    {after ? (
-                      <img
-                        src={after.public_url}
-                        alt={`${location.project_name} after`}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : null}
-                  </div>
-                </div>
-                <div className="space-y-2 p-4">
-                  <h3 className="text-base font-semibold text-slate-900">
-                    {location.project_name}
-                  </h3>
-                  <p className="text-sm text-slate-600">
-                    {location.place_label}
-                  </p>
-                  <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span>Added {formatDate(location.created_at)}</span>
-                    {location.review?.stars ? (
-                      <span className="inline-flex items-center gap-1 text-amber-600">
-                        <Star className="h-3.5 w-3.5 fill-current" />
-                        {location.review.stars}/5
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="flex items-center justify-end gap-2 pt-2">
-                    {!location.review ? (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => openReviewRequest(location.id)}
-                      >
-                        <QrCode className="h-3.5 w-3.5" />
-                        Get review QR
-                      </Button>
-                    ) : null}
-                    <Button variant="outline" size="sm" asChild>
-                      <Link
-                        to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Edit
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setDeleteTargetId(location.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                <SelectTrigger className="h-9 w-full sm:w-[170px]">
+                  <SelectValue placeholder="Filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">Private</SelectItem>
+                  <SelectItem value="needs_review">Needs Review</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {filteredLocations.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center text-sm text-slate-600">
+              No locations match your current search or filter.
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {filteredLocations.map((location) => {
+                const before = location.images.find(
+                  (image) => image.kind === "before",
+                );
+                const after = location.images.find(
+                  (image) => image.kind === "after",
+                );
+
+                return (
+                  <article
+                    key={location.id}
+                    className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+                  >
+                    <div className="grid grid-cols-2 gap-1 bg-slate-100">
+                      <div className="aspect-video bg-slate-200">
+                        {before ? (
+                          <img
+                            src={before.public_url}
+                            alt={`${location.project_name} before`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : null}
+                      </div>
+                      <div className="aspect-video bg-slate-200">
+                        {after ? (
+                          <img
+                            src={after.public_url}
+                            alt={`${location.project_name} after`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="space-y-2 p-4">
+                      <h3 className="text-base font-semibold text-slate-900">
+                        {location.project_name}
+                      </h3>
+                      <p className="text-sm text-slate-600">
+                        {location.place_label}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-slate-500">
+                        <span>Added {formatDate(location.created_at)}</span>
+                        {location.review?.stars ? (
+                          <span className="inline-flex items-center gap-1 text-amber-600">
+                            <Star className="h-3.5 w-3.5 fill-current" />
+                            {location.review.stars}/5
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="flex items-center justify-end gap-2 pt-2">
+                        {!location.review ? (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => openReviewRequest(location.id)}
+                          >
+                            <QrCode className="h-3.5 w-3.5" />
+                            Get review QR
+                          </Button>
+                        ) : null}
+                        <Button variant="outline" size="sm" asChild>
+                          <Link
+                            to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Edit
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setDeleteTargetId(location.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
       <AlertDialog
