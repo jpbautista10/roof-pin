@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
 import Onboarding from "./pages/Onboarding";
 import PublicMap from "./pages/PublicMap";
+import PublicReview from "./pages/PublicReview";
 import Dashboard from "./pages/Dashboard";
 import DashboardRedirect from "./pages/DashboardRedirect";
 import DashboardLayout from "./components/layout/DashboardLayout";
@@ -37,6 +38,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/s/:slug" element={<PublicMap />} />
+            <Route path="/review/:token" element={<PublicReview />} />
 
             <Route element={<AuthRoutes />}>
               <Route path="/auth/login" element={<Login />} />

@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Pencil, PlusCircle, Star, Trash2 } from "lucide-react";
+import { MapPin, Pencil, PlusCircle, QrCode, Star, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
 import { deleteLocation, fetchLocationsByCompany } from "@/lib/locations";
 import { Button } from "@/components/ui/button";
+import { createOrGetReviewToken } from "@/lib/review-requests";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +17,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import QRCode from "qrcode";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -29,6 +38,11 @@ export default function Dashboard() {
   const { company } = useAuth();
   const queryClient = useQueryClient();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [reviewLinkLocationId, setReviewLinkLocationId] = useState<
+    string | null
+  >(null);
+  const [reviewLink, setReviewLink] = useState("");
+  const [qrDataUrl, setQrDataUrl] = useState("");
 
   const locationsQuery = useQuery({
     queryKey: ["locations", company?.id],
@@ -57,6 +71,43 @@ export default function Dashboard() {
       );
     },
   });
+
+  const reviewLinkMutation = useMutation({
+    mutationFn: async (locationId: string) => {
+      const token = await createOrGetReviewToken(locationId);
+      const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+      const link = `${baseUrl}/review/${token}`;
+      const qr = await QRCode.toDataURL(link, { margin: 1, width: 280 });
+      return { link, qr };
+    },
+    onSuccess: ({ link, qr }) => {
+      setReviewLink(link);
+      setQrDataUrl(qr);
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to generate review link.",
+      );
+    },
+  });
+
+  function openReviewRequest(locationId: string) {
+    setReviewLinkLocationId(locationId);
+    setReviewLink("");
+    setQrDataUrl("");
+    reviewLinkMutation.mutate(locationId);
+  }
+
+  async function handleCopyReviewLink() {
+    try {
+      await navigator.clipboard.writeText(reviewLink);
+      toast.success("Review link copied.");
+    } catch {
+      toast.error("Unable to copy review link.");
+    }
+  }
 
   return (
     <section className="space-y-6">
@@ -152,6 +203,16 @@ export default function Dashboard() {
                     ) : null}
                   </div>
                   <div className="flex items-center justify-end gap-2 pt-2">
+                    {!location.review ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => openReviewRequest(location.id)}
+                      >
+                        <QrCode className="h-3.5 w-3.5" />
+                        Get review QR
+                      </Button>
+                    ) : null}
                     <Button variant="outline" size="sm" asChild>
                       <Link
                         to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
@@ -209,6 +270,54 @@ export default function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={Boolean(reviewLinkLocationId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setReviewLinkLocationId(null);
+            setReviewLink("");
+            setQrDataUrl("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Customer review request</DialogTitle>
+            <DialogDescription>
+              Send this link to your customer so they can submit their own
+              review.
+            </DialogDescription>
+          </DialogHeader>
+
+          {reviewLinkMutation.isPending ? (
+            <p className="text-sm text-slate-600">Generating review link...</p>
+          ) : (
+            <div className="space-y-3">
+              {qrDataUrl ? (
+                <img
+                  src={qrDataUrl}
+                  alt="Review request QR code"
+                  className="mx-auto h-48 w-48 rounded-lg border border-slate-200 p-2"
+                />
+              ) : null}
+              {reviewLink ? (
+                <>
+                  <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 break-all">
+                    {reviewLink}
+                  </p>
+                  <Button
+                    className="w-full"
+                    onClick={() => void handleCopyReviewLink()}
+                  >
+                    Copy link
+                  </Button>
+                </>
+              ) : null}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

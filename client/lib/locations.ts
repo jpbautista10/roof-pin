@@ -14,6 +14,7 @@ export interface LocationWithAssets extends LocationRow {
     customer_name: string | null;
     review_text: string | null;
     stars: number | null;
+    source: string;
   } | null;
 }
 
@@ -52,7 +53,7 @@ export async function fetchLocationsByCompany(companyId: string) {
   const { data, error } = await supabase
     .from("locations")
     .select(
-      "*, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
+      "*, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars, source)",
     )
     .eq("company_id", companyId)
     .order("created_at", { ascending: false });
@@ -68,7 +69,7 @@ export async function fetchLocationById(locationId: string) {
   const { data, error } = await supabase
     .from("locations")
     .select(
-      "*, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
+      "*, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars, source)",
     )
     .eq("id", locationId)
     .maybeSingle();

@@ -119,12 +119,52 @@ export type Database = {
           },
         ]
       }
+      location_review_requests: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          created_by_user_id: string
+          expires_at: string
+          id: string
+          location_id: string
+          token: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          created_by_user_id: string
+          expires_at?: string
+          id?: string
+          location_id: string
+          token: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          created_by_user_id?: string
+          expires_at?: string
+          id?: string
+          location_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_review_requests_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: true
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       location_reviews: {
         Row: {
           created_at: string
           customer_name: string | null
           location_id: string
+          review_request_id: string | null
           review_text: string | null
+          source: string
           stars: number | null
           updated_at: string
         }
@@ -132,7 +172,9 @@ export type Database = {
           created_at?: string
           customer_name?: string | null
           location_id: string
+          review_request_id?: string | null
           review_text?: string | null
+          source?: string
           stars?: number | null
           updated_at?: string
         }
@@ -140,7 +182,9 @@ export type Database = {
           created_at?: string
           customer_name?: string | null
           location_id?: string
+          review_request_id?: string | null
           review_text?: string | null
+          source?: string
           stars?: number | null
           updated_at?: string
         }
@@ -150,6 +194,13 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: true
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_reviews_review_request_id_fkey"
+            columns: ["review_request_id"]
+            isOneToOne: false
+            referencedRelation: "location_review_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -256,7 +307,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_or_get_location_review_token: {
+        Args: { p_location_id: string }
+        Returns: string
+      }
+      submit_location_review: {
+        Args: {
+          p_customer_name: string
+          p_review_text: string
+          p_stars: number
+          p_token: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
