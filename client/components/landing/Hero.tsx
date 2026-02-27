@@ -31,7 +31,7 @@ export default function Hero() {
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              to="/dashboard"
+              to="/auth/login"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all hover:shadow-xl hover:shadow-primary/30"
             >
               Start for free
@@ -54,13 +54,16 @@ export default function Hero() {
         <div className="mt-16 relative max-w-4xl mx-auto">
           <div className="aspect-[16/9] rounded-2xl border border-slate-200/80 bg-slate-100 shadow-2xl shadow-slate-200/50 overflow-hidden relative">
             {/* Grid pattern for map feel */}
-            <div className="absolute inset-0 opacity-30" style={{
-              backgroundImage: `
+            <div
+              className="absolute inset-0 opacity-30"
+              style={{
+                backgroundImage: `
                 linear-gradient(rgba(100,116,139,0.1) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(100,116,139,0.1) 1px, transparent 1px)
               `,
-              backgroundSize: '40px 40px'
-            }} />
+                backgroundSize: "40px 40px",
+              }}
+            />
 
             {/* Fake road lines */}
             <div className="absolute top-1/2 left-0 right-0 h-px bg-slate-300/60" />
@@ -88,23 +91,33 @@ export default function Hero() {
 
             {/* Overlay label */}
             <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur rounded-lg px-3 py-2 shadow-sm border border-slate-200/60">
-              <p className="text-xs font-semibold text-slate-800">Smith Roofing Co.</p>
+              <p className="text-xs font-semibold text-slate-800">
+                Smith Roofing Co.
+              </p>
               <p className="text-[11px] text-slate-500">6 verified projects</p>
             </div>
           </div>
 
           {/* Floating card */}
           <div className="absolute -right-2 sm:right-4 top-1/2 -translate-y-1/2 w-56 sm:w-64 bg-white rounded-xl shadow-xl shadow-slate-200/80 border border-slate-200/60 p-4 hidden sm:block">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Project in Buckhead</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+              Project in Buckhead
+            </p>
             <div className="flex gap-0.5 mb-2">
               {[...Array(5)].map((_, i) => (
-                <svg key={i} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  key={i}
+                  className="w-4 h-4 text-amber-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
               ))}
             </div>
             <p className="text-sm text-slate-600 line-clamp-2">
-              "Premium quality work at a fair price. Our neighbors are already asking for their number!"
+              "Premium quality work at a fair price. Our neighbors are already
+              asking for their number!"
             </p>
             <p className="text-xs text-slate-400 mt-1">— Robert M.</p>
           </div>
