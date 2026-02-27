@@ -41,6 +41,7 @@ export default function ProjectDrawer({
 
   const beforeImage = location.images.find((image) => image.kind === "before");
   const afterImage = location.images.find((image) => image.kind === "after");
+  const ctaUrl = company.cta_url;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -101,6 +102,20 @@ export default function ProjectDrawer({
             </div>
           ) : null}
         </div>
+
+        {ctaUrl ? (
+          <div className="border-t border-slate-200 p-6">
+            <a
+              href={ctaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center rounded-lg py-3 text-sm font-semibold text-white"
+              style={{ backgroundColor: company.brand_primary_color }}
+            >
+              Get a quote
+            </a>
+          </div>
+        ) : null}
       </SheetContent>
     </Sheet>
   );

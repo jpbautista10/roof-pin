@@ -1,6 +1,13 @@
 import { ReactNode, useState } from "react";
 import { Link, Outlet, useLocation, useParams } from "react-router-dom";
-import { LayoutDashboard, MapPin, Menu, PlusCircle, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  MapPin,
+  Menu,
+  PlusCircle,
+  Settings,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -20,6 +27,11 @@ const navDefinitions = [
     to: "locations/new",
     label: "Create Location",
     icon: PlusCircle,
+  },
+  {
+    to: "settings",
+    label: "Settings",
+    icon: Settings,
   },
 ];
 
@@ -44,11 +56,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             key={to}
             to={to}
             onClick={onNavigate}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              isActive
-                ? "bg-primary/10 text-primary"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-            }`}
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive
+              ? "bg-primary/10 text-primary"
+              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
           >
             <item.icon className="h-4 w-4" />
             {item.label}
@@ -103,11 +114,15 @@ export default function DashboardLayout({
                 <NavLinks onNavigate={() => setMobileOpen(false)} />
               </div>
 
-              <a href={`/s/${companySlug}`} target="_blank" rel="noopener noreferrer">
+              <div className="p-3"><a
+                href={`/s/${companySlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <Button variant="outline" size="sm" className="w-full">
                   Preview
                 </Button>
-              </a>
+              </a></div>
             </SheetContent>
           </Sheet>
         </div>
@@ -125,11 +140,17 @@ export default function DashboardLayout({
               </span>
             </div>
             <NavLinks />
-            <a href={`/s/${companySlug}`} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="sm" className="w-full">
-                  Preview
-                </Button>
-              </a>
+            <div className="p-3">
+              <a
+              href={`/s/${companySlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" size="sm" className="w-full">
+                Preview
+              </Button>
+            </a>
+            </div>
           </div>
         </aside>
 

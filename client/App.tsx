@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import DashboardRedirect from "./pages/DashboardRedirect";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import DashboardLocationCreate from "./pages/DashboardLocationCreate";
+import DashboardSettings from "./pages/DashboardSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ export default function App() {
                       path="locations/new"
                       element={<DashboardLocationCreate />}
                     />
+                    <Route path="settings" element={<DashboardSettings />} />
                   </Route>
                 </Route>
               </Route>

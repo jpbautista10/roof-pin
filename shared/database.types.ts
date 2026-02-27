@@ -45,6 +45,7 @@ export type Database = {
           brand_primary_color: string
           brand_secondary_color: string
           created_at: string
+          cta_url: string | null
           id: string
           logo_url: string | null
           name: string
@@ -57,6 +58,7 @@ export type Database = {
           brand_primary_color?: string
           brand_secondary_color?: string
           created_at?: string
+          cta_url?: string | null
           id?: string
           logo_url?: string | null
           name: string
@@ -69,6 +71,7 @@ export type Database = {
           brand_primary_color?: string
           brand_secondary_color?: string
           created_at?: string
+          cta_url?: string | null
           id?: string
           logo_url?: string | null
           name?: string

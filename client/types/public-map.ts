@@ -3,6 +3,7 @@ export interface PublicCompany {
   name: string;
   slug: string;
   logo_url: string | null;
+  cta_url: string | null;
   brand_primary_color: string;
   brand_secondary_color: string;
   brand_accent_color: string;
