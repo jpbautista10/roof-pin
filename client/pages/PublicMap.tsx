@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import L from "leaflet";
 import { MapPin } from "lucide-react";
@@ -175,7 +175,9 @@ function normalizeLocations(rows: LocationQueryRow[]): PublicLocation[] {
 
 export default function PublicMap() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
   const isDemoMode = DEMO_SLUGS.has(slug ?? "");
+  const isEmbedMode = searchParams.get("embed") === "1";
   const [activeTab, setActiveTab] = useState("map");
   const [selectedLocation, setSelectedLocation] =
     useState<PublicLocation | null>(null);
@@ -273,35 +275,39 @@ export default function PublicMap() {
 
   return (
     <div className="relative h-screen w-screen flex flex-col overflow-hidden">
-      <MapHeader
-        company={company}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      {!isEmbedMode ? (
+        <MapHeader
+          company={company}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      ) : null}
 
-      {isDemoMode ? (
+      {isDemoMode && !isEmbedMode ? (
         <div className="absolute left-4 top-[4.5rem] z-[500] rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
           Live Demo Mode
         </div>
       ) : null}
 
       <div className="relative flex-1 overflow-hidden">
-        {activeTab === "map" ? (
+        {isEmbedMode || activeTab === "map" ? (
           <MapView locations={locations} onSelectLocation={openLocation} />
         ) : (
           <StatsView locations={locations} onSelectLocation={openLocation} />
         )}
       </div>
 
-      <div className="pointer-events-none absolute bottom-4 left-1/2 z-[500] -translate-x-1/2">
-        <div className="pointer-events-auto rounded-full border border-slate-200 bg-white/95 px-4 py-1.5 text-xs text-slate-600 shadow-sm backdrop-blur">
-          {mapSummary.totalProjects} project
-          {mapSummary.totalProjects === 1 ? "" : "s"}
-          {typeof mapSummary.averageRating === "number"
-            ? ` · ${mapSummary.averageRating.toFixed(1)} avg rating`
-            : ""}
+      {!isEmbedMode ? (
+        <div className="pointer-events-none absolute bottom-4 left-1/2 z-[500] -translate-x-1/2">
+          <div className="pointer-events-auto rounded-full border border-slate-200 bg-white/95 px-4 py-1.5 text-xs text-slate-600 shadow-sm backdrop-blur">
+            {mapSummary.totalProjects} project
+            {mapSummary.totalProjects === 1 ? "" : "s"}
+            {typeof mapSummary.averageRating === "number"
+              ? ` · ${mapSummary.averageRating.toFixed(1)} avg rating`
+              : ""}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <ProjectDrawer
         location={selectedLocation}

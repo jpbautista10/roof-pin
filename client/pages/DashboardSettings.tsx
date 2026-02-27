@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import slugify from "slugify";
-import { Loader2, Upload } from "lucide-react";
+import { Check, Copy, Loader2, Upload } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -44,6 +44,7 @@ export default function DashboardSettings() {
   const queryClient = useQueryClient();
   const { user, company, refreshProfile } = useAuth();
   const [logoPreview, setLogoPreview] = useState(company?.logo_url ?? "");
+  const [copied, setCopied] = useState(false);
 
   const form = useForm<SettingsValues>({
     resolver: zodResolver(settingsSchema),
@@ -90,6 +91,24 @@ export default function DashboardSettings() {
     slugCheckQuery.data &&
       (!company?.id || slugCheckQuery.data.id !== company.id),
   );
+
+  const embedSlug = formattedSlug || company.slug;
+  const appBaseUrl =
+    import.meta.env.VITE_APP_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const embedUrl = `${appBaseUrl}/s/${embedSlug}?embed=1`;
+  const embedSnippet = `<iframe src="${embedUrl}" width="100%" height="640" style="border:0;border-radius:12px;" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+
+  async function handleCopyEmbed() {
+    try {
+      await navigator.clipboard.writeText(embedSnippet);
+      setCopied(true);
+      toast.success("Embed code copied.");
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Unable to copy embed code.");
+    }
+  }
 
   const settingsMutation = useMutation({
     mutationFn: async (values: SettingsValues) => {
@@ -253,6 +272,36 @@ export default function DashboardSettings() {
                   Used for the quote button on the public map drawer.
                 </p>
               )}
+            </div>
+
+            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  Website embed widget
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Paste this into your website to embed your live map widget.
+                </p>
+              </div>
+              <Input value={embedUrl} readOnly className="font-mono text-xs" />
+              <textarea
+                value={embedSnippet}
+                readOnly
+                rows={4}
+                className="w-full rounded-md border border-slate-200 bg-white p-3 font-mono text-xs text-slate-700"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void handleCopyEmbed()}
+              >
+                {copied ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
+                {copied ? "Copied" : "Copy embed code"}
+              </Button>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
