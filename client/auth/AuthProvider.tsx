@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Database } from "@shared/database.types";
 
@@ -75,6 +76,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const location = useLocation();
 
   const sessionQuery = useQuery<Session | null>({
     queryKey: ["auth", "session"],
@@ -159,6 +161,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
+    const shouldApplyCompanyTheme = location.pathname.startsWith("/dashboard");
+
+    if (!shouldApplyCompanyTheme) {
+      root.style.setProperty("--primary", DEFAULT_THEME.primary);
+      root.style.setProperty("--secondary", DEFAULT_THEME.secondary);
+      root.style.setProperty("--accent", DEFAULT_THEME.accent);
+      root.style.setProperty("--ring", DEFAULT_THEME.primary);
+      root.style.setProperty("--sidebar-primary", DEFAULT_THEME.primary);
+      return;
+    }
 
     const primary = company?.brand_primary_color
       ? hexToHslString(company.brand_primary_color)
@@ -178,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       "--sidebar-primary",
       primary ?? DEFAULT_THEME.primary,
     );
-  }, [company]);
+  }, [company, location.pathname]);
 
   const refreshProfile = useCallback(async () => {
     await Promise.all([
