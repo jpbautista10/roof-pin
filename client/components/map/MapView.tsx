@@ -1,172 +1,61 @@
-import { useState } from "react";
-import { Pin, Tenant } from "@/types";
-import { getDisplayCoords } from "@/data/mock";
-import ProjectDrawer from "./ProjectDrawer";
+import { useEffect } from "react";
+import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
+import L from "leaflet";
+import { PublicLocation } from "@/types/public-map";
 
 interface MapViewProps {
-  tenant: Tenant;
-  pins: Pin[];
+  locations: PublicLocation[];
+  onSelectLocation: (location: PublicLocation) => void;
 }
 
-/**
- * Placeholder map component.
- * Positions pins on a styled container using normalized lat/lng offsets.
- * Designed to be swapped with react-map-gl + Mapbox when API key is available.
- */
-// Map zoom constraints — pass to react-map-gl <Map> when connected
-const MIN_ZOOM = 9;
-const MAX_ZOOM = 18;
+function FitToLocations({ locations }: { locations: PublicLocation[] }) {
+  const map = useMap();
 
-/*
- * Auto-fit bounds (for react-map-gl integration):
- * When the map loads, calculate the bounding box of all pins
- * and zoom to fit them:
- *
- * const bounds = pins.reduce(
- *   (acc, pin) => {
- *     const { lat, lng } = getDisplayCoords(pin);
- *     return [
- *       [Math.min(acc[0][0], lng), Math.min(acc[0][1], lat)],
- *       [Math.max(acc[1][0], lng), Math.max(acc[1][1], lat)],
- *     ];
- *   },
- *   [[Infinity, Infinity], [-Infinity, -Infinity]]
- * );
- * map.fitBounds(bounds, { padding: 60, maxZoom: MAX_ZOOM, minZoom: MIN_ZOOM });
- */
+  useEffect(() => {
+    if (locations.length === 0) {
+      map.setView([33.749, -84.388], 11);
+      return;
+    }
 
-export default function MapView({ tenant, pins }: MapViewProps) {
-  const [selectedPin, setSelectedPin] = useState<Pin | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+    if (locations.length === 1) {
+      map.setView([locations[0].latitude, locations[0].longitude], 14);
+      return;
+    }
 
-  // Use display coords (privacy-offset if needed)
-  const displayPins = pins.map((pin) => ({
-    pin,
-    coords: getDisplayCoords(pin),
-  }));
+    const bounds = L.latLngBounds(
+      locations.map((location) => [location.latitude, location.longitude]),
+    );
+    map.fitBounds(bounds, { padding: [48, 48] });
+  }, [locations, map]);
 
-  // Calculate bounds for positioning pins relatively
-  const lats = displayPins.map((d) => d.coords.lat);
-  const lngs = displayPins.map((d) => d.coords.lng);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const latRange = maxLat - minLat || 0.01;
-  const lngRange = maxLng - minLng || 0.01;
+  return null;
+}
 
-  const padding = 0.12;
-
-  function pinPosition(lat: number, lng: number) {
-    const normX = (lng - minLng) / lngRange;
-    const normY = 1 - (lat - minLat) / latRange;
-    return {
-      left: `${padding * 100 + normX * (1 - 2 * padding) * 100}%`,
-      top: `${padding * 100 + normY * (1 - 2 * padding) * 100}%`,
-    };
-  }
-
-  function handlePinClick(pin: Pin) {
-    setSelectedPin(pin);
-    setDrawerOpen(true);
-  }
-
+export default function MapView({ locations, onSelectLocation }: MapViewProps) {
   return (
-    <div className="relative w-full h-full bg-[#f0f3f8] overflow-hidden">
-      {/* Grid pattern */}
-      <div
-        className="absolute inset-0 opacity-40"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(100,116,139,0.12) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(100,116,139,0.12) 1px, transparent 1px)
-          `,
-          backgroundSize: "60px 60px",
-        }}
-      />
+    <div className="h-full w-full">
+      <MapContainer
+        center={[33.749, -84.388]}
+        zoom={12}
+        scrollWheelZoom
+        className="h-full w-full"
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <FitToLocations locations={locations} />
 
-      {/* Fake road lines */}
-      <div className="absolute top-[30%] left-0 right-0 h-[2px] bg-slate-300/50" />
-      <div className="absolute top-[55%] left-0 right-0 h-[2px] bg-slate-300/40" />
-      <div className="absolute top-[75%] left-0 right-0 h-[2px] bg-slate-300/30" />
-      <div className="absolute top-0 bottom-0 left-[25%] w-[2px] bg-slate-300/50" />
-      <div className="absolute top-0 bottom-0 left-[50%] w-[2px] bg-slate-300/40" />
-      <div className="absolute top-0 bottom-0 left-[70%] w-[2px] bg-slate-300/30" />
-
-      {/* Diagonal road */}
-      <div
-        className="absolute top-0 left-0 w-full h-full"
-        style={{
-          background:
-            "linear-gradient(135deg, transparent 45%, rgba(148,163,184,0.2) 45%, rgba(148,163,184,0.2) 45.3%, transparent 45.3%)",
-        }}
-      />
-
-      {/* Pins */}
-      {displayPins.map(({ pin, coords }) => {
-        const pos = pinPosition(coords.lat, coords.lng);
-        const isSelected = selectedPin?.id === pin.id;
-        const isPrivacy = pin.privacy_mode;
-        return (
-          <button
-            key={pin.id}
-            className="absolute -translate-x-1/2 -translate-y-full z-10 group"
-            style={{ left: pos.left, top: pos.top }}
-            onClick={() => handlePinClick(pin)}
-          >
-            {/* SVG Teardrop Pin with House Icon */}
-            <svg
-              width="36"
-              height="46"
-              viewBox="0 0 36 46"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className={`transition-transform duration-200 group-hover:scale-110 ${
-                isSelected ? "scale-125" : ""
-              } ${isPrivacy ? "opacity-70" : ""}`}
-              style={{
-                filter: isSelected
-                  ? `drop-shadow(0 4px 8px ${tenant.brand_color}50)`
-                  : `drop-shadow(0 2px 4px rgba(0,0,0,0.25))`,
-              }}
-            >
-              {/* Teardrop body */}
-              <path
-                d="M18 0C8.059 0 0 8.059 0 18c0 12.627 16.5 27 17.25 27.656a1.125 1.125 0 001.5 0C19.5 45 36 30.627 36 18 36 8.059 27.941 0 18 0z"
-                fill={tenant.brand_color}
-              />
-              {/* White house/roof icon */}
-              <path
-                d="M18 9l-8 7h3v6h4v-4h2v4h4v-6h3l-8-7z"
-                fill="white"
-              />
-            </svg>
-            {/* Tooltip */}
-            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-medium rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              {pin.neighborhood}
-              {isPrivacy && (
-                <span className="ml-1 text-slate-400">· Area</span>
-              )}
-              <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-slate-900" />
-            </span>
-          </button>
-        );
-      })}
-
-      {/* Map style badge */}
-      <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow border border-slate-200/60 z-20">
-        <p className="text-[10px] text-slate-400 font-medium">
-          Mapbox preview · Connect API key for live map
-        </p>
-      </div>
-
-      {/* Drawer */}
-      <ProjectDrawer
-        pin={selectedPin}
-        tenant={tenant}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-      />
+        {locations.map((location) => (
+          <Marker
+            key={location.id}
+            position={[location.latitude, location.longitude]}
+            eventHandlers={{
+              click: () => onSelectLocation(location),
+            }}
+          />
+        ))}
+      </MapContainer>
     </div>
   );
 }

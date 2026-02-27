@@ -4,7 +4,6 @@ import { LayoutDashboard, MapPin, Menu, PlusCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetHeader,
   SheetTitle,
@@ -98,20 +97,17 @@ export default function DashboardLayout({
               <SheetHeader className="border-b border-slate-200 px-4 py-3">
                 <div className="flex items-center justify-between">
                   <SheetTitle className="text-base">Navigation</SheetTitle>
-                  <SheetClose asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Close navigation menu"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </SheetClose>
                 </div>
               </SheetHeader>
               <div className="p-3">
                 <NavLinks onNavigate={() => setMobileOpen(false)} />
               </div>
+
+              <a href={`/s/${companySlug}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="w-full">
+                  Preview
+                </Button>
+              </a>
             </SheetContent>
           </Sheet>
         </div>
@@ -129,6 +125,11 @@ export default function DashboardLayout({
               </span>
             </div>
             <NavLinks />
+            <a href={`/s/${companySlug}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm" className="w-full">
+                  Preview
+                </Button>
+              </a>
           </div>
         </aside>
 
