@@ -31,7 +31,7 @@ export default function PublicMap() {
     );
   }
 
-  const tenantPins = pins.filter((p) => p.tenant_id === tenant.id);
+  const tenantPins = pins.filter((p) => p.tenant_id === tenant.id && !p.hidden);
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">

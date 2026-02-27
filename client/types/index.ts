@@ -26,4 +26,5 @@ export interface Pin {
   work_type: WorkType;
   date_completed: string;
   privacy_mode: boolean;
+  hidden?: boolean;
 }

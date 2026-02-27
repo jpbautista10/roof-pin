@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { MapPin, LayoutDashboard, PlusCircle, Settings, ExternalLink } from "lucide-react";
+import { MapPin, LayoutDashboard, PlusCircle, List, Settings, ExternalLink } from "lucide-react";
 
 const navItems = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { to: "/dashboard/pins", label: "Manage Pins", icon: List },
   { to: "/dashboard/add-pin", label: "Add Pin", icon: PlusCircle },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ];

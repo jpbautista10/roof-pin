@@ -7,6 +7,9 @@ interface DataContextValue {
   pins: Pin[];
   updateTenant: (updates: Partial<Tenant>) => void;
   addPin: (pin: Pin) => void;
+  editPin: (id: string, updates: Partial<Pin>) => void;
+  removePin: (id: string) => void;
+  togglePinVisibility: (id: string) => void;
 }
 
 const DataContext = createContext<DataContextValue | null>(null);
@@ -23,8 +26,20 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setPins((prev) => [pin, ...prev]);
   }, []);
 
+  const editPin = useCallback((id: string, updates: Partial<Pin>) => {
+    setPins((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+  }, []);
+
+  const removePin = useCallback((id: string) => {
+    setPins((prev) => prev.filter((p) => p.id !== id));
+  }, []);
+
+  const togglePinVisibility = useCallback((id: string) => {
+    setPins((prev) => prev.map((p) => (p.id === id ? { ...p, hidden: !p.hidden } : p)));
+  }, []);
+
   return (
-    <DataContext.Provider value={{ tenant, pins, updateTenant, addPin }}>
+    <DataContext.Provider value={{ tenant, pins, updateTenant, addPin, editPin, removePin, togglePinVisibility }}>
       {children}
     </DataContext.Provider>
   );

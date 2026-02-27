@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import PublicMap from "./pages/PublicMap";
 import Dashboard from "./pages/Dashboard";
 import DashboardAddPin from "./pages/DashboardAddPin";
+import DashboardPins from "./pages/DashboardPins";
 import DashboardSettings from "./pages/DashboardSettings";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +27,7 @@ export default function App() {
               <Route path="/s/:slug" element={<PublicMap />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/add-pin" element={<DashboardAddPin />} />
+              <Route path="/dashboard/pins" element={<DashboardPins />} />
               <Route path="/dashboard/settings" element={<DashboardSettings />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
