@@ -53,29 +53,6 @@ export default function Footer() {
                 </li>
               </ul>
             </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
-                Account
-              </p>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                    to="/dashboard"
-                    className="hover:text-white transition-colors"
-                  >
-                    Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/onboarding"
-                    className="hover:text-white transition-colors"
-                  >
-                    Onboarding
-                  </Link>
-                </li>
-              </ul>
-            </div>
           </div>
         </div>
 
