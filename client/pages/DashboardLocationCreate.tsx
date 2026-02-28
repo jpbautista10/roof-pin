@@ -90,11 +90,9 @@ function ImageUpload({ label, preview, onFile, onClear }: ImageUploadProps) {
       });
       const url = URL.createObjectURL(compressed);
       onFile(compressed, url);
-      toast.success(
-        `Compressed: ${Math.round(file.size / 1024)}KB -> ${Math.round(compressed.size / 1024)}KB`,
-      );
     } catch {
-      toast.error("Failed to compress image");
+      const fallbackUrl = URL.createObjectURL(file);
+      onFile(file, fallbackUrl);
     } finally {
       setCompressing(false);
     }
@@ -329,13 +327,6 @@ export default function DashboardLocationCreate() {
           });
 
       if (!privacyMode) {
-        const hasBeforeImage = Boolean(beforeFile || beforePreview);
-        const hasAfterImage = Boolean(afterFile || afterPreview);
-
-        if (!hasBeforeImage || !hasAfterImage) {
-          throw new Error("Upload before and after images.");
-        }
-
         if (beforeFile) {
           const uploaded = await uploadLocationImage({
             userId: user.id,

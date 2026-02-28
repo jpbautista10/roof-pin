@@ -17,6 +17,28 @@ interface ProjectDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
+function formatProjectDate(dateCompleted: string | null, createdAt: string) {
+  if (dateCompleted) {
+    const parsedDate = new Date(`${dateCompleted} 1`);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return parsedDate.toLocaleDateString(undefined, {
+        month: "short",
+        year: "numeric",
+      });
+    }
+  }
+
+  const fallbackDate = new Date(createdAt);
+  if (!Number.isNaN(fallbackDate.getTime())) {
+    return fallbackDate.toLocaleDateString(undefined, {
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  return "Date unavailable";
+}
+
 function StarRow({ stars }: { stars: number }) {
   return (
     <div className="flex gap-0.5">
@@ -46,6 +68,10 @@ export default function ProjectDrawer({
   const reviews = location.privacy_mode ? [] : location.reviews;
   const brandColor = getValidBrandColor(company.brand_primary_color);
   const brandTextColor = getContrastTextColor(brandColor);
+  const projectDate = formatProjectDate(
+    location.date_completed,
+    location.created_at,
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -101,7 +127,7 @@ export default function ProjectDrawer({
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-700">
               <Calendar className="w-3 h-3" />
-              {new Date(location.created_at).toLocaleDateString()}
+              {projectDate}
             </span>
           </div>
 
