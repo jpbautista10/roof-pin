@@ -6,6 +6,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Calendar, ImageOff, MapPin, Star } from "lucide-react";
+import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
 import BeforeAfterSlider from "./BeforeAfterSlider";
 import { PublicCompany, PublicLocation } from "@/types/public-map";
 
@@ -14,6 +15,28 @@ interface ProjectDrawerProps {
   company: PublicCompany;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+function formatProjectDate(dateCompleted: string | null, createdAt: string) {
+  if (dateCompleted) {
+    const parsedDate = new Date(`${dateCompleted} 1`);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return parsedDate.toLocaleDateString(undefined, {
+        month: "short",
+        year: "numeric",
+      });
+    }
+  }
+
+  const fallbackDate = new Date(createdAt);
+  if (!Number.isNaN(fallbackDate.getTime())) {
+    return fallbackDate.toLocaleDateString(undefined, {
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  return "Date unavailable";
 }
 
 function StarRow({ stars }: { stars: number }) {
@@ -43,6 +66,12 @@ export default function ProjectDrawer({
   const afterImage = location.images.find((image) => image.kind === "after");
   const ctaUrl = company.cta_url;
   const reviews = location.privacy_mode ? [] : location.reviews;
+  const brandColor = getValidBrandColor(company.brand_primary_color);
+  const brandTextColor = getContrastTextColor(brandColor);
+  const projectDate = formatProjectDate(
+    location.date_completed,
+    location.created_at,
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -52,7 +81,10 @@ export default function ProjectDrawer({
       >
         <div className="flex-1 overflow-y-auto">
           <SheetHeader className="px-6 pt-6 pb-4">
-            <SheetDescription className="text-xs font-semibold uppercase tracking-wider text-primary">
+            <SheetDescription
+              className="text-xs font-semibold uppercase tracking-wider"
+              style={{ color: brandColor }}
+            >
               {company.name}
             </SheetDescription>
             <SheetTitle className="text-xl font-bold text-slate-900">
@@ -95,7 +127,7 @@ export default function ProjectDrawer({
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-700">
               <Calendar className="w-3 h-3" />
-              {new Date(location.created_at).toLocaleDateString()}
+              {projectDate}
             </span>
           </div>
 
@@ -131,8 +163,8 @@ export default function ProjectDrawer({
               href={ctaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center justify-center rounded-lg py-3 text-sm font-semibold text-white"
-              style={{ backgroundColor: company.brand_primary_color }}
+              className="flex w-full items-center justify-center rounded-lg py-3 text-sm font-semibold"
+              style={{ backgroundColor: brandColor, color: brandTextColor }}
             >
               Get a quote
             </a>

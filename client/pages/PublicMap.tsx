@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import L from "leaflet";
 import { MapPin } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import MapHeader from "@/components/map/MapHeader";
@@ -9,19 +8,6 @@ import MapView from "@/components/map/MapView";
 import StatsView from "@/components/map/StatsView";
 import ProjectDrawer from "@/components/map/ProjectDrawer";
 import { PublicCompany, PublicLocation } from "@/types/public-map";
-
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })
-  ._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
 
 interface LocationQueryRow {
   id: string;
@@ -32,6 +18,7 @@ interface LocationQueryRow {
   geocode_latitude: number;
   geocode_longitude: number;
   privacy_mode: boolean;
+  date_completed: string | null;
   created_at: string;
   location_images: Array<{
     id: string;
@@ -74,6 +61,7 @@ const demoLocations: PublicLocation[] = [
     latitude: 33.8462,
     longitude: -84.3713,
     privacy_mode: false,
+    date_completed: "January 2026",
     created_at: new Date("2026-01-18").toISOString(),
     images: [
       {
@@ -105,6 +93,7 @@ const demoLocations: PublicLocation[] = [
     latitude: 33.7402,
     longitude: -84.3458,
     privacy_mode: true,
+    date_completed: "February 2026",
     created_at: new Date("2026-02-04").toISOString(),
     images: [
       {
@@ -136,6 +125,7 @@ const demoLocations: PublicLocation[] = [
     latitude: 33.7748,
     longitude: -84.2963,
     privacy_mode: false,
+    date_completed: "February 2026",
     created_at: new Date("2026-02-20").toISOString(),
     images: [
       {
@@ -163,21 +153,33 @@ const demoLocations: PublicLocation[] = [
 ];
 
 function normalizeLocations(rows: LocationQueryRow[]): PublicLocation[] {
-  return rows.map((row) => ({
-    id: row.id,
-    project_name: row.project_name,
-    place_label: row.place_label,
-    latitude: row.privacy_mode ? row.geocode_latitude : row.latitude,
-    longitude: row.privacy_mode ? row.geocode_longitude : row.longitude,
-    privacy_mode: row.privacy_mode,
-    created_at: row.created_at,
-    images: row.location_images ?? [],
-    reviews: Array.isArray(row.location_reviews)
-      ? row.location_reviews.filter(Boolean)
-      : row.location_reviews
-        ? [row.location_reviews]
-        : [],
-  }));
+  return rows.map((row) => {
+    const displayLatitude =
+      Number.isFinite(row.latitude) && row.latitude !== 0
+        ? row.latitude
+        : row.geocode_latitude;
+    const displayLongitude =
+      Number.isFinite(row.longitude) && row.longitude !== 0
+        ? row.longitude
+        : row.geocode_longitude;
+
+    return {
+      id: row.id,
+      project_name: row.project_name,
+      place_label: row.place_label,
+      latitude: displayLatitude,
+      longitude: displayLongitude,
+      privacy_mode: row.privacy_mode,
+      date_completed: row.date_completed,
+      created_at: row.created_at,
+      images: row.location_images ?? [],
+      reviews: Array.isArray(row.location_reviews)
+        ? row.location_reviews.filter(Boolean)
+        : row.location_reviews
+          ? [row.location_reviews]
+          : [],
+    };
+  });
 }
 
 export default function PublicMap() {
@@ -217,7 +219,7 @@ export default function PublicMap() {
       const { data, error } = await supabase
         .from("locations")
         .select(
-          "id, project_name, place_label, latitude, longitude, geocode_latitude, geocode_longitude, privacy_mode, created_at, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
+          "id, project_name, place_label, latitude, longitude, geocode_latitude, geocode_longitude, privacy_mode, date_completed, created_at, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
         )
         .eq("company_id", companyQuery.data!.id)
         .order("created_at", { ascending: false });
@@ -300,7 +302,11 @@ export default function PublicMap() {
 
       <div className="relative flex-1 overflow-hidden">
         {isEmbedMode || activeTab === "map" ? (
-          <MapView locations={locations} onSelectLocation={openLocation} />
+          <MapView
+            locations={locations}
+            onSelectLocation={openLocation}
+            brandColor={company.brand_primary_color}
+          />
         ) : (
           <StatsView locations={locations} onSelectLocation={openLocation} />
         )}
