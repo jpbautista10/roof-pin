@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import L from "leaflet";
 import { MapPin } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import MapHeader from "@/components/map/MapHeader";
@@ -9,19 +8,6 @@ import MapView from "@/components/map/MapView";
 import StatsView from "@/components/map/StatsView";
 import ProjectDrawer from "@/components/map/ProjectDrawer";
 import { PublicCompany, PublicLocation } from "@/types/public-map";
-
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })
-  ._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
 
 interface LocationQueryRow {
   id: string;

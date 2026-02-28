@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  MapContainer,
+import Map, {
   Marker,
-  TileLayer,
-  useMap,
-  useMapEvents,
-} from "react-leaflet";
-import L from "leaflet";
+  NavigationControl,
+  type MapMouseEvent,
+  type MarkerDragEvent,
+  type ViewState,
+} from "react-map-gl/mapbox";
 import imageCompression from "browser-image-compression";
 import {
   ArrowLeft,
@@ -33,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/auth/AuthProvider";
+import LocationPin from "@/components/map/LocationPin";
 import {
   createLocation,
   fetchLocationById,
@@ -41,19 +41,6 @@ import {
 import { createOrGetReviewToken } from "@/lib/review-requests";
 import { supabase } from "@/lib/supabase";
 import { GeocodeSuggestResponse, GeocodeSuggestion } from "@shared/api";
-
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })
-  ._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-});
 
 const WORK_TYPES = ["Shingle", "Flat", "Tile", "Metal"] as const;
 const MONTHS = [
@@ -75,27 +62,8 @@ const YEARS = Array.from({ length: 8 }, (_, i) =>
 );
 
 const INITIAL_COORDS = { lat: 33.749, lng: -84.388 };
-
-function MapCenterUpdater({ lat, lng }: { lat: number; lng: number }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView([lat, lng]);
-  }, [lat, lng, map]);
-  return null;
-}
-
-function MapClickSetter({
-  onSet,
-}: {
-  onSet: (lat: number, lng: number) => void;
-}) {
-  useMapEvents({
-    click(event) {
-      onSet(event.latlng.lat, event.latlng.lng);
-    },
-  });
-  return null;
-}
+const MAPBOX_STYLE = "mapbox://styles/mapbox/standard";
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 interface ImageUploadProps {
   label: string;
@@ -227,6 +195,14 @@ export default function DashboardLocationCreate() {
 
   const [latitude, setLatitude] = useState(INITIAL_COORDS.lat);
   const [longitude, setLongitude] = useState(INITIAL_COORDS.lng);
+  const [viewState, setViewState] = useState<ViewState>({
+    latitude: INITIAL_COORDS.lat,
+    longitude: INITIAL_COORDS.lng,
+    zoom: 14,
+    bearing: 0,
+    pitch: 0,
+    padding: { top: 0, right: 0, bottom: 0, left: 0 },
+  });
   const [reviewLink, setReviewLink] = useState("");
   const [reviewQrDataUrl, setReviewQrDataUrl] = useState("");
 
@@ -290,6 +266,24 @@ export default function DashboardLocationCreate() {
       if (afterPreview?.startsWith("blob:")) URL.revokeObjectURL(afterPreview);
     };
   }, [beforePreview, afterPreview]);
+
+  useEffect(() => {
+    setViewState((previous) => ({
+      ...previous,
+      latitude,
+      longitude,
+    }));
+  }, [latitude, longitude]);
+
+  function handleMapClick(event: MapMouseEvent) {
+    setLatitude(event.lngLat.lat);
+    setLongitude(event.lngLat.lng);
+  }
+
+  function handleMarkerDragEnd(event: MarkerDragEvent) {
+    setLatitude(event.lngLat.lat);
+    setLongitude(event.lngLat.lng);
+  }
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -536,35 +530,34 @@ export default function DashboardLocationCreate() {
           </div>
 
           <div className="overflow-hidden rounded-lg border border-slate-200">
-            <MapContainer
-              center={[latitude, longitude]}
-              zoom={14}
-              scrollWheelZoom
-              className="h-[300px] w-full"
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <MapCenterUpdater lat={latitude} lng={longitude} />
-              <MapClickSetter
-                onSet={(lat, lng) => {
-                  setLatitude(lat);
-                  setLongitude(lng);
-                }}
-              />
-              <Marker
-                draggable
-                position={[latitude, longitude]}
-                eventHandlers={{
-                  dragend: (event) => {
-                    const next = event.target.getLatLng();
-                    setLatitude(next.lat);
-                    setLongitude(next.lng);
-                  },
-                }}
-              />
-            </MapContainer>
+            {MAPBOX_TOKEN ? (
+              <Map
+                {...viewState}
+                onMove={(event) => setViewState(event.viewState)}
+                onClick={handleMapClick}
+                mapboxAccessToken={MAPBOX_TOKEN}
+                mapStyle={MAPBOX_STYLE}
+                style={{ width: "100%", height: 300 }}
+                attributionControl
+              >
+                <NavigationControl position="top-right" />
+                <Marker
+                  latitude={latitude}
+                  longitude={longitude}
+                  anchor="bottom"
+                  draggable
+                  onDragEnd={handleMarkerDragEnd}
+                >
+                  <LocationPin className="-mt-1" />
+                </Marker>
+              </Map>
+            ) : (
+              <div className="flex h-[300px] w-full items-center justify-center bg-slate-100">
+                <p className="px-4 text-center text-sm text-slate-600">
+                  Mapbox token missing. Set `VITE_MAPBOX_ACCESS_TOKEN`.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
