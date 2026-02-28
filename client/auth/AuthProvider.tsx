@@ -28,6 +28,7 @@ interface AuthContextValue {
   company: Company | null;
   isLoading: boolean;
   refreshProfile: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -133,6 +134,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]);
   }, [queryClient]);
 
+  const signOut = useCallback(async () => {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      throw error;
+    }
+
+    queryClient.setQueryData(["auth", "session"], null);
+    queryClient.removeQueries({ queryKey: ["auth", "profile"] });
+    queryClient.removeQueries({ queryKey: ["auth", "company"] });
+  }, [queryClient]);
+
   useEffect(() => {
     const {
       data: { subscription },
@@ -165,8 +178,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       company,
       isLoading,
       refreshProfile,
+      signOut,
     }),
-    [user, sessionQuery.data, dbUser, company, isLoading, refreshProfile],
+    [
+      user,
+      sessionQuery.data,
+      dbUser,
+      company,
+      isLoading,
+      refreshProfile,
+      signOut,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
