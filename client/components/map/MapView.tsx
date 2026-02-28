@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Map, {
   Marker,
   NavigationControl,
@@ -30,42 +30,87 @@ export default function MapView({
   brandColor,
 }: MapViewProps) {
   const mapRef = useRef<MapRef | null>(null);
+  const hasAppliedInitialViewport = useRef(false);
+  const [isMapReady, setIsMapReady] = useState(false);
+
+  const validLocations = useMemo(
+    () =>
+      locations.filter(
+        (location) =>
+          Number.isFinite(location.latitude) &&
+          Number.isFinite(location.longitude),
+      ),
+    [locations],
+  );
+
+  const initialViewState = useMemo(() => {
+    if (validLocations.length === 0) {
+      return INITIAL_CENTER;
+    }
+
+    return {
+      latitude: validLocations[0].latitude,
+      longitude: validLocations[0].longitude,
+      zoom: validLocations.length === 1 ? 14 : INITIAL_CENTER.zoom,
+    };
+  }, [validLocations]);
 
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !isMapReady) return;
     const map = mapRef.current;
+    const shouldAnimate = hasAppliedInitialViewport.current;
 
-    if (locations.length === 0) {
-      map.flyTo({
-        center: [INITIAL_CENTER.longitude, INITIAL_CENTER.latitude],
-        zoom: INITIAL_CENTER.zoom,
-        duration: 700,
-      });
+    if (validLocations.length === 0) {
+      if (shouldAnimate) {
+        map.flyTo({
+          center: [INITIAL_CENTER.longitude, INITIAL_CENTER.latitude],
+          zoom: INITIAL_CENTER.zoom,
+          duration: 700,
+        });
+      } else {
+        map.jumpTo({
+          center: [INITIAL_CENTER.longitude, INITIAL_CENTER.latitude],
+          zoom: INITIAL_CENTER.zoom,
+        });
+      }
+
+      hasAppliedInitialViewport.current = true;
       return;
     }
 
-    if (locations.length === 1) {
-      map.flyTo({
-        center: [locations[0].longitude, locations[0].latitude],
-        zoom: 14,
-        duration: 700,
-      });
+    if (validLocations.length === 1) {
+      if (shouldAnimate) {
+        map.flyTo({
+          center: [validLocations[0].longitude, validLocations[0].latitude],
+          zoom: 14,
+          duration: 700,
+        });
+      } else {
+        map.jumpTo({
+          center: [validLocations[0].longitude, validLocations[0].latitude],
+          zoom: 14,
+        });
+      }
+
+      hasAppliedInitialViewport.current = true;
       return;
     }
 
-    const bounds = locations.reduce(
+    const bounds = validLocations.reduce(
       (acc, location) => acc.extend([location.longitude, location.latitude]),
       new LngLatBounds(
-        [locations[0].longitude, locations[0].latitude],
-        [locations[0].longitude, locations[0].latitude],
+        [validLocations[0].longitude, validLocations[0].latitude],
+        [validLocations[0].longitude, validLocations[0].latitude],
       ),
     );
 
     map.fitBounds(bounds, {
       padding: 48,
-      duration: 700,
+      duration: shouldAnimate ? 700 : 0,
     });
-  }, [locations]);
+
+    hasAppliedInitialViewport.current = true;
+  }, [isMapReady, validLocations]);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -81,15 +126,16 @@ export default function MapView({
     <div className="h-full w-full">
       <Map
         ref={mapRef}
-        initialViewState={INITIAL_CENTER}
+        initialViewState={initialViewState}
         mapboxAccessToken={MAPBOX_TOKEN}
         mapStyle={MAPBOX_STYLE}
         style={{ width: "100%", height: "100%" }}
         attributionControl
+        onLoad={() => setIsMapReady(true)}
       >
         <NavigationControl position="top-right" />
 
-        {locations.map((location) => (
+        {validLocations.map((location) => (
           <Marker
             key={location.id}
             latitude={location.latitude}
@@ -98,10 +144,13 @@ export default function MapView({
           >
             <button
               type="button"
-              className="cursor-pointer border-0 bg-transparent p-0"
+              className="group relative cursor-pointer border-0 bg-transparent p-0"
               onClick={() => onSelectLocation(location)}
               aria-label={location.project_name}
             >
+              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white shadow-md group-hover:block group-focus-visible:block">
+                {location.project_name}
+              </span>
               <LocationPin className="-mt-1" color={brandColor} />
             </button>
           </Marker>
