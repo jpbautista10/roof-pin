@@ -6,6 +6,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Calendar, ImageOff, MapPin, Star } from "lucide-react";
+import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
 import BeforeAfterSlider from "./BeforeAfterSlider";
 import { PublicCompany, PublicLocation } from "@/types/public-map";
 
@@ -43,6 +44,8 @@ export default function ProjectDrawer({
   const afterImage = location.images.find((image) => image.kind === "after");
   const ctaUrl = company.cta_url;
   const reviews = location.privacy_mode ? [] : location.reviews;
+  const brandColor = getValidBrandColor(company.brand_primary_color);
+  const brandTextColor = getContrastTextColor(brandColor);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -52,7 +55,10 @@ export default function ProjectDrawer({
       >
         <div className="flex-1 overflow-y-auto">
           <SheetHeader className="px-6 pt-6 pb-4">
-            <SheetDescription className="text-xs font-semibold uppercase tracking-wider text-primary">
+            <SheetDescription
+              className="text-xs font-semibold uppercase tracking-wider"
+              style={{ color: brandColor }}
+            >
               {company.name}
             </SheetDescription>
             <SheetTitle className="text-xl font-bold text-slate-900">
@@ -131,8 +137,8 @@ export default function ProjectDrawer({
               href={ctaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center justify-center rounded-lg py-3 text-sm font-semibold text-white"
-              style={{ backgroundColor: company.brand_primary_color }}
+              className="flex w-full items-center justify-center rounded-lg py-3 text-sm font-semibold"
+              style={{ backgroundColor: brandColor, color: brandTextColor }}
             >
               Get a quote
             </a>

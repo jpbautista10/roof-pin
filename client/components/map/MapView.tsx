@@ -11,6 +11,7 @@ import { PublicLocation } from "@/types/public-map";
 interface MapViewProps {
   locations: PublicLocation[];
   onSelectLocation: (location: PublicLocation) => void;
+  brandColor?: string;
 }
 
 const INITIAL_CENTER = {
@@ -23,7 +24,11 @@ const MAPBOX_STYLE = "mapbox://styles/mapbox/standard";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
-export default function MapView({ locations, onSelectLocation }: MapViewProps) {
+export default function MapView({
+  locations,
+  onSelectLocation,
+  brandColor,
+}: MapViewProps) {
   const mapRef = useRef<MapRef | null>(null);
 
   useEffect(() => {
@@ -97,7 +102,7 @@ export default function MapView({ locations, onSelectLocation }: MapViewProps) {
               onClick={() => onSelectLocation(location)}
               aria-label={location.project_name}
             >
-              <LocationPin className="-mt-1" />
+              <LocationPin className="-mt-1" color={brandColor} />
             </button>
           </Marker>
         ))}

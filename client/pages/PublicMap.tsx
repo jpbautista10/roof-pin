@@ -286,7 +286,11 @@ export default function PublicMap() {
 
       <div className="relative flex-1 overflow-hidden">
         {isEmbedMode || activeTab === "map" ? (
-          <MapView locations={locations} onSelectLocation={openLocation} />
+          <MapView
+            locations={locations}
+            onSelectLocation={openLocation}
+            brandColor={company.brand_primary_color}
+          />
         ) : (
           <StatsView locations={locations} onSelectLocation={openLocation} />
         )}

@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
+import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,12 +33,21 @@ const settingsSchema = z.object({
       "Use a valid URL starting with http:// or https://",
     ),
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
-  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
-  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
   logoFile: z.any().optional(),
 });
 
 type SettingsValues = z.infer<typeof settingsSchema>;
+
+const BRAND_COLOR_PRESETS = [
+  "#0f766e",
+  "#0ea5e9",
+  "#2563eb",
+  "#4f46e5",
+  "#be123c",
+  "#f97316",
+  "#84cc16",
+  "#111827",
+];
 
 export default function DashboardSettings() {
   const navigate = useNavigate();
@@ -53,8 +63,6 @@ export default function DashboardSettings() {
       slug: company?.slug ?? "",
       ctaUrl: company?.cta_url ?? "",
       primaryColor: company?.brand_primary_color ?? "#0f766e",
-      secondaryColor: company?.brand_secondary_color ?? "#0ea5e9",
-      accentColor: company?.brand_accent_color ?? "#f59e0b",
       logoFile: undefined,
     },
   });
@@ -68,6 +76,8 @@ export default function DashboardSettings() {
       }),
     [form.watch("slug")],
   );
+  const selectedBrandColor = getValidBrandColor(form.watch("primaryColor"));
+  const selectedBrandTextColor = getContrastTextColor(selectedBrandColor);
 
   const slugCheckQuery = useQuery({
     queryKey: ["companies", "slug-check", formattedSlug],
@@ -170,8 +180,6 @@ export default function DashboardSettings() {
           cta_url: values.ctaUrl?.trim() || null,
           logo_url: logoUrl,
           brand_primary_color: values.primaryColor,
-          brand_secondary_color: values.secondaryColor,
-          brand_accent_color: values.accentColor,
         })
         .eq("id", company.id);
 
@@ -304,31 +312,89 @@ export default function DashboardSettings() {
               </Button>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="primaryColor">Primary</Label>
-                <Input
-                  id="primaryColor"
-                  type="color"
-                  {...form.register("primaryColor")}
-                />
+            <div className="space-y-3">
+              <Label htmlFor="primaryColor">Brand color</Label>
+              <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      Public map primary color
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Used on `/s/:slug` for map pins and primary actions.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-10 w-10 rounded-lg border border-white shadow-sm"
+                      style={{ backgroundColor: selectedBrandColor }}
+                    />
+                    <span className="rounded-md bg-slate-100 px-2 py-1 font-mono text-xs text-slate-700">
+                      {selectedBrandColor.toUpperCase()}
+                    </span>
+                    <label className="relative inline-flex h-10 cursor-pointer items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
+                      Pick
+                      <input
+                        id="primaryColor"
+                        type="color"
+                        value={selectedBrandColor}
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        onChange={(event) => {
+                          form.setValue("primaryColor", event.target.value, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-8 gap-2">
+                  {BRAND_COLOR_PRESETS.map((presetColor) => (
+                    <button
+                      key={presetColor}
+                      type="button"
+                      className="h-7 rounded-md border border-white shadow-sm ring-offset-2 transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                      style={{
+                        backgroundColor: presetColor,
+                        boxShadow:
+                          selectedBrandColor === presetColor
+                            ? "inset 0 0 0 2px rgba(255,255,255,0.85), 0 0 0 2px rgba(15, 23, 42, 0.28)"
+                            : undefined,
+                      }}
+                      onClick={() => {
+                        form.setValue("primaryColor", presetColor, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      }}
+                      aria-label={`Set brand color to ${presetColor}`}
+                    />
+                  ))}
+                </div>
+
+                <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    Button preview
+                  </p>
+                  <button
+                    type="button"
+                    className="mt-2 inline-flex items-center rounded-md px-3 py-1.5 text-xs font-semibold"
+                    style={{
+                      backgroundColor: selectedBrandColor,
+                      color: selectedBrandTextColor,
+                    }}
+                  >
+                    Get a quote
+                  </button>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="secondaryColor">Secondary</Label>
-                <Input
-                  id="secondaryColor"
-                  type="color"
-                  {...form.register("secondaryColor")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="accentColor">Accent</Label>
-                <Input
-                  id="accentColor"
-                  type="color"
-                  {...form.register("accentColor")}
-                />
-              </div>
+              {form.formState.errors.primaryColor ? (
+                <p className="text-xs text-red-600">
+                  {form.formState.errors.primaryColor.message}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-2">

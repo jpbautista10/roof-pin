@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
 import { PublicCompany } from "@/types/public-map";
 import { List, Map } from "lucide-react";
 
@@ -15,7 +16,8 @@ export default function MapHeader({
   onTabChange,
 }: MapHeaderProps) {
   const navigate = useNavigate();
-  const brandColor = company.brand_primary_color || "#0f766e";
+  const brandColor = getValidBrandColor(company.brand_primary_color);
+  const brandTextColor = getContrastTextColor(brandColor);
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 shrink-0 z-30">
@@ -31,8 +33,11 @@ export default function MapHeader({
           />
         ) : (
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer select-none shrink-0"
-            style={{ backgroundColor: brandColor }}
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer select-none shrink-0"
+            style={{
+              backgroundColor: brandColor,
+              color: brandTextColor,
+            }}
             onDoubleClick={() => navigate(`/dashboard/${company.slug}`)}
           >
             {company.name
