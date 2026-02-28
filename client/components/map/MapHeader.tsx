@@ -1,36 +1,41 @@
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tenant } from "@/types";
-import { Map, BarChart3 } from "lucide-react";
+import { PublicCompany } from "@/types/public-map";
+import { List, Map } from "lucide-react";
 
 interface MapHeaderProps {
-  tenant: Tenant;
+  company: PublicCompany;
   activeTab: string;
   onTabChange: (tab: string) => void;
 }
 
-export default function MapHeader({ tenant, activeTab, onTabChange }: MapHeaderProps) {
+export default function MapHeader({
+  company,
+  activeTab,
+  onTabChange,
+}: MapHeaderProps) {
   const navigate = useNavigate();
+  const brandColor = company.brand_primary_color || "#0f766e";
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 shrink-0 z-30">
       {/* Left: Logo + Company Name */}
       <div className="flex items-center gap-3 min-w-0">
-        {tenant.logo_url ? (
+        {company.logo_url ? (
           <img
-            src={tenant.logo_url}
-            alt={`${tenant.company_name} logo`}
+            src={company.logo_url}
+            alt={`${company.name} logo`}
             className="w-9 h-9 rounded-lg object-contain bg-white border border-slate-200/60 p-0.5 cursor-pointer select-none shrink-0"
-            onDoubleClick={() => navigate("/dashboard")}
+            onDoubleClick={() => navigate(`/dashboard/${company.slug}`)}
             draggable={false}
           />
         ) : (
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer select-none shrink-0"
-            style={{ backgroundColor: tenant.brand_color }}
-            onDoubleClick={() => navigate("/dashboard")}
+            style={{ backgroundColor: brandColor }}
+            onDoubleClick={() => navigate(`/dashboard/${company.slug}`)}
           >
-            {tenant.company_name
+            {company.name
               .split(" ")
               .map((w) => w[0])
               .join("")
@@ -39,7 +44,7 @@ export default function MapHeader({ tenant, activeTab, onTabChange }: MapHeaderP
           </div>
         )}
         <span className="text-sm font-bold text-slate-900 truncate">
-          {tenant.company_name}
+          {company.name}
         </span>
       </div>
 
@@ -51,10 +56,10 @@ export default function MapHeader({ tenant, activeTab, onTabChange }: MapHeaderP
             <span className="hidden sm:inline">Map View</span>
             <span className="sm:hidden">Map</span>
           </TabsTrigger>
-          <TabsTrigger value="stats" className="text-xs gap-1.5 px-3">
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Stats & List</span>
-            <span className="sm:hidden">Stats</span>
+          <TabsTrigger value="locations" className="text-xs gap-1.5 px-3">
+            <List className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Locations</span>
+            <span className="sm:hidden">List</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

@@ -4,11 +4,11 @@ export const mockTenants: Tenant[] = [
   {
     id: "t1",
     user_id: "u1",
-    slug: "smithroofing",
+    slug: "demo",
     company_name: "Smith Roofing Co.",
     brand_color: "#2563EB",
     logo_url: "",
-    cta_link: "https://smithroofing.com/contact",
+    cta_link: "https://example.com/",
   },
 ];
 

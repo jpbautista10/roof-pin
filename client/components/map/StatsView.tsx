@@ -1,167 +1,85 @@
-import { useState } from "react";
-import { Pin, Tenant, WorkType } from "@/types";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Hammer, Star, CheckCircle2 } from "lucide-react";
-import ProjectDrawer from "./ProjectDrawer";
+import { Card } from "@/components/ui/card";
+import { MapPin, Star } from "lucide-react";
+import { PublicLocation } from "@/types/public-map";
 
 interface StatsViewProps {
-  tenant: Tenant;
-  pins: Pin[];
+  locations: PublicLocation[];
+  onSelectLocation: (location: PublicLocation) => void;
 }
 
-export default function StatsView({ tenant, pins }: StatsViewProps) {
-  const [selectedPin, setSelectedPin] = useState<Pin | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+export default function StatsView({
+  locations,
+  onSelectLocation,
+}: StatsViewProps) {
+  const sortedLocations = [...locations].sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
 
-  const totalProjects = pins.length;
-
-  // Top work type
-  const workTypeCounts: Record<string, number> = {};
-  pins.forEach((p) => {
-    workTypeCounts[p.work_type] = (workTypeCounts[p.work_type] || 0) + 1;
-  });
-  const topWorkType = Object.entries(workTypeCounts).sort(
-    (a, b) => b[1] - a[1]
-  )[0]?.[0] as WorkType | undefined;
-
-  // Average rating (only non-privacy pins with stars > 0)
-  const ratedPins = pins.filter((p) => !p.privacy_mode && p.stars > 0);
-  const avgRating =
-    ratedPins.length > 0
-      ? ratedPins.reduce((sum, p) => sum + p.stars, 0) / ratedPins.length
-      : 0;
-
-  // Sort pins by date_completed (rough sort — Month Year format)
-  const monthOrder = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
-
-  const sortedPins = [...pins].sort((a, b) => {
-    const [aMonth, aYear] = a.date_completed.split(" ");
-    const [bMonth, bYear] = b.date_completed.split(" ");
-    const aVal = Number(aYear) * 12 + monthOrder.indexOf(aMonth);
-    const bVal = Number(bYear) * 12 + monthOrder.indexOf(bMonth);
-    return bVal - aVal;
-  });
+  if (sortedLocations.length === 0) {
+    return (
+      <div className="absolute inset-0 bg-slate-50 overflow-y-auto">
+        <div className="mx-auto max-w-3xl px-4 py-10">
+          <Card className="border-slate-200 p-10 text-center">
+            <MapPin className="mx-auto mb-3 h-8 w-8 text-slate-300" />
+            <p className="text-sm font-medium text-slate-700">
+              No locations yet
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              This company has not published projects.
+            </p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="absolute inset-0 bg-slate-50 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 pt-6 pb-8 space-y-6">
-        {/* Stat Cards */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="border-slate-200/80 shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto mb-2"
-                style={{ backgroundColor: `${tenant.brand_color}15` }}
-              >
-                <CheckCircle2
-                  className="w-4.5 h-4.5"
-                  style={{ color: tenant.brand_color }}
-                />
-              </div>
-              <p className="text-2xl font-bold text-slate-900">{totalProjects}</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">Total Projects</p>
-            </CardContent>
-          </Card>
+      <div className="mx-auto max-w-3xl px-4 py-6 space-y-3">
+        {sortedLocations.map((location) => {
+          const firstReview = location.reviews[0] ?? null;
+          const hasReview =
+            !location.privacy_mode && Boolean(firstReview?.review_text);
 
-          <Card className="border-slate-200/80 shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto mb-2"
-                style={{ backgroundColor: `${tenant.brand_color}15` }}
-              >
-                <Hammer
-                  className="w-4.5 h-4.5"
-                  style={{ color: tenant.brand_color }}
-                />
+          return (
+            <button
+              key={location.id}
+              type="button"
+              className="w-full rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:bg-slate-50"
+              onClick={() => onSelectLocation(location)}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {location.project_name}
+                  </p>
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {location.place_label}
+                  </p>
+                </div>
+                {!location.privacy_mode &&
+                typeof firstReview?.stars === "number" ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                    <Star className="h-3.5 w-3.5 fill-current" />
+                    {firstReview.stars}
+                  </span>
+                ) : location.privacy_mode ? (
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                    Private
+                  </span>
+                ) : null}
               </div>
-              <p className="text-2xl font-bold text-slate-900">
-                {topWorkType || "—"}
-              </p>
-              <p className="text-[11px] text-slate-500 mt-0.5">Top Work Type</p>
-            </CardContent>
-          </Card>
 
-          <Card className="border-slate-200/80 shadow-sm">
-            <CardContent className="p-4 text-center">
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto mb-2"
-                style={{ backgroundColor: `${tenant.brand_color}15` }}
-              >
-                <Star
-                  className="w-4.5 h-4.5"
-                  style={{ color: tenant.brand_color }}
-                />
-              </div>
-              <p className="text-2xl font-bold text-slate-900">
-                {avgRating > 0 ? avgRating.toFixed(1) : "—"}
-              </p>
-              <p className="text-[11px] text-slate-500 mt-0.5">Avg. Rating</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Project Table */}
-        <Card className="border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Completed Projects
-            </h3>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50/50">
-                <TableHead className="text-xs font-medium">Neighborhood</TableHead>
-                <TableHead className="text-xs font-medium">Work Type</TableHead>
-                <TableHead className="text-xs font-medium text-right">
-                  Completed
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedPins.map((pin) => (
-                <TableRow
-                  key={pin.id}
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => {
-                    setSelectedPin(pin);
-                    setDrawerOpen(true);
-                  }}
-                >
-                  <TableCell className="font-medium text-sm text-slate-900">
-                    {pin.neighborhood}
-                  </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-xs font-medium text-slate-700">
-                      {pin.work_type}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right text-sm text-slate-500">
-                    {pin.date_completed}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+              {hasReview ? (
+                <p className="mt-2 line-clamp-2 text-xs italic text-slate-600">
+                  "{firstReview?.review_text}"
+                </p>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
-
-      <ProjectDrawer
-        pin={selectedPin}
-        tenant={tenant}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
-      />
     </div>
   );
 }

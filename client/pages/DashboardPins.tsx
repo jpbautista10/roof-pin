@@ -1,3 +1,4 @@
+// TODO: Legacy mock management page not used in router. Rebuild against Supabase locations or remove.
 import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import EditPinDialog from "@/components/dashboard/EditPinDialog";
@@ -59,7 +60,7 @@ export default function DashboardPins() {
         p.neighborhood.toLowerCase().includes(q) ||
         p.customer_name.toLowerCase().includes(q) ||
         p.work_type.toLowerCase().includes(q) ||
-        p.zip_code.toLowerCase().includes(q)
+        p.zip_code.toLowerCase().includes(q),
     );
   }, [pins, search]);
 
@@ -67,7 +68,7 @@ export default function DashboardPins() {
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice(
     (currentPage - 1) * PINS_PER_PAGE,
-    currentPage * PINS_PER_PAGE
+    currentPage * PINS_PER_PAGE,
   );
 
   // Reset to page 1 when search changes
@@ -88,7 +89,11 @@ export default function DashboardPins() {
 
   function handleToggleVisibility(pin: Pin) {
     togglePinVisibility(pin.id);
-    toast.success(pin.hidden ? "Pin is now visible on the map." : "Pin hidden from the map.");
+    toast.success(
+      pin.hidden
+        ? "Pin is now visible on the map."
+        : "Pin hidden from the map.",
+    );
   }
 
   function handleDeleteClick(pin: Pin) {
@@ -142,12 +147,24 @@ export default function DashboardPins() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50/60">
-                      <TableHead className="text-xs font-medium w-[180px]">Neighborhood</TableHead>
-                      <TableHead className="text-xs font-medium">Work Type</TableHead>
-                      <TableHead className="text-xs font-medium hidden sm:table-cell">Customer</TableHead>
-                      <TableHead className="text-xs font-medium hidden md:table-cell">Completed</TableHead>
-                      <TableHead className="text-xs font-medium text-center">Status</TableHead>
-                      <TableHead className="text-xs font-medium text-right">Actions</TableHead>
+                      <TableHead className="text-xs font-medium w-[180px]">
+                        Neighborhood
+                      </TableHead>
+                      <TableHead className="text-xs font-medium">
+                        Work Type
+                      </TableHead>
+                      <TableHead className="text-xs font-medium hidden sm:table-cell">
+                        Customer
+                      </TableHead>
+                      <TableHead className="text-xs font-medium hidden md:table-cell">
+                        Completed
+                      </TableHead>
+                      <TableHead className="text-xs font-medium text-center">
+                        Status
+                      </TableHead>
+                      <TableHead className="text-xs font-medium text-right">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -166,7 +183,9 @@ export default function DashboardPins() {
                         </TableCell>
                         <TableCell className="text-sm text-slate-600 hidden sm:table-cell">
                           {pin.privacy_mode ? (
-                            <span className="text-slate-400 italic">Private</span>
+                            <span className="text-slate-400 italic">
+                              Private
+                            </span>
                           ) : (
                             pin.customer_name || "—"
                           )}
@@ -203,7 +222,9 @@ export default function DashboardPins() {
                               size="icon"
                               className="h-8 w-8 text-slate-500 hover:text-slate-900"
                               onClick={() => handleToggleVisibility(pin)}
-                              title={pin.hidden ? "Show on map" : "Hide from map"}
+                              title={
+                                pin.hidden ? "Show on map" : "Hide from map"
+                              }
                             >
                               {pin.hidden ? (
                                 <Eye className="w-3.5 h-3.5" />
@@ -246,17 +267,19 @@ export default function DashboardPins() {
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </Button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                      <Button
-                        key={p}
-                        variant={p === currentPage ? "default" : "outline"}
-                        size="icon"
-                        className="h-8 w-8 text-xs"
-                        onClick={() => setPage(p)}
-                      >
-                        {p}
-                      </Button>
-                    ))}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (p) => (
+                        <Button
+                          key={p}
+                          variant={p === currentPage ? "default" : "outline"}
+                          size="icon"
+                          className="h-8 w-8 text-xs"
+                          onClick={() => setPage(p)}
+                        >
+                          {p}
+                        </Button>
+                      ),
+                    )}
                     <Button
                       variant="outline"
                       size="icon"

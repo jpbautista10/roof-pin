@@ -10,3 +10,18 @@
 export interface DemoResponse {
   message: string;
 }
+
+export interface GeocodeSuggestion {
+  id: string;
+  label: string;
+  latitude: number;
+  longitude: number;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  postcode: string | null;
+}
+
+export interface GeocodeSuggestResponse {
+  suggestions: GeocodeSuggestion[];
+}

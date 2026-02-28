@@ -19,20 +19,20 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+            <a
+              href="#features"
+              className="text-sm text-slate-600 hover:text-slate-900 transition-colors"
+            >
               Features
             </a>
-            <a href="#how-it-works" className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+            <a
+              href="#how-it-works"
+              className="text-sm text-slate-600 hover:text-slate-900 transition-colors"
+            >
               How It Works
             </a>
             <Link
-              to="/dashboard"
-              className="text-sm text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/dashboard"
+              to="/auth/login"
               className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
             >
               Get Started Free
@@ -43,7 +43,11 @@ export default function Navbar() {
             className="md:hidden p-2 text-slate-600"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>
@@ -65,14 +69,7 @@ export default function Navbar() {
             How It Works
           </a>
           <Link
-            to="/dashboard"
-            onClick={() => setMobileOpen(false)}
-            className="block text-sm text-slate-600 hover:text-slate-900"
-          >
-            Sign In
-          </Link>
-          <Link
-            to="/dashboard"
+            to="/auth/login"
             onClick={() => setMobileOpen(false)}
             className="block w-full text-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white"
           >

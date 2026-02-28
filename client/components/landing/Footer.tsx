@@ -27,18 +27,30 @@ export default function Footer() {
                 Product
               </p>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
-                <li><Link to="/s/smithroofing" className="hover:text-white transition-colors">Live Demo</Link></li>
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
-                Account
-              </p>
-              <ul className="space-y-2 text-sm">
-                <li><Link to="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
-                <li><Link to="/dashboard/settings" className="hover:text-white transition-colors">Settings</Link></li>
+                <li>
+                  <a
+                    href="#features"
+                    className="hover:text-white transition-colors"
+                  >
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#how-it-works"
+                    className="hover:text-white transition-colors"
+                  >
+                    How It Works
+                  </a>
+                </li>
+                <li>
+                  <Link
+                    to="/s/demo"
+                    className="hover:text-white transition-colors"
+                  >
+                    Live Demo
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
