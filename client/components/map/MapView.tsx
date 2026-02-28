@@ -25,6 +25,7 @@ const INITIAL_CENTER = {
 const MAPBOX_STYLE = "mapbox://styles/mapbox/standard";
 const PRIVATE_RADIUS_METERS = 200;
 const PRIVATE_RADIUS_STEPS = 40;
+const PRIVATE_CENTER_OFFSET_MAX_METERS = 80;
 const PRIVATE_RADIUS_FILL_LAYER_ID = "private-radius-fill";
 const PRIVATE_RADIUS_OUTLINE_LAYER_ID = "private-radius-outline";
 
@@ -66,6 +67,34 @@ function createCircleCoordinates(
   return coordinates;
 }
 
+function offsetCoordinates(
+  latitude: number,
+  longitude: number,
+  maxOffsetMeters: number,
+) {
+  const distance = Math.random() * maxOffsetMeters;
+  const bearing = Math.random() * 2 * Math.PI;
+  const earthRadiusMeters = 6371000;
+  const angularDistance = distance / earthRadiusMeters;
+  const latitudeRadians = (latitude * Math.PI) / 180;
+  const longitudeRadians = (longitude * Math.PI) / 180;
+
+  const sinLatitude =
+    Math.sin(latitudeRadians) * Math.cos(angularDistance) +
+    Math.cos(latitudeRadians) * Math.sin(angularDistance) * Math.cos(bearing);
+  const nextLatitudeRadians = Math.asin(sinLatitude);
+
+  const y =
+    Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(latitudeRadians);
+  const x = Math.cos(angularDistance) - Math.sin(latitudeRadians) * sinLatitude;
+  const nextLongitudeRadians = longitudeRadians + Math.atan2(y, x);
+
+  return {
+    latitude: (nextLatitudeRadians * 180) / Math.PI,
+    longitude: (nextLongitudeRadians * 180) / Math.PI,
+  };
+}
+
 export default function MapView({
   locations,
   onSelectLocation,
@@ -74,6 +103,7 @@ export default function MapView({
   const mapRef = useRef<MapRef | null>(null);
   const hasAppliedInitialViewport = useRef(false);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [isStyleReady, setIsStyleReady] = useState(false);
 
   const validLocations = useMemo(
     () =>
@@ -107,21 +137,35 @@ export default function MapView({
     [privateLocations],
   );
 
+  const obfuscatedPrivateCenters = useMemo(
+    () =>
+      privateLocations.map((location) => ({
+        locationId: location.id,
+        projectName: location.project_name,
+        ...offsetCoordinates(
+          location.latitude,
+          location.longitude,
+          PRIVATE_CENTER_OFFSET_MAX_METERS,
+        ),
+      })),
+    [privateLocations],
+  );
+
   const privateRadiusGeoJson = useMemo(
     () => ({
       type: "FeatureCollection" as const,
-      features: privateLocations.map((location) => ({
+      features: obfuscatedPrivateCenters.map((center) => ({
         type: "Feature" as const,
         properties: {
-          locationId: location.id,
-          projectName: location.project_name,
+          locationId: center.locationId,
+          projectName: center.projectName,
         },
         geometry: {
           type: "Polygon" as const,
           coordinates: [
             createCircleCoordinates(
-              location.latitude,
-              location.longitude,
+              center.latitude,
+              center.longitude,
               PRIVATE_RADIUS_METERS,
               PRIVATE_RADIUS_STEPS,
             ),
@@ -129,7 +173,7 @@ export default function MapView({
         },
       })),
     }),
-    [privateLocations],
+    [obfuscatedPrivateCenters],
   );
 
   const initialViewState = useMemo(() => {
@@ -224,7 +268,15 @@ export default function MapView({
           PRIVATE_RADIUS_FILL_LAYER_ID,
           PRIVATE_RADIUS_OUTLINE_LAYER_ID,
         ]}
-        onLoad={() => setIsMapReady(true)}
+        onLoad={() => {
+          setIsMapReady(true);
+          setIsStyleReady(false);
+        }}
+        onIdle={() => {
+          if (mapRef.current?.isStyleLoaded()) {
+            setIsStyleReady(true);
+          }
+        }}
         onClick={(event) => {
           const locationId =
             event.features?.[0]?.properties?.locationId ??
@@ -242,7 +294,7 @@ export default function MapView({
       >
         <NavigationControl position="top-right" />
 
-        {privateLocations.length > 0 ? (
+        {isStyleReady && privateLocations.length > 0 ? (
           <Source
             id="private-radius-source"
             type="geojson"
