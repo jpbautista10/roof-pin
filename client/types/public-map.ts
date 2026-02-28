@@ -6,7 +6,6 @@ export interface PublicCompany {
   cta_url: string | null;
   brand_primary_color: string;
   brand_secondary_color: string;
-  brand_accent_color: string;
 }
 
 export interface PublicLocationImage {

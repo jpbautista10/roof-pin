@@ -52,7 +52,7 @@ export default function ProjectDrawer({
       >
         <div className="flex-1 overflow-y-auto">
           <SheetHeader className="px-6 pt-6 pb-4">
-            <SheetDescription className="text-xs font-semibold uppercase tracking-wider text-primary">
+            <SheetDescription className="text-xs font-semibold uppercase tracking-wider text-brand-primary">
               {company.name}
             </SheetDescription>
             <SheetTitle className="text-xl font-bold text-slate-900">
@@ -131,8 +131,7 @@ export default function ProjectDrawer({
               href={ctaUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full items-center justify-center rounded-lg py-3 text-sm font-semibold text-white"
-              style={{ backgroundColor: company.brand_primary_color }}
+              className="flex w-full items-center justify-center rounded-lg py-3 text-sm font-semibold text-brand-primary-foreground bg-brand-primary hover:opacity-90 transition-opacity"
             >
               Get a quote
             </a>

@@ -16,9 +16,8 @@ type DbUser = Database["public"]["Tables"]["users"]["Row"];
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 const DEFAULT_THEME = {
-  primary: "217 71% 45%",
-  secondary: "220 20% 94%",
-  accent: "168 60% 40%",
+  brandPrimary: "168 76% 26%",
+  brandSecondary: "199 89% 48%",
 };
 
 function hexToHslString(hex: string) {
@@ -161,36 +160,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    const shouldApplyCompanyTheme = location.pathname.startsWith("/dashboard");
 
-    if (!shouldApplyCompanyTheme) {
-      root.style.setProperty("--primary", DEFAULT_THEME.primary);
-      root.style.setProperty("--secondary", DEFAULT_THEME.secondary);
-      root.style.setProperty("--accent", DEFAULT_THEME.accent);
-      root.style.setProperty("--ring", DEFAULT_THEME.primary);
-      root.style.setProperty("--sidebar-primary", DEFAULT_THEME.primary);
-      return;
-    }
-
-    const primary = company?.brand_primary_color
+    // Brand colors are separate from system UI colors.
+    // They only affect branding elements (map markers, CTA buttons, logos, etc.)
+    // and never override system buttons, inputs, or other UI primitives.
+    const brandPrimary = company?.brand_primary_color
       ? hexToHslString(company.brand_primary_color)
       : null;
-    const secondary = company?.brand_secondary_color
+    const brandSecondary = company?.brand_secondary_color
       ? hexToHslString(company.brand_secondary_color)
       : null;
-    const accent = company?.brand_accent_color
-      ? hexToHslString(company.brand_accent_color)
-      : null;
 
-    root.style.setProperty("--primary", primary ?? DEFAULT_THEME.primary);
-    root.style.setProperty("--secondary", secondary ?? DEFAULT_THEME.secondary);
-    root.style.setProperty("--accent", accent ?? DEFAULT_THEME.accent);
-    root.style.setProperty("--ring", primary ?? DEFAULT_THEME.primary);
     root.style.setProperty(
-      "--sidebar-primary",
-      primary ?? DEFAULT_THEME.primary,
+      "--brand-primary",
+      brandPrimary ?? DEFAULT_THEME.brandPrimary,
     );
-  }, [company, location.pathname]);
+    root.style.setProperty(
+      "--brand-secondary",
+      brandSecondary ?? DEFAULT_THEME.brandSecondary,
+    );
+  }, [company]);
 
   const refreshProfile = useCallback(async () => {
     await Promise.all([

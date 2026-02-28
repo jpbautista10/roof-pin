@@ -23,7 +23,6 @@ import { supabase } from "@/lib/supabase";
 const DEFAULT_COLORS = {
   primary: "#0f766e",
   secondary: "#0ea5e9",
-  accent: "#f59e0b",
 };
 
 const onboardingSchema = z.object({
@@ -37,7 +36,6 @@ const onboardingSchema = z.object({
     ),
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
   secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
-  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
   logoFile: z.any().optional(),
 });
 
@@ -58,7 +56,6 @@ export default function Onboarding() {
       primaryColor: company?.brand_primary_color ?? DEFAULT_COLORS.primary,
       secondaryColor:
         company?.brand_secondary_color ?? DEFAULT_COLORS.secondary,
-      accentColor: company?.brand_accent_color ?? DEFAULT_COLORS.accent,
     },
   });
 
@@ -171,7 +168,6 @@ export default function Onboarding() {
             logo_url: logoUrl,
             brand_primary_color: values.primaryColor,
             brand_secondary_color: values.secondaryColor,
-            brand_accent_color: values.accentColor,
           })
           .eq("id", companyId)
           .select("id")
@@ -192,7 +188,6 @@ export default function Onboarding() {
             logo_url: logoUrl,
             brand_primary_color: values.primaryColor,
             brand_secondary_color: values.secondaryColor,
-            brand_accent_color: values.accentColor,
           })
           .select("id")
           .single<{ id: string }>();
@@ -302,30 +297,30 @@ export default function Onboarding() {
                 ) : null}
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="primaryColor">Primary</Label>
-                  <Input
-                    id="primaryColor"
-                    type="color"
-                    {...form.register("primaryColor")}
-                  />
+              <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Brand colors</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Used for your public map branding (markers, buttons, logo).
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="secondaryColor">Secondary</Label>
-                  <Input
-                    id="secondaryColor"
-                    type="color"
-                    {...form.register("secondaryColor")}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="accentColor">Accent</Label>
-                  <Input
-                    id="accentColor"
-                    type="color"
-                    {...form.register("accentColor")}
-                  />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryColor">Primary</Label>
+                    <Input
+                      id="primaryColor"
+                      type="color"
+                      {...form.register("primaryColor")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="secondaryColor">Secondary</Label>
+                    <Input
+                      id="secondaryColor"
+                      type="color"
+                      {...form.register("secondaryColor")}
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -33,7 +33,6 @@ const settingsSchema = z.object({
     ),
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
   secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
-  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
   logoFile: z.any().optional(),
 });
 
@@ -54,7 +53,6 @@ export default function DashboardSettings() {
       ctaUrl: company?.cta_url ?? "",
       primaryColor: company?.brand_primary_color ?? "#0f766e",
       secondaryColor: company?.brand_secondary_color ?? "#0ea5e9",
-      accentColor: company?.brand_accent_color ?? "#f59e0b",
       logoFile: undefined,
     },
   });
@@ -171,7 +169,6 @@ export default function DashboardSettings() {
           logo_url: logoUrl,
           brand_primary_color: values.primaryColor,
           brand_secondary_color: values.secondaryColor,
-          brand_accent_color: values.accentColor,
         })
         .eq("id", company.id);
 
@@ -304,30 +301,30 @@ export default function DashboardSettings() {
               </Button>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="primaryColor">Primary</Label>
-                <Input
-                  id="primaryColor"
-                  type="color"
-                  {...form.register("primaryColor")}
-                />
+            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Brand colors</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  These colors are used for your public map branding (markers, CTA buttons, logo background). They do not affect app interface buttons.
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="secondaryColor">Secondary</Label>
-                <Input
-                  id="secondaryColor"
-                  type="color"
-                  {...form.register("secondaryColor")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="accentColor">Accent</Label>
-                <Input
-                  id="accentColor"
-                  type="color"
-                  {...form.register("accentColor")}
-                />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="primaryColor">Primary</Label>
+                  <Input
+                    id="primaryColor"
+                    type="color"
+                    {...form.register("primaryColor")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="secondaryColor">Secondary</Label>
+                  <Input
+                    id="secondaryColor"
+                    type="color"
+                    {...form.register("secondaryColor")}
+                  />
+                </div>
               </div>
             </div>
 

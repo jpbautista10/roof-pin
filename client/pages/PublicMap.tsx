@@ -63,7 +63,6 @@ const demoCompany: PublicCompany = {
   cta_url: "https://example.com/contact",
   brand_primary_color: "#0f766e",
   brand_secondary_color: "#0ea5e9",
-  brand_accent_color: "#f59e0b",
 };
 
 const demoLocations: PublicLocation[] = [
@@ -197,7 +196,7 @@ export default function PublicMap() {
       const { data, error } = await supabase
         .from("companies")
         .select(
-          "id, name, slug, logo_url, cta_url, brand_primary_color, brand_secondary_color, brand_accent_color",
+          "id, name, slug, logo_url, cta_url, brand_primary_color, brand_secondary_color",
         )
         .eq("slug", slug)
         .maybeSingle<PublicCompany>();

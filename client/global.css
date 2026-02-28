@@ -36,6 +36,11 @@
     --input: 220 15% 89%;
     --ring: 217 71% 45%;
 
+    --brand-primary: 168 76% 26%;
+    --brand-primary-foreground: 0 0% 100%;
+    --brand-secondary: 199 89% 48%;
+    --brand-secondary-foreground: 0 0% 100%;
+
     --radius: 0.625rem;
 
     --sidebar-background: 0 0% 100%;
