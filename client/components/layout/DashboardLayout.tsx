@@ -86,11 +86,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             key={to}
             to={to}
             onClick={onNavigate}
-            className={`group flex items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
-              isActive
+            className={`group flex items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors ${isActive
                 ? "border-primary/20 bg-primary/10 text-primary"
                 : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100/80 hover:text-slate-900"
-            }`}
+              }`}
           >
             <item.icon className="mt-0.5 h-4 w-4" />
             <span className="min-w-0 flex-1">
@@ -214,64 +213,63 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-slate-100/70">
-      <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur lg:hidden">
-        <div className="flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Open navigation menu"
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[310px] p-0">
-                <SheetHeader className="border-b border-slate-200 px-4 py-3">
-                  <SheetTitle className="text-base">Navigation</SheetTitle>
-                </SheetHeader>
-                <div className="space-y-4 p-4">
-                  <NavLinks onNavigate={() => setMobileOpen(false)} />
-                  <a
-                    href={`/s/${companySlug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setMobileOpen(false)}
+      <div className="flex flex-col lg:flex-row w-full min-h-[100dvh]">
+        <div className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur lg:hidden">
+          <div className="flex h-16 items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Open navigation menu"
                   >
-                    <Button variant="outline" size="sm" className="w-full">
-                      Preview public map
-                    </Button>
-                  </a>
-                </div>
-              </SheetContent>
-            </Sheet>
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[310px] p-0">
+                  <SheetHeader className="border-b border-slate-200 px-4 py-3">
+                    <SheetTitle className="text-base">Navigation</SheetTitle>
+                  </SheetHeader>
+                  <div className="space-y-4 p-4">
+                    <NavLinks onNavigate={() => setMobileOpen(false)} />
+                    <a
+                      href={`/s/${companySlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      <Button variant="outline" size="sm" className="w-full">
+                        Preview public map
+                      </Button>
+                    </a>
+                  </div>
+                </SheetContent>
+              </Sheet>
 
-            <Link
-              to={companySlug ? `/dashboard/${companySlug}` : "/dashboard"}
-              className="inline-flex items-center gap-2"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <MapPin className="h-4 w-4 text-white" />
-              </span>
-              <span className="text-sm font-semibold text-slate-900">
-                Dashboard
-              </span>
-            </Link>
+              <Link
+                to={companySlug ? `/dashboard/${companySlug}` : "/dashboard"}
+                className="inline-flex items-center gap-2"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                  <MapPin className="h-4 w-4 text-white" />
+                </span>
+                <span className="text-sm font-semibold text-slate-900">
+                  Dashboard
+                </span>
+              </Link>
+            </div>
+
+            <UserMenu
+              email={user?.email ?? null}
+              companyName={company?.name ?? null}
+              isSigningOut={isSigningOut}
+              onSignOut={() => void handleSignOut()}
+            />
           </div>
-
-          <UserMenu
-            email={user?.email ?? null}
-            companyName={company?.name ?? null}
-            isSigningOut={isSigningOut}
-            onSignOut={() => void handleSignOut()}
-          />
         </div>
-      </div>
 
-      <div className="mx-auto flex w-full max-w-[1440px] gap-6 px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
-        <aside className="hidden lg:block lg:w-80">
-          <div className="sticky top-6 space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <aside className="hidden lg:block lg:w-80 space-y-4 border border-slate-200 p-4">
             <div className="flex items-center gap-3 px-1 py-1">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                 <MapPin className="h-5 w-5" />
@@ -303,15 +301,11 @@ export default function DashboardLayout({
                 </Button>
               </a>
             </div>
-          </div>
         </aside>
 
         <main className="min-w-0 flex-1">
-          <header className="mb-4 hidden items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm lg:flex">
+          <header className="mb-4 hidden items-center justify-between border border-slate-200 bg-white px-5 py-4 shadow-sm lg:flex">
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">
-                Application shell
-              </p>
               <h1 className="text-lg font-semibold text-slate-900">
                 {activeNav.label}
               </h1>
