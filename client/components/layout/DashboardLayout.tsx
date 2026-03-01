@@ -303,8 +303,8 @@ export default function DashboardLayout({
             </div>
         </aside>
 
-        <main className="min-w-0 flex-1 p-5 pt-0">
-          <header className="mb-4 hidden items-center justify-between border border-slate-200 bg-white px-5 py-4 shadow-sm lg:flex">
+        <main className="min-w-0 flex-1">
+          <header className="mb-4 hidden items-center justify-between bg-white px-5 py-4 lg:flex">
             <div>
               <h1 className="text-lg font-semibold text-slate-900">
                 {activeNav.label}
@@ -332,7 +332,7 @@ export default function DashboardLayout({
             </div>
           </header>
 
-          <div className="rounded-2xl">{children ?? <Outlet />}</div>
+          <div className="rounded-2xl p-5 pt-0">{children ?? <Outlet />}</div>
         </main>
       </div>
     </div>
