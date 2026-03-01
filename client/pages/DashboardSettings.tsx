@@ -292,24 +292,40 @@ export default function DashboardSettings() {
                 </p>
               </div>
               <Input value={embedUrl} readOnly className="font-mono text-xs" />
-              <textarea
-                value={embedSnippet}
-                readOnly
-                rows={4}
-                className="w-full rounded-md border border-slate-200 bg-white p-3 font-mono text-xs text-slate-700"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void handleCopyEmbed()}
-              >
-                {copied ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-                {copied ? "Copied" : "Copy embed code"}
-              </Button>
+              <div className="overflow-hidden rounded-md border border-slate-700 bg-slate-950 shadow-inner">
+                <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-3 py-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                    <span className="ml-2 font-mono text-[11px] text-slate-400">
+                      embed.html
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleCopyEmbed()}
+                    aria-label={
+                      copied ? "Embed code copied" : "Copy embed code"
+                    }
+                    title={copied ? "Copied" : "Copy embed code"}
+                    className="inline-flex h-6 w-6 items-center justify-center rounded text-slate-300 transition-colors hover:bg-slate-800 hover:text-slate-100"
+                  >
+                    {copied ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
+                <textarea
+                  value={embedSnippet}
+                  readOnly
+                  rows={4}
+                  spellCheck={false}
+                  className="w-full resize-none border-0 bg-slate-950 p-3 font-mono text-xs leading-relaxed text-sky-200 selection:bg-slate-700 selection:text-slate-100 focus:outline-none"
+                />
+              </div>
             </div>
 
             <div className="space-y-3">
