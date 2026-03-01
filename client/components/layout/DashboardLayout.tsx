@@ -269,7 +269,7 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <aside className="hidden lg:block lg:w-80 space-y-4 border border-slate-200 p-4">
+        <aside className="hidden lg:block lg:w-80 space-y-4 p-4 bg-white">
             <div className="flex items-center gap-3 px-1 py-1">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                 <MapPin className="h-5 w-5" />
@@ -303,7 +303,7 @@ export default function DashboardLayout({
             </div>
         </aside>
 
-        <main className="min-w-0 flex-1">
+        <main className="min-w-0 flex-1 p-6 pt-0">
           <header className="mb-4 hidden items-center justify-between border border-slate-200 bg-white px-5 py-4 shadow-sm lg:flex">
             <div>
               <h1 className="text-lg font-semibold text-slate-900">
