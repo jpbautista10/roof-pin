@@ -256,7 +256,10 @@ export default function MapView({
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="relative h-full w-full">
+      {!isMapReady && (
+        <div className="absolute inset-0 z-10 bg-slate-100" />
+      )}
       <Map
         ref={mapRef}
         initialViewState={initialViewState}
