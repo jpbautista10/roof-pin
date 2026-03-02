@@ -167,7 +167,7 @@ export default function Dashboard() {
 
   return (
     <section className="space-y-6">
-      <header className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <header className="pt-5 sm:p-6 lg:hidden">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-slate-500">Dashboard</p>
