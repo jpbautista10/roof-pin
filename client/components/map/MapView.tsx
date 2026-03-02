@@ -22,7 +22,7 @@ const INITIAL_CENTER = {
   zoom: 11,
 };
 
-const MAPBOX_STYLE = "mapbox://styles/mapbox/standard";
+const MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";
 const PRIVATE_RADIUS_METERS = 200;
 const PRIVATE_RADIUS_STEPS = 40;
 const PRIVATE_CENTER_OFFSET_MAX_METERS = 80;
