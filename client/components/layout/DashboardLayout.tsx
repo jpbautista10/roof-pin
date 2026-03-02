@@ -86,10 +86,11 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             key={to}
             to={to}
             onClick={onNavigate}
-            className={`group flex items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors ${isActive
+            className={`group flex items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
+              isActive
                 ? "border-primary/20 bg-primary/10 text-primary"
                 : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100/80 hover:text-slate-900"
-              }`}
+            }`}
           >
             <item.icon className="mt-0.5 h-4 w-4" />
             <span className="min-w-0 flex-1">
@@ -270,37 +271,37 @@ export default function DashboardLayout({
         </div>
 
         <aside className="hidden lg:block lg:w-80 space-y-4 p-4 bg-white">
-            <div className="flex items-center gap-3 px-1 py-1">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                <MapPin className="h-5 w-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  Workspace
-                </p>
-                <p className="truncate text-sm font-semibold text-slate-900">
-                  {company?.name ?? "Dashboard"}
-                </p>
-              </div>
-            </div>
-
-            <NavLinks />
-
-            <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Public profile
+          <div className="flex items-center gap-3 px-1 py-1">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <MapPin className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-wide text-slate-500">
+                Workspace
               </p>
-              <a
-                href={`/s/${companySlug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button variant="outline" size="sm" className="w-full">
-                  <PanelsTopLeft className="h-4 w-4" />
-                  Preview public map
-                </Button>
-              </a>
+              <p className="truncate text-sm font-semibold text-slate-900">
+                {company?.name ?? "Dashboard"}
+              </p>
             </div>
+          </div>
+
+          <NavLinks />
+
+          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Public profile
+            </p>
+            <a
+              href={`/s/${companySlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" size="sm" className="w-full">
+                <PanelsTopLeft className="h-4 w-4" />
+                Preview public map
+              </Button>
+            </a>
+          </div>
         </aside>
 
         <main className="min-w-0 flex-1">

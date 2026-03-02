@@ -10,4 +10,7 @@ if (!supabaseUrl || !supabasePublishableKey) {
   );
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey);
+export const supabase = createClient<Database>(
+  supabaseUrl,
+  supabasePublishableKey,
+);

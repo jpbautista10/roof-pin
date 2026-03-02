@@ -5,7 +5,10 @@ interface BeforeAfterSliderProps {
   afterImg: string;
 }
 
-export default function BeforeAfterSlider({ beforeImg, afterImg }: BeforeAfterSliderProps) {
+export default function BeforeAfterSlider({
+  beforeImg,
+  afterImg,
+}: BeforeAfterSliderProps) {
   const [position, setPosition] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
@@ -68,7 +71,13 @@ export default function BeforeAfterSlider({ beforeImg, afterImg }: BeforeAfterSl
       >
         {/* Handle */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-xl flex items-center justify-center">
-          <svg className="w-5 h-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            className="w-5 h-5 text-slate-600"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M8 6l-4 6 4 6" />
             <path d="M16 6l4 6-4 6" />
           </svg>

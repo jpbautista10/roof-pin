@@ -20,6 +20,7 @@ interface LocationQueryRow {
   privacy_mode: boolean;
   date_completed: string | null;
   created_at: string;
+  work_type: string | null;
   location_images: Array<{
     id: string;
     kind: string;
@@ -63,6 +64,7 @@ const demoLocations: PublicLocation[] = [
     privacy_mode: false,
     date_completed: "January 2026",
     created_at: new Date("2026-01-18").toISOString(),
+    work_type: "Roof Replacement",
     images: [
       {
         id: "demo-1-before",
@@ -95,6 +97,7 @@ const demoLocations: PublicLocation[] = [
     privacy_mode: true,
     date_completed: "February 2026",
     created_at: new Date("2026-02-04").toISOString(),
+    work_type: "Storm Repair",
     images: [
       {
         id: "demo-2-before",
@@ -127,6 +130,7 @@ const demoLocations: PublicLocation[] = [
     privacy_mode: false,
     date_completed: "February 2026",
     created_at: new Date("2026-02-20").toISOString(),
+    work_type: "Shingle Upgrade",
     images: [
       {
         id: "demo-3-before",
@@ -172,6 +176,7 @@ function normalizeLocations(rows: LocationQueryRow[]): PublicLocation[] {
       privacy_mode: row.privacy_mode,
       date_completed: row.date_completed,
       created_at: row.created_at,
+      work_type: row.work_type,
       images: row.location_images ?? [],
       reviews: Array.isArray(row.location_reviews)
         ? row.location_reviews.filter(Boolean)
@@ -219,7 +224,7 @@ export default function PublicMap() {
       const { data, error } = await supabase
         .from("locations")
         .select(
-          "id, project_name, place_label, latitude, longitude, geocode_latitude, geocode_longitude, privacy_mode, date_completed, created_at, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
+          "id, project_name, place_label, latitude, longitude, geocode_latitude, geocode_longitude, privacy_mode, date_completed, created_at, work_type, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
         )
         .eq("company_id", companyQuery.data!.id)
         .order("created_at", { ascending: false });

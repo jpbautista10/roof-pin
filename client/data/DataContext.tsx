@@ -27,7 +27,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const editPin = useCallback((id: string, updates: Partial<Pin>) => {
-    setPins((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    setPins((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    );
   }, []);
 
   const removePin = useCallback((id: string) => {
@@ -35,11 +37,23 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const togglePinVisibility = useCallback((id: string) => {
-    setPins((prev) => prev.map((p) => (p.id === id ? { ...p, hidden: !p.hidden } : p)));
+    setPins((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, hidden: !p.hidden } : p)),
+    );
   }, []);
 
   return (
-    <DataContext.Provider value={{ tenant, pins, updateTenant, addPin, editPin, removePin, togglePinVisibility }}>
+    <DataContext.Provider
+      value={{
+        tenant,
+        pins,
+        updateTenant,
+        addPin,
+        editPin,
+        removePin,
+        togglePinVisibility,
+      }}
+    >
       {children}
     </DataContext.Provider>
   );

@@ -23,8 +23,18 @@ import type { Pin, WorkType } from "@/types";
 
 const WORK_TYPES: WorkType[] = ["Shingle", "Flat", "Tile", "Metal"];
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 const YEARS = Array.from({ length: 6 }, (_, i) => String(2024 - i));
 
@@ -35,7 +45,12 @@ interface EditPinDialogProps {
   onSave: (id: string, updates: Partial<Pin>) => void;
 }
 
-export default function EditPinDialog({ pin, open, onOpenChange, onSave }: EditPinDialogProps) {
+export default function EditPinDialog({
+  pin,
+  open,
+  onOpenChange,
+  onSave,
+}: EditPinDialogProps) {
   const [neighborhood, setNeighborhood] = useState("");
   const [workType, setWorkType] = useState<WorkType>("Shingle");
   const [month, setMonth] = useState("");
@@ -80,7 +95,9 @@ export default function EditPinDialog({ pin, open, onOpenChange, onSave }: EditP
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Pin</DialogTitle>
-          <DialogDescription>Update the details for this project pin.</DialogDescription>
+          <DialogDescription>
+            Update the details for this project pin.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5 py-2">
@@ -97,13 +114,18 @@ export default function EditPinDialog({ pin, open, onOpenChange, onSave }: EditP
           {/* Work Type */}
           <div className="space-y-2">
             <Label>Work Type</Label>
-            <Select value={workType} onValueChange={(v) => setWorkType(v as WorkType)}>
+            <Select
+              value={workType}
+              onValueChange={(v) => setWorkType(v as WorkType)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {WORK_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -119,7 +141,9 @@ export default function EditPinDialog({ pin, open, onOpenChange, onSave }: EditP
                 </SelectTrigger>
                 <SelectContent>
                   {MONTHS.map((m) => (
-                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -129,7 +153,9 @@ export default function EditPinDialog({ pin, open, onOpenChange, onSave }: EditP
                 </SelectTrigger>
                 <SelectContent>
                   {YEARS.map((y) => (
-                    <SelectItem key={y} value={y}>{y}</SelectItem>
+                    <SelectItem key={y} value={y}>
+                      {y}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -140,7 +166,9 @@ export default function EditPinDialog({ pin, open, onOpenChange, onSave }: EditP
           <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
             <div>
               <Label className="text-sm font-semibold">Privacy Mode</Label>
-              <p className="text-xs text-slate-500 mt-0.5">Hide customer details on public map.</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Hide customer details on public map.
+              </p>
             </div>
             <Switch checked={privacyMode} onCheckedChange={setPrivacyMode} />
           </div>

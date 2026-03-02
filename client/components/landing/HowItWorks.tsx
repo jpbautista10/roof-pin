@@ -5,25 +5,29 @@ const steps = [
     icon: UserPlus,
     step: "01",
     title: "Create Your Account",
-    description: "Sign up in 30 seconds. Enter your company name, pick your brand color, and you're ready to go.",
+    description:
+      "Sign up in 30 seconds. Enter your company name, pick your brand color, and you're ready to go.",
   },
   {
     icon: MapPinPlus,
     step: "02",
     title: "Add Your Projects",
-    description: "Enter an address, upload before/after photos, and add a customer review. We handle the rest.",
+    description:
+      "Enter an address, upload before/after photos, and add a customer review. We handle the rest.",
   },
   {
     icon: Code,
     step: "03",
     title: "Embed on Your Site",
-    description: "Copy a single line of code and paste it anywhere on your website. That's it — you're live.",
+    description:
+      "Copy a single line of code and paste it anywhere on your website. That's it — you're live.",
   },
   {
     icon: Rocket,
     step: "04",
     title: "Win More Jobs",
-    description: "Prospects see real proof in their neighborhood. Watch your close rate climb.",
+    description:
+      "Prospects see real proof in their neighborhood. Watch your close rate climb.",
   },
 ];
 
@@ -58,8 +62,12 @@ export default function HowItWorks() {
                     Step {s.step}
                   </span>
                 </div>
-                <h3 className="text-base font-semibold text-slate-900 mb-2">{s.title}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{s.description}</p>
+                <h3 className="text-base font-semibold text-slate-900 mb-2">
+                  {s.title}
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  {s.description}
+                </p>
               </div>
             </div>
           ))}
