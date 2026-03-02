@@ -409,12 +409,12 @@ export default function Dashboard() {
                             </td>
                             <td className="p-4 text-center align-middle">
                               {location.privacy_mode ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                                <span className="whitespace-nowrap inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                                   <EyeOff className="h-3 w-3" />
                                   Private
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                <span className="whitespace-nowrap inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                                   <Eye className="h-3 w-3" />
                                   Public
                                 </span>
