@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Map, {
-  Layer,
   Marker,
   NavigationControl,
-  Source,
   type MapRef,
 } from "react-map-gl/mapbox";
 import { LngLatBounds } from "mapbox-gl";
@@ -23,61 +21,24 @@ const INITIAL_CENTER = {
 };
 
 const MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";
-const PRIVATE_RADIUS_METERS = 200;
-const PRIVATE_RADIUS_STEPS = 40;
-const PRIVATE_CENTER_OFFSET_MAX_METERS = 80;
-const PRIVATE_RADIUS_FILL_LAYER_ID = "private-radius-fill";
-const PRIVATE_RADIUS_OUTLINE_LAYER_ID = "private-radius-outline";
+const PRIVATE_CENTER_OFFSET_MAX_METERS = 500;
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
-function createCircleCoordinates(
-  latitude: number,
-  longitude: number,
-  radiusInMeters: number,
-  steps: number,
-) {
-  const earthRadiusMeters = 6371000;
-  const angularDistance = radiusInMeters / earthRadiusMeters;
-  const latitudeRadians = (latitude * Math.PI) / 180;
-  const longitudeRadians = (longitude * Math.PI) / 180;
-
-  const coordinates: [number, number][] = [];
-
-  for (let step = 0; step <= steps; step += 1) {
-    const bearing = (2 * Math.PI * step) / steps;
-
-    const sinLatitude =
-      Math.sin(latitudeRadians) * Math.cos(angularDistance) +
-      Math.cos(latitudeRadians) * Math.sin(angularDistance) * Math.cos(bearing);
-    const nextLatitudeRadians = Math.asin(sinLatitude);
-
-    const y =
-      Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(latitudeRadians);
-    const x =
-      Math.cos(angularDistance) - Math.sin(latitudeRadians) * sinLatitude;
-    const nextLongitudeRadians = longitudeRadians + Math.atan2(y, x);
-
-    coordinates.push([
-      (nextLongitudeRadians * 180) / Math.PI,
-      (nextLatitudeRadians * 180) / Math.PI,
-    ]);
+function getDisplayCoordinates(location: PublicLocation) {
+  if (!location.privacy_mode) {
+    return {
+      latitude: location.latitude,
+      longitude: location.longitude,
+    };
   }
 
-  return coordinates;
-}
-
-function offsetCoordinates(
-  latitude: number,
-  longitude: number,
-  maxOffsetMeters: number,
-) {
-  const distance = Math.random() * maxOffsetMeters;
+  const distance = Math.random() * PRIVATE_CENTER_OFFSET_MAX_METERS;
   const bearing = Math.random() * 2 * Math.PI;
   const earthRadiusMeters = 6371000;
   const angularDistance = distance / earthRadiusMeters;
-  const latitudeRadians = (latitude * Math.PI) / 180;
-  const longitudeRadians = (longitude * Math.PI) / 180;
+  const latitudeRadians = (location.latitude * Math.PI) / 180;
+  const longitudeRadians = (location.longitude * Math.PI) / 180;
 
   const sinLatitude =
     Math.sin(latitudeRadians) * Math.cos(angularDistance) +
@@ -103,7 +64,6 @@ export default function MapView({
   const mapRef = useRef<MapRef | null>(null);
   const hasAppliedInitialViewport = useRef(false);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [isStyleReady, setIsStyleReady] = useState(false);
 
   const validLocations = useMemo(
     () =>
@@ -115,71 +75,16 @@ export default function MapView({
     [locations],
   );
 
-  const privateLocations = useMemo(
-    () => validLocations.filter((location) => location.privacy_mode),
+  const displayLocations = useMemo(
+    () =>
+      validLocations.map((location) => ({
+        ...location,
+        ...getDisplayCoordinates(location),
+      })),
     [validLocations],
   );
 
-  const publicLocations = useMemo(
-    () => validLocations.filter((location) => !location.privacy_mode),
-    [validLocations],
-  );
-
-  const viewportLocations = useMemo(
-    () => (publicLocations.length > 0 ? publicLocations : validLocations),
-    [publicLocations, validLocations],
-  );
-
-  const privateLocationById = useMemo(
-    () =>
-      privateLocations.reduce<Record<string, PublicLocation>>(
-        (acc, location) => {
-          acc[location.id] = location;
-          return acc;
-        },
-        {},
-      ),
-    [privateLocations],
-  );
-
-  const obfuscatedPrivateCenters = useMemo(
-    () =>
-      privateLocations.map((location) => ({
-        locationId: location.id,
-        projectName: location.project_name,
-        ...offsetCoordinates(
-          location.latitude,
-          location.longitude,
-          PRIVATE_CENTER_OFFSET_MAX_METERS,
-        ),
-      })),
-    [privateLocations],
-  );
-
-  const privateRadiusGeoJson = useMemo(
-    () => ({
-      type: "FeatureCollection" as const,
-      features: obfuscatedPrivateCenters.map((center) => ({
-        type: "Feature" as const,
-        properties: {
-          locationId: center.locationId,
-          projectName: center.projectName,
-        },
-        geometry: {
-          type: "Polygon" as const,
-          coordinates: [
-            createCircleCoordinates(
-              center.latitude,
-              center.longitude,
-              PRIVATE_RADIUS_METERS,
-              PRIVATE_RADIUS_STEPS,
-            ),
-          ],
-        },
-      })),
-    }),
-    [obfuscatedPrivateCenters],
-  );
+  const viewportLocations = useMemo(() => displayLocations, [displayLocations]);
 
   const initialViewState = useMemo(() => {
     if (viewportLocations.length === 0) {
@@ -268,9 +173,7 @@ export default function MapView({
 
   return (
     <div className="relative h-full w-full">
-      {!isMapReady && (
-        <div className="absolute inset-0 z-10 bg-slate-100" />
-      )}
+      {!isMapReady && <div className="absolute inset-0 z-10 bg-slate-100" />}
       <Map
         ref={mapRef}
         initialViewState={initialViewState}
@@ -278,63 +181,13 @@ export default function MapView({
         mapStyle={MAPBOX_STYLE}
         style={{ width: "100%", height: "100%" }}
         attributionControl
-        interactiveLayerIds={[
-          PRIVATE_RADIUS_FILL_LAYER_ID,
-          PRIVATE_RADIUS_OUTLINE_LAYER_ID,
-        ]}
         onLoad={() => {
           setIsMapReady(true);
-          setIsStyleReady(false);
-        }}
-        onIdle={() => {
-          if (mapRef.current?.isStyleLoaded()) {
-            setIsStyleReady(true);
-          }
-        }}
-        onClick={(event) => {
-          const locationId =
-            event.features?.[0]?.properties?.locationId ??
-            event.features?.[0]?.properties?.locationid;
-
-          if (typeof locationId !== "string") {
-            return;
-          }
-
-          const selectedLocation = privateLocationById[locationId];
-          if (selectedLocation) {
-            onSelectLocation(selectedLocation);
-          }
         }}
       >
         <NavigationControl position="top-right" />
 
-        {isStyleReady && privateLocations.length > 0 ? (
-          <Source
-            id="private-radius-source"
-            type="geojson"
-            data={privateRadiusGeoJson}
-          >
-            <Layer
-              id={PRIVATE_RADIUS_FILL_LAYER_ID}
-              type="fill"
-              paint={{
-                "fill-color": brandColor ?? "#0f766e",
-                "fill-opacity": 0.16,
-              }}
-            />
-            <Layer
-              id={PRIVATE_RADIUS_OUTLINE_LAYER_ID}
-              type="line"
-              paint={{
-                "line-color": brandColor ?? "#0f766e",
-                "line-width": 2,
-                "line-opacity": 0.55,
-              }}
-            />
-          </Source>
-        ) : null}
-
-        {publicLocations.map((location) => (
+        {displayLocations.map((location) => (
           <Marker
             key={location.id}
             latitude={location.latitude}
