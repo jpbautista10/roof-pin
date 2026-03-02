@@ -22,7 +22,7 @@ const INITIAL_CENTER = {
   zoom: 11,
 };
 
-const MAPBOX_STYLE = "mapbox://styles/mapbox/standard";
+const MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";
 const PRIVATE_RADIUS_METERS = 200;
 const PRIVATE_RADIUS_STEPS = 40;
 const PRIVATE_CENTER_OFFSET_MAX_METERS = 80;
@@ -267,7 +267,10 @@ export default function MapView({
   }
 
   return (
-    <div className="h-full w-full">
+    <div className="relative h-full w-full">
+      {!isMapReady && (
+        <div className="absolute inset-0 z-10 bg-slate-100" />
+      )}
       <Map
         ref={mapRef}
         initialViewState={initialViewState}
