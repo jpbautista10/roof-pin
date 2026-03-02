@@ -15,6 +15,7 @@ import {
   PanelsTopLeft,
   PlusCircle,
   Settings,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
@@ -48,6 +49,12 @@ const navDefinitions = [
     label: "Create Location",
     icon: PlusCircle,
     description: "Add a new project location",
+  },
+  {
+    to: "import",
+    label: "Import",
+    icon: Upload,
+    description: "Bulk import locations from CSV",
   },
   {
     to: "settings",
