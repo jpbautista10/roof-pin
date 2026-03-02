@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getValidBrandColor } from "@/lib/color";
 import MapHeader from "@/components/map/MapHeader";
 import MapView from "@/components/map/MapView";
 import StatsView from "@/components/map/StatsView";
@@ -245,6 +246,49 @@ export default function PublicMap() {
 
   const company = isDemoMode ? demoCompany : companyQuery.data;
   const locations = isDemoMode ? demoLocations : (locationsQuery.data ?? []);
+
+  useEffect(() => {
+    if (typeof document === "undefined" || !company || isEmbedMode) {
+      return;
+    }
+
+    const previousTitle = document.title;
+    const existingFavicon =
+      document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    const faviconLink = existingFavicon ?? document.createElement("link");
+    const previousFaviconHref = faviconLink.getAttribute("href");
+    const wasCreated = !existingFavicon;
+
+    if (wasCreated) {
+      faviconLink.setAttribute("rel", "icon");
+      document.head.appendChild(faviconLink);
+    }
+
+    const fallbackCharacter =
+      company.name.trim().charAt(0).toUpperCase() || "M";
+    const fallbackSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="${getValidBrandColor(company.brand_primary_color)}"/><text x="50%" y="55%" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="white">${fallbackCharacter}</text></svg>`;
+    const faviconHref =
+      company.logo_url ||
+      `data:image/svg+xml,${encodeURIComponent(fallbackSvg)}`;
+
+    document.title = `${company.name} Map`;
+    faviconLink.setAttribute("href", faviconHref);
+
+    return () => {
+      document.title = previousTitle;
+
+      if (wasCreated) {
+        faviconLink.remove();
+        return;
+      }
+
+      if (previousFaviconHref) {
+        faviconLink.setAttribute("href", previousFaviconHref);
+      } else {
+        faviconLink.removeAttribute("href");
+      }
+    };
+  }, [company, isEmbedMode]);
 
   const mapSummary = useMemo(() => {
     const ratings = locations

@@ -415,6 +415,10 @@ export default function DashboardSettings() {
 
             <div className="space-y-2">
               <Label htmlFor="logoFile">Company logo</Label>
+              <p className="text-xs text-slate-500">
+                This logo is also used as the favicon on your public `/s/:slug`
+                page.
+              </p>
               <Input
                 id="logoFile"
                 type="file"
