@@ -125,6 +125,11 @@ export default function MapView({
     [validLocations],
   );
 
+  const viewportLocations = useMemo(
+    () => (publicLocations.length > 0 ? publicLocations : validLocations),
+    [publicLocations, validLocations],
+  );
+
   const privateLocationById = useMemo(
     () =>
       privateLocations.reduce<Record<string, PublicLocation>>(
@@ -177,23 +182,23 @@ export default function MapView({
   );
 
   const initialViewState = useMemo(() => {
-    if (validLocations.length === 0) {
+    if (viewportLocations.length === 0) {
       return INITIAL_CENTER;
     }
 
     return {
-      latitude: validLocations[0].latitude,
-      longitude: validLocations[0].longitude,
-      zoom: validLocations.length === 1 ? 14 : INITIAL_CENTER.zoom,
+      latitude: viewportLocations[0].latitude,
+      longitude: viewportLocations[0].longitude,
+      zoom: viewportLocations.length === 1 ? 14 : INITIAL_CENTER.zoom,
     };
-  }, [validLocations]);
+  }, [viewportLocations]);
 
   useEffect(() => {
     if (!mapRef.current || !isMapReady) return;
     const map = mapRef.current;
     const shouldAnimate = hasAppliedInitialViewport.current;
 
-    if (validLocations.length === 0) {
+    if (viewportLocations.length === 0) {
       if (shouldAnimate) {
         map.flyTo({
           center: [INITIAL_CENTER.longitude, INITIAL_CENTER.latitude],
@@ -211,16 +216,22 @@ export default function MapView({
       return;
     }
 
-    if (validLocations.length === 1) {
+    if (viewportLocations.length === 1) {
       if (shouldAnimate) {
         map.flyTo({
-          center: [validLocations[0].longitude, validLocations[0].latitude],
+          center: [
+            viewportLocations[0].longitude,
+            viewportLocations[0].latitude,
+          ],
           zoom: 14,
           duration: 700,
         });
       } else {
         map.jumpTo({
-          center: [validLocations[0].longitude, validLocations[0].latitude],
+          center: [
+            viewportLocations[0].longitude,
+            viewportLocations[0].latitude,
+          ],
           zoom: 14,
         });
       }
@@ -229,11 +240,11 @@ export default function MapView({
       return;
     }
 
-    const bounds = validLocations.reduce(
+    const bounds = viewportLocations.reduce(
       (acc, location) => acc.extend([location.longitude, location.latitude]),
       new LngLatBounds(
-        [validLocations[0].longitude, validLocations[0].latitude],
-        [validLocations[0].longitude, validLocations[0].latitude],
+        [viewportLocations[0].longitude, viewportLocations[0].latitude],
+        [viewportLocations[0].longitude, viewportLocations[0].latitude],
       ),
     );
 
@@ -243,7 +254,7 @@ export default function MapView({
     });
 
     hasAppliedInitialViewport.current = true;
-  }, [isMapReady, validLocations]);
+  }, [isMapReady, viewportLocations]);
 
   if (!MAPBOX_TOKEN) {
     return (
