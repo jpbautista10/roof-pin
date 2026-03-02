@@ -26,6 +26,7 @@ export interface PublicLocation {
   id: string;
   project_name: string;
   place_label: string;
+  neighborhood: string;
   latitude: number;
   longitude: number;
   privacy_mode: boolean;
@@ -33,4 +34,5 @@ export interface PublicLocation {
   created_at: string;
   images: PublicLocationImage[];
   reviews: PublicLocationReview[];
+  work_type: string | null;
 }

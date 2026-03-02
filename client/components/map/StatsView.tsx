@@ -55,7 +55,7 @@ export default function StatsView({
                     {location.project_name}
                   </p>
                   <p className="mt-1 truncate text-xs text-slate-500">
-                    {location.place_label}
+                    {location.neighborhood || location.place_label}
                   </p>
                 </div>
                 {!location.privacy_mode &&

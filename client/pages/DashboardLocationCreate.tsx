@@ -164,6 +164,15 @@ async function uploadLocationImage(params: {
   return { storage_path: filePath, public_url: data.publicUrl };
 }
 
+function getAddressField(addressJson: unknown, field: string) {
+  if (!addressJson || typeof addressJson !== "object") {
+    return null;
+  }
+
+  const value = (addressJson as Record<string, unknown>)[field];
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
 export default function DashboardLocationCreate() {
   const navigate = useNavigate();
   const params = useParams<{ locationId: string }>();
@@ -235,9 +244,18 @@ export default function DashboardLocationCreate() {
     const location = editLocationQuery.data;
     if (!location) return;
 
+    const savedNeighborhood = getAddressField(
+      location.address_json,
+      "neighborhood",
+    );
+    const savedFullAddress = getAddressField(
+      location.address_json,
+      "full_address",
+    );
+
     setProjectName(location.project_name ?? "");
-    setAddress(location.place_label ?? "");
-    setNeighborhood(location.place_label ?? "");
+    setAddress(savedFullAddress ?? location.place_label ?? "");
+    setNeighborhood(savedNeighborhood ?? location.place_label ?? "");
     setLatitude(location.latitude);
     setLongitude(location.longitude);
     setWorkType(
@@ -294,7 +312,7 @@ export default function DashboardLocationCreate() {
       const payload = {
         project_name: projectName.trim(),
         place_label:
-          neighborhood.trim() || selectedSuggestion?.label || address.trim(),
+          selectedSuggestion?.label || address.trim() || neighborhood.trim(),
         latitude,
         longitude,
         geocode_latitude:
@@ -314,7 +332,7 @@ export default function DashboardLocationCreate() {
           country: selectedSuggestion?.country ?? null,
           postcode: selectedSuggestion?.postcode ?? null,
           full_address: selectedSuggestion?.label ?? address.trim(),
-          neighborhood: neighborhood || null,
+          neighborhood: neighborhood.trim() || null,
         },
       };
 

@@ -13,6 +13,9 @@ interface LocationQueryRow {
   id: string;
   project_name: string;
   place_label: string;
+  address_json: {
+    neighborhood?: string | null;
+  } | null;
   latitude: number;
   longitude: number;
   geocode_latitude: number;
@@ -59,6 +62,7 @@ const demoLocations: PublicLocation[] = [
     id: "demo-1",
     project_name: "Buckhead Full Roof Replacement",
     place_label: "Buckhead, Atlanta, GA",
+    neighborhood: "Buckhead",
     latitude: 33.8462,
     longitude: -84.3713,
     privacy_mode: false,
@@ -92,6 +96,7 @@ const demoLocations: PublicLocation[] = [
     id: "demo-2",
     project_name: "East Atlanta Storm Repair",
     place_label: "East Atlanta Village, Atlanta, GA",
+    neighborhood: "East Atlanta Village",
     latitude: 33.7402,
     longitude: -84.3458,
     privacy_mode: true,
@@ -125,6 +130,7 @@ const demoLocations: PublicLocation[] = [
     id: "demo-3",
     project_name: "Decatur Architectural Shingle Upgrade",
     place_label: "Decatur, GA",
+    neighborhood: "Decatur",
     latitude: 33.7748,
     longitude: -84.2963,
     privacy_mode: false,
@@ -171,6 +177,7 @@ function normalizeLocations(rows: LocationQueryRow[]): PublicLocation[] {
       id: row.id,
       project_name: row.project_name,
       place_label: row.place_label,
+      neighborhood: row.address_json?.neighborhood?.trim() || row.place_label,
       latitude: displayLatitude,
       longitude: displayLongitude,
       privacy_mode: row.privacy_mode,
@@ -224,7 +231,7 @@ export default function PublicMap() {
       const { data, error } = await supabase
         .from("locations")
         .select(
-          "id, project_name, place_label, latitude, longitude, geocode_latitude, geocode_longitude, privacy_mode, date_completed, created_at, work_type, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
+          "id, project_name, place_label, address_json, latitude, longitude, geocode_latitude, geocode_longitude, privacy_mode, date_completed, created_at, work_type, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
         )
         .eq("company_id", companyQuery.data!.id)
         .order("created_at", { ascending: false });

@@ -51,6 +51,17 @@ function normalizeFilter(value: string | null): ListFilter {
   return "all";
 }
 
+function getNeighborhood(addressJson: unknown, fallback: string) {
+  if (addressJson && typeof addressJson === "object") {
+    const value = (addressJson as Record<string, unknown>).neighborhood;
+    if (typeof value === "string" && value.trim()) {
+      return value;
+    }
+  }
+
+  return fallback;
+}
+
 export default function Dashboard() {
   const { company } = useAuth();
   const queryClient = useQueryClient();
@@ -81,6 +92,11 @@ export default function Dashboard() {
     const normalizedQuery = query.trim().toLowerCase();
 
     return locations.filter((location) => {
+      const neighborhood = getNeighborhood(
+        location.address_json,
+        location.place_label,
+      );
+
       if (filter === "public" && location.privacy_mode) return false;
       if (filter === "private" && !location.privacy_mode) return false;
       if (filter === "needs_review" && location.review) return false;
@@ -89,7 +105,7 @@ export default function Dashboard() {
 
       return (
         location.project_name.toLowerCase().includes(normalizedQuery) ||
-        location.place_label.toLowerCase().includes(normalizedQuery) ||
+        neighborhood.toLowerCase().includes(normalizedQuery) ||
         (location.work_type ?? "").toLowerCase().includes(normalizedQuery) ||
         (location.date_completed ?? "").toLowerCase().includes(normalizedQuery)
       );
@@ -245,6 +261,10 @@ export default function Dashboard() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {filteredLocations.map((location) => {
+                const neighborhood = getNeighborhood(
+                  location.address_json,
+                  location.place_label,
+                );
                 const before = location.images.find(
                   (image) => image.kind === "before",
                 );
@@ -281,9 +301,7 @@ export default function Dashboard() {
                       <h3 className="text-base font-semibold text-slate-900">
                         {location.project_name}
                       </h3>
-                      <p className="text-sm text-slate-600">
-                        {location.place_label}
-                      </p>
+                      <p className="text-sm text-slate-600">{neighborhood}</p>
                       <div className="flex items-center justify-between text-xs text-slate-500">
                         <span>Added {formatDate(location.created_at)}</span>
                         {location.review?.stars ? (
