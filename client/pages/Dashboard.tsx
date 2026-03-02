@@ -1,6 +1,14 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Pencil, PlusCircle, QrCode, Star, Trash2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  MapPin,
+  Pencil,
+  PlusCircle,
+  QrCode,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
@@ -259,91 +267,209 @@ export default function Dashboard() {
               No locations match your current search or filter.
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {filteredLocations.map((location) => {
-                const neighborhood = getNeighborhood(
-                  location.address_json,
-                  location.place_label,
-                );
-                const before = location.images.find(
-                  (image) => image.kind === "before",
-                );
-                const after = location.images.find(
-                  (image) => image.kind === "after",
-                );
+            <>
+              <div className="space-y-3 sm:hidden">
+                {filteredLocations.map((location) => {
+                  const neighborhood = getNeighborhood(
+                    location.address_json,
+                    location.place_label,
+                  );
 
-                return (
-                  <article
-                    key={location.id}
-                    className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
-                  >
-                    <div className="grid grid-cols-2 gap-1 bg-slate-100">
-                      <div className="aspect-video bg-slate-200">
-                        {before ? (
-                          <img
-                            src={before.public_url}
-                            alt={`${location.project_name} before`}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : null}
-                      </div>
-                      <div className="aspect-video bg-slate-200">
-                        {after ? (
-                          <img
-                            src={after.public_url}
-                            alt={`${location.project_name} after`}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : null}
-                      </div>
-                    </div>
-                    <div className="space-y-2 p-4">
-                      <h3 className="text-base font-semibold text-slate-900">
-                        {location.project_name}
-                      </h3>
-                      <p className="text-sm text-slate-600">{neighborhood}</p>
-                      <div className="flex items-center justify-between text-xs text-slate-500">
-                        <span>Added {formatDate(location.created_at)}</span>
-                        {location.review?.stars ? (
-                          <span className="inline-flex items-center gap-1 text-amber-600">
-                            <Star className="h-3.5 w-3.5 fill-current" />
-                            {location.review.stars}/5
+                  return (
+                    <article
+                      key={location.id}
+                      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 space-y-1">
+                          <h3 className="truncate text-sm font-semibold text-slate-900">
+                            {neighborhood}
+                          </h3>
+                          <p className="truncate text-sm text-slate-600">
+                            {location.project_name}
+                          </p>
+                        </div>
+                        {location.privacy_mode ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                            <EyeOff className="h-3 w-3" />
+                            Private
                           </span>
-                        ) : null}
+                        ) : (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                            <Eye className="h-3 w-3" />
+                            Public
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center justify-end gap-2 pt-2">
+
+                      <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                          {location.work_type ?? "Unknown"}
+                        </span>
+                        <span>
+                          {location.date_completed ||
+                            formatDate(location.created_at)}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-end gap-1 border-t border-slate-100 pt-2">
                         {!location.review ? (
                           <Button
-                            variant="secondary"
-                            size="sm"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                             onClick={() => openReviewRequest(location.id)}
+                            title="Get review QR"
+                            aria-label="Get review QR"
                           >
                             <QrCode className="h-3.5 w-3.5" />
-                            Get review QR
                           </Button>
                         ) : null}
-                        <Button variant="outline" size="sm" asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                          asChild
+                        >
                           <Link
                             to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
+                            title="Edit location"
+                            aria-label="Edit location"
                           >
                             <Pencil className="h-3.5 w-3.5" />
-                            Edit
                           </Link>
                         </Button>
                         <Button
-                          variant="destructive"
-                          size="sm"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-red-600"
                           onClick={() => setDeleteTargetId(location.id)}
+                          title="Delete location"
+                          aria-label="Delete location"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          Delete
                         </Button>
                       </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full caption-bottom text-sm">
+                    <thead>
+                      <tr className="border-b bg-slate-50/60">
+                        <th className="h-12 w-[180px] px-4 text-left align-middle text-xs font-medium text-slate-500">
+                          Neighborhood
+                        </th>
+                        <th className="h-12 px-4 text-left align-middle text-xs font-medium text-slate-500">
+                          Work Type
+                        </th>
+                        <th className="h-12 px-4 text-left align-middle text-xs font-medium text-slate-500">
+                          Project
+                        </th>
+                        <th className="hidden h-12 px-4 text-left align-middle text-xs font-medium text-slate-500 md:table-cell">
+                          Completed
+                        </th>
+                        <th className="h-12 px-4 text-center align-middle text-xs font-medium text-slate-500">
+                          Status
+                        </th>
+                        <th className="h-12 px-4 text-right align-middle text-xs font-medium text-slate-500">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredLocations.map((location) => {
+                        const neighborhood = getNeighborhood(
+                          location.address_json,
+                          location.place_label,
+                        );
+
+                        return (
+                          <tr
+                            key={location.id}
+                            className="border-b transition-colors hover:bg-slate-50"
+                          >
+                            <td className="p-4 align-middle text-sm font-medium text-slate-900">
+                              {neighborhood}
+                            </td>
+                            <td className="p-4 align-middle">
+                              <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                                {location.work_type ?? "Unknown"}
+                              </span>
+                            </td>
+                            <td className="p-4 align-middle text-sm text-slate-600">
+                              {location.project_name}
+                            </td>
+                            <td className="hidden p-4 align-middle text-sm text-slate-500 md:table-cell">
+                              {location.date_completed ||
+                                formatDate(location.created_at)}
+                            </td>
+                            <td className="p-4 text-center align-middle">
+                              {location.privacy_mode ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                                  <EyeOff className="h-3 w-3" />
+                                  Private
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                  <Eye className="h-3 w-3" />
+                                  Public
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4 text-right align-middle">
+                              <div className="flex items-center justify-end gap-1">
+                                {!location.review ? (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                    onClick={() =>
+                                      openReviewRequest(location.id)
+                                    }
+                                    title="Get review QR"
+                                    aria-label="Get review QR"
+                                  >
+                                    <QrCode className="h-3.5 w-3.5" />
+                                  </Button>
+                                ) : null}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                  asChild
+                                >
+                                  <Link
+                                    to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
+                                    title="Edit location"
+                                    aria-label="Edit location"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Link>
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-red-600"
+                                  onClick={() => setDeleteTargetId(location.id)}
+                                  title="Delete location"
+                                  aria-label="Delete location"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           )}
         </>
       )}
