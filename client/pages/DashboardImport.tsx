@@ -86,9 +86,9 @@ export default function DashboardImport() {
     const importRows = validRows.map((r) => ({
       project_name: r.project_name.trim(),
       address: r.address.trim(),
-      work_type: r.work_type?.trim() || undefined,
+      work_type: r.work_type?.trim() || r.project_name.trim(),
       date_completed: r.date_completed?.trim() || undefined,
-      privacy_mode: r.privacy_mode?.trim() === "true",
+      privacy_mode: r.privacy_mode?.trim().toLowerCase() === "true",
     }));
 
     let geocodedResults: Array<{
