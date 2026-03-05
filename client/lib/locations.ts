@@ -128,3 +128,13 @@ export async function deleteLocation(locationId: string) {
     throw error;
   }
 }
+
+export async function deleteLocationsBulk(locationIds: string[]) {
+  const { error } = await supabase
+    .from("locations")
+    .delete()
+    .in("id", locationIds);
+  if (error) {
+    throw error;
+  }
+}

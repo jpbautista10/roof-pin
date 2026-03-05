@@ -12,7 +12,12 @@ import {
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
-import { deleteLocation, fetchLocationsByCompany } from "@/lib/locations";
+import {
+  deleteLocation,
+  deleteLocationsBulk,
+  fetchLocationsByCompany,
+} from "@/lib/locations";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createOrGetReviewToken } from "@/lib/review-requests";
@@ -75,6 +80,8 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [reviewLinkLocationId, setReviewLinkLocationId] = useState<
     string | null
   >(null);
@@ -151,6 +158,44 @@ export default function Dashboard() {
       );
     },
   });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => deleteLocationsBulk(ids),
+    onSuccess: async (_data, ids) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["locations", company.id],
+      });
+      toast.success(`${ids.length} location(s) deleted.`);
+      setSelectedIds(new Set());
+      setShowBulkDeleteDialog(false);
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to delete locations.",
+      );
+    },
+  });
+
+  function toggleSelection(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filteredLocations.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredLocations.map((l) => l.id)));
+    }
+  }
+
+  const allSelected =
+    filteredLocations.length > 0 &&
+    selectedIds.size === filteredLocations.length;
 
   const reviewLinkMutation = useMutation({
     mutationFn: async (locationId: string) => {
@@ -262,6 +307,29 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 shadow-sm">
+              <span className="text-sm font-medium text-slate-700">
+                {selectedIds.size} selected
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedIds(new Set())}
+              >
+                Deselect all
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowBulkDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete selected
+              </Button>
+            </div>
+          )}
+
           {filteredLocations.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center text-sm text-slate-600">
               No locations match your current search or filter.
@@ -278,9 +346,18 @@ export default function Dashboard() {
                   return (
                     <article
                       key={location.id}
-                      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                      className={`rounded-xl border bg-white p-4 shadow-sm ${
+                        selectedIds.has(location.id)
+                          ? "border-primary ring-1 ring-primary/30"
+                          : "border-slate-200"
+                      }`}
                     >
                       <div className="flex items-start justify-between gap-3">
+                        <Checkbox
+                          checked={selectedIds.has(location.id)}
+                          onCheckedChange={() => toggleSelection(location.id)}
+                          className="mt-0.5 shrink-0"
+                        />
                         <div className="min-w-0 space-y-1">
                           <h3 className="truncate text-sm font-semibold text-slate-900">
                             {neighborhood}
@@ -360,6 +437,12 @@ export default function Dashboard() {
                   <table className="w-full caption-bottom text-sm">
                     <thead>
                       <tr className="border-b bg-slate-50/60">
+                        <th className="h-12 w-12 px-4 text-center align-middle">
+                          <Checkbox
+                            checked={allSelected}
+                            onCheckedChange={toggleSelectAll}
+                          />
+                        </th>
                         <th className="h-12 w-[180px] px-4 text-left align-middle text-xs font-medium text-slate-500">
                           Neighborhood
                         </th>
@@ -390,8 +473,18 @@ export default function Dashboard() {
                         return (
                           <tr
                             key={location.id}
-                            className="border-b transition-colors hover:bg-slate-50"
+                            className={`border-b transition-colors hover:bg-slate-50 ${
+                              selectedIds.has(location.id) ? "bg-primary/5" : ""
+                            }`}
                           >
+                            <td className="w-12 p-4 text-center align-middle">
+                              <Checkbox
+                                checked={selectedIds.has(location.id)}
+                                onCheckedChange={() =>
+                                  toggleSelection(location.id)
+                                }
+                              />
+                            </td>
                             <td className="p-4 align-middle text-sm font-medium text-slate-900">
                               {neighborhood}
                             </td>
@@ -473,6 +566,40 @@ export default function Dashboard() {
           )}
         </>
       )}
+
+      <AlertDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open) setShowBulkDeleteDialog(false);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {selectedIds.size} location{selectedIds.size !== 1 ? "s" : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the selected locations, their reviews,
+              and image references. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={bulkDeleteMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                bulkDeleteMutation.mutate(Array.from(selectedIds));
+              }}
+            >
+              {bulkDeleteMutation.isPending ? "Deleting..." : `Delete ${selectedIds.size}`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={Boolean(deleteTargetId)}
