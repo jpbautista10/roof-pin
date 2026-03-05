@@ -200,9 +200,6 @@ export default function MapView({
               onClick={() => onSelectLocation(location)}
               aria-label={location.project_name}
             >
-              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs font-medium text-white shadow-md group-hover:block group-focus-visible:block">
-                {location.project_name}
-              </span>
               <LocationPin className="-mt-1" color={brandColor} />
             </button>
           </Marker>
