@@ -1,4 +1,4 @@
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 
 interface MapboxContextItem {
   id?: string;
@@ -26,10 +26,36 @@ interface ImportRow {
   privacy_mode?: boolean;
 }
 
-function getContextText(
-  context: MapboxContextItem[] | undefined,
-  key: string,
-) {
+function parseBatchRows(body: unknown): ImportRow[] | undefined {
+  let payload = body;
+
+  if (Buffer.isBuffer(payload)) {
+    const raw = payload.toString("utf8").trim();
+    if (!raw) return undefined;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return undefined;
+    }
+  } else if (typeof payload === "string") {
+    const raw = payload.trim();
+    if (!raw) return undefined;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return undefined;
+    }
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return undefined;
+  }
+
+  const maybeRows = (payload as { rows?: unknown }).rows;
+  return Array.isArray(maybeRows) ? (maybeRows as ImportRow[]) : undefined;
+}
+
+function getContextText(context: MapboxContextItem[] | undefined, key: string) {
   return (
     context?.find((item) => item.id?.startsWith(`${key}.`))?.text?.trim() ??
     null
@@ -42,10 +68,7 @@ async function geocodeAddress(address: string, token: string) {
     `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedQuery}.json`,
   );
   url.searchParams.set("limit", "1");
-  url.searchParams.set(
-    "types",
-    "address,place,postcode,locality,neighborhood",
-  );
+  url.searchParams.set("types", "address,place,postcode,locality,neighborhood");
   url.searchParams.set("access_token", token);
 
   const response = await fetch(url.toString());
@@ -116,10 +139,12 @@ export const handleBatchGeocode: RequestHandler = async (req, res) => {
   }
 
   console.log("Received batch geocode request with body:", req.body);
-  const rows = req.body?.rows as ImportRow[] | undefined;
+  const rows = parseBatchRows(req.body);
 
   if (!Array.isArray(rows) || rows.length === 0) {
-    res.status(400).json({ message: "Request body must contain a non-empty 'rows' array." });
+    res
+      .status(400)
+      .json({ message: "Request body must contain a non-empty 'rows' array." });
     return;
   }
 
@@ -134,7 +159,11 @@ export const handleBatchGeocode: RequestHandler = async (req, res) => {
     const row = rows[i];
 
     if (!row.project_name?.trim()) {
-      results.push({ row_index: i, status: "error", error: "Missing project_name" });
+      results.push({
+        row_index: i,
+        status: "error",
+        error: "Missing project_name",
+      });
       continue;
     }
 
