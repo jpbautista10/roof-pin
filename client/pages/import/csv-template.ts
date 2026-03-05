@@ -27,8 +27,8 @@ export interface ValidatedRow extends ParsedRow {
 export function validateRow(row: ParsedRow, index: number): ValidatedRow {
   const errors: string[] = [];
 
-  if (!row.project_name?.trim()) {
-    errors.push("Missing project name");
+  if (!row.project_name?.trim() && !row.work_type?.trim()) {
+    errors.push("Missing project name (or work_type as fallback)");
   }
 
   if (!row.address?.trim()) {

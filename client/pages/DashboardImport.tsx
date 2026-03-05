@@ -84,9 +84,9 @@ export default function DashboardImport() {
 
     // Step 1: Batch geocode via server
     const importRows = validRows.map((r) => ({
-      project_name: r.project_name.trim(),
+      project_name: r.project_name?.trim() || r.work_type?.trim() || '',
       address: r.address.trim(),
-      work_type: r.work_type?.trim() || r.project_name.trim(),
+      work_type: r.work_type?.trim() || undefined,
       date_completed: r.date_completed?.trim() || undefined,
       privacy_mode: r.privacy_mode?.trim().toLowerCase() === "true",
     }));
