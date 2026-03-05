@@ -66,9 +66,14 @@ function normalizeFilter(value: string | null): ListFilter {
 
 function getNeighborhood(addressJson: unknown, fallback: string) {
   if (addressJson && typeof addressJson === "object") {
-    const value = (addressJson as Record<string, unknown>).neighborhood;
-    if (typeof value === "string" && value.trim()) {
-      return value;
+    const obj = addressJson as Record<string, unknown>;
+    const neighborhood = obj.neighborhood;
+    if (typeof neighborhood === "string" && neighborhood.trim()) {
+      return neighborhood;
+    }
+    const city = obj.city;
+    if (typeof city === "string" && city.trim()) {
+      return city;
     }
   }
 
