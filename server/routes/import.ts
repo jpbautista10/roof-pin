@@ -115,6 +115,7 @@ export const handleBatchGeocode: RequestHandler = async (req, res) => {
     return;
   }
 
+  console.log("Received batch geocode request with body:", req.body);
   const rows = req.body?.rows as ImportRow[] | undefined;
 
   if (!Array.isArray(rows) || rows.length === 0) {
