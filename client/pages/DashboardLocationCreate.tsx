@@ -62,7 +62,7 @@ const YEARS = Array.from({ length: 8 }, (_, i) =>
 );
 
 const INITIAL_COORDS = { lat: 33.749, lng: -84.388 };
-const MAPBOX_STYLE = "mapbox://styles/mapbox/standard";
+const MAPBOX_STYLE = "mapbox://styles/mapbox/streets-v12";
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 interface ImageUploadProps {

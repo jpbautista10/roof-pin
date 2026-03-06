@@ -8,6 +8,11 @@ window.addEventListener("unhandledrejection", (event) => {
     event.preventDefault();
   }
 });
+window.addEventListener("error", (event) => {
+  if (event.error?.name === "AbortError" || event.message?.includes("AbortError")) {
+    event.preventDefault();
+  }
+});
 
 const container = document.getElementById("root")!;
 
