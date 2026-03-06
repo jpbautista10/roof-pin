@@ -222,7 +222,7 @@ export default function DashboardLayout({
                       onClick={() => setMobileOpen(false)}
                     >
                       <Button variant="outline" size="sm" className="w-full">
-                        Preview public map
+                        View live map
                       </Button>
                     </a>
                   </div>
@@ -268,18 +268,16 @@ export default function DashboardLayout({
 
           <NavLinks />
 
-          <div className="mt-auto space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <a
-              href={`/s/${companySlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="outline" size="sm" className="w-full">
-                <PanelsTopLeft className="h-4 w-4" />
-                Preview public map
-              </Button>
-            </a>
-          </div>
+          <a
+            href={`/s/${companySlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" size="sm" className="w-full">
+              <PanelsTopLeft className="h-4 w-4" />
+              View live map
+            </Button>
+          </a>
         </aside>
 
         {/* Main content */}
