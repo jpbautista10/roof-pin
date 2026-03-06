@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Map, {
-  Marker,
-  NavigationControl,
-  type MapRef,
-} from "react-map-gl/mapbox";
+import Map, { Marker, type MapRef } from "react-map-gl/mapbox";
 import { LngLatBounds } from "mapbox-gl";
-import { LocateFixed, Loader2 } from "lucide-react";
+import { LocateFixed, Loader2, Plus, Minus } from "lucide-react";
 import LocationPin from "@/components/map/LocationPin";
 import { PublicLocation } from "@/types/public-map";
 
@@ -220,8 +216,6 @@ export default function MapView({
           setIsMapReady(true);
         }}
       >
-        <NavigationControl position="top-right" />
-
         {userLocation && (
           <Marker
             latitude={userLocation.latitude}
@@ -254,21 +248,41 @@ export default function MapView({
         ))}
       </Map>
 
-      {/* Locate me button – positioned below the Mapbox +/- NavigationControl */}
-      <button
-        type="button"
-        onClick={handleLocateMe}
-        disabled={locating}
-        className="absolute right-[10px] top-[96px] z-10 flex h-[29px] w-[29px] items-center justify-center rounded-md border border-slate-300 bg-white shadow-sm transition-colors hover:bg-slate-100 disabled:opacity-60"
-        aria-label="Locate me"
-        title="Zoom to my location"
-      >
-        {locating ? (
-          <Loader2 className="h-4 w-4 animate-spin text-slate-600" />
-        ) : (
-          <LocateFixed className="h-4 w-4 text-slate-600" />
-        )}
-      </button>
+      {/* Custom map controls: zoom + locate */}
+      <div className="absolute right-2.5 top-2.5 z-10 flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <button
+          type="button"
+          onClick={() => mapRef.current?.zoomIn({ duration: 300 })}
+          className="flex h-9 w-9 items-center justify-center border-b border-slate-200 transition-colors hover:bg-slate-100"
+          aria-label="Zoom in"
+          title="Zoom in"
+        >
+          <Plus className="h-4 w-4 text-slate-600" />
+        </button>
+        <button
+          type="button"
+          onClick={() => mapRef.current?.zoomOut({ duration: 300 })}
+          className="flex h-9 w-9 items-center justify-center border-b border-slate-200 transition-colors hover:bg-slate-100"
+          aria-label="Zoom out"
+          title="Zoom out"
+        >
+          <Minus className="h-4 w-4 text-slate-600" />
+        </button>
+        <button
+          type="button"
+          onClick={handleLocateMe}
+          disabled={locating}
+          className="flex h-9 w-9 items-center justify-center transition-colors hover:bg-slate-100 disabled:opacity-60"
+          aria-label="Locate me"
+          title="Zoom to my location"
+        >
+          {locating ? (
+            <Loader2 className="h-4 w-4 animate-spin text-slate-600" />
+          ) : (
+            <LocateFixed className="h-4 w-4 text-slate-600" />
+          )}
+        </button>
+      </div>
     </div>
   );
 }
