@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
 import { PublicCompany } from "@/types/public-map";
-import { List, Map } from "lucide-react";
+import { BarChart3, Map } from "lucide-react";
 
 interface MapHeaderProps {
   company: PublicCompany;
@@ -62,9 +62,9 @@ export default function MapHeader({
             <span className="sm:hidden">Map</span>
           </TabsTrigger>
           <TabsTrigger value="locations" className="text-xs gap-1.5 px-3">
-            <List className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Locations</span>
-            <span className="sm:hidden">List</span>
+            <BarChart3 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Stats</span>
+            <span className="sm:hidden">Stats</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

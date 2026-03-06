@@ -65,7 +65,7 @@ export default function WorkTypeFilter({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1.5 w-52 rounded-lg border border-slate-200 bg-white shadow-lg">
+        <div className="fixed inset-x-3 top-auto z-50 mt-1.5 rounded-lg border border-slate-200 bg-white shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:left-auto sm:w-52">
           <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
             <span className="text-xs font-semibold text-slate-700">
               Filter by Work Type
@@ -90,7 +90,7 @@ export default function WorkTypeFilter({
                   key={type}
                   type="button"
                   onClick={() => toggleType(type)}
-                  className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs text-slate-700 transition-colors hover:bg-slate-50"
+                  className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 sm:py-1.5 sm:text-xs"
                 >
                   <span
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${

@@ -386,7 +386,7 @@ export default function PublicMap() {
             brandColor={company.brand_primary_color}
           />
         ) : (
-          <StatsView locations={filteredLocations} onSelectLocation={openLocation} />
+          <StatsView locations={filteredLocations} />
         )}
 
         {/* Top overlay bar: projects pill + work type filter */}
