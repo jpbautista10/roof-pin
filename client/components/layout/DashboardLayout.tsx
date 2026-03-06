@@ -13,7 +13,7 @@ import {
   Mail,
   MapPin,
   Menu,
-  PanelsTopLeft,
+  Map as MapIcon,
   Plus,
   Settings,
 } from "lucide-react";
@@ -274,7 +274,7 @@ export default function DashboardLayout({
             rel="noopener noreferrer"
           >
             <Button variant="outline" size="sm" className="w-full">
-              <PanelsTopLeft className="h-4 w-4" />
+              <MapIcon className="h-4 w-4" />
               View live map
             </Button>
           </a>
