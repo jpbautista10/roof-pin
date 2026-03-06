@@ -215,6 +215,10 @@ export default function MapView({
         onLoad={() => {
           setIsMapReady(true);
         }}
+        onError={(e) => {
+          // Suppress benign Mapbox GL AbortError from tile cancellation
+          if (e?.error?.name === "AbortError") return;
+        }}
       >
         {userLocation && (
           <Marker
