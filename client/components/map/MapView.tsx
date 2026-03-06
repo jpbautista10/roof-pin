@@ -248,38 +248,49 @@ export default function MapView({
         ))}
       </Map>
 
-      {/* Custom map controls: zoom + locate — glass style */}
-      <div className="absolute right-2.5 top-16 z-10 flex flex-col overflow-hidden rounded-xl border border-white/30 bg-white/60 shadow-lg backdrop-blur-lg">
+      {/* Custom map controls: zoom + locate — iOS glass style */}
+      <div
+        className="absolute right-2.5 top-[5.75rem] z-10 flex flex-col overflow-hidden rounded-2xl"
+        style={{
+          background: "rgba(255,255,255,0.65)",
+          backdropFilter: "saturate(180%) blur(20px)",
+          WebkitBackdropFilter: "saturate(180%) blur(20px)",
+          boxShadow:
+            "0 0.5px 0 rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)",
+        }}
+      >
         <button
           type="button"
           onClick={() => mapRef.current?.zoomIn({ duration: 300 })}
-          className="flex h-9 w-9 items-center justify-center border-b border-white/30 transition-colors hover:bg-white/40"
+          className="flex h-10 w-10 items-center justify-center border-b transition-colors hover:bg-white/50"
+          style={{ borderColor: "rgba(0,0,0,0.08)" }}
           aria-label="Zoom in"
           title="Zoom in"
         >
-          <Plus className="h-4 w-4 text-slate-700" />
+          <Plus className="h-[18px] w-[18px] text-slate-800" />
         </button>
         <button
           type="button"
           onClick={() => mapRef.current?.zoomOut({ duration: 300 })}
-          className="flex h-9 w-9 items-center justify-center border-b border-white/30 transition-colors hover:bg-white/40"
+          className="flex h-10 w-10 items-center justify-center border-b transition-colors hover:bg-white/50"
+          style={{ borderColor: "rgba(0,0,0,0.08)" }}
           aria-label="Zoom out"
           title="Zoom out"
         >
-          <Minus className="h-4 w-4 text-slate-700" />
+          <Minus className="h-[18px] w-[18px] text-slate-800" />
         </button>
         <button
           type="button"
           onClick={handleLocateMe}
           disabled={locating}
-          className="flex h-9 w-9 items-center justify-center transition-colors hover:bg-white/40 disabled:opacity-60"
+          className="flex h-10 w-10 items-center justify-center transition-colors hover:bg-white/50 disabled:opacity-60"
           aria-label="Locate me"
           title="Zoom to my location"
         >
           {locating ? (
-            <Loader2 className="h-4 w-4 animate-spin text-slate-700" />
+            <Loader2 className="h-[18px] w-[18px] animate-spin text-slate-800" />
           ) : (
-            <LocateFixed className="h-4 w-4 text-slate-700" />
+            <LocateFixed className="h-[18px] w-[18px] text-slate-800" />
           )}
         </button>
       </div>
