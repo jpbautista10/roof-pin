@@ -8,6 +8,7 @@ import MapHeader from "@/components/map/MapHeader";
 import MapView from "@/components/map/MapView";
 import StatsView from "@/components/map/StatsView";
 import ProjectDrawer from "@/components/map/ProjectDrawer";
+import WorkTypeFilter from "@/components/map/WorkTypeFilter";
 import { PublicCompany, PublicLocation } from "@/types/public-map";
 
 interface LocationQueryRow {
@@ -207,6 +208,7 @@ export default function PublicMap() {
   const [selectedLocation, setSelectedLocation] =
     useState<PublicLocation | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedWorkTypes, setSelectedWorkTypes] = useState<string[]>([]);
 
   const companyQuery = useQuery({
     queryKey: ["public-map", "company", slug],
@@ -294,8 +296,25 @@ export default function PublicMap() {
     };
   }, [company, isEmbedMode]);
 
+  const workTypes = useMemo(() => {
+    const types = new Set<string>();
+    for (const loc of locations) {
+      if (loc.work_type?.trim()) {
+        types.add(loc.work_type.trim());
+      }
+    }
+    return Array.from(types).sort();
+  }, [locations]);
+
+  const filteredLocations = useMemo(() => {
+    if (selectedWorkTypes.length === 0) return locations;
+    return locations.filter(
+      (loc) => loc.work_type && selectedWorkTypes.includes(loc.work_type.trim()),
+    );
+  }, [locations, selectedWorkTypes]);
+
   const mapSummary = useMemo(() => {
-    const ratings = locations
+    const ratings = filteredLocations
       .flatMap((location) =>
         location.privacy_mode
           ? []
@@ -309,10 +328,10 @@ export default function PublicMap() {
         : null;
 
     return {
-      totalProjects: locations.length,
+      totalProjects: filteredLocations.length,
       averageRating,
     };
-  }, [locations]);
+  }, [filteredLocations]);
 
   function openLocation(location: PublicLocation) {
     setSelectedLocation(location);
@@ -362,26 +381,36 @@ export default function PublicMap() {
       <div className="relative flex-1 overflow-hidden">
         {isEmbedMode || activeTab === "map" ? (
           <MapView
-            locations={locations}
+            locations={filteredLocations}
             onSelectLocation={openLocation}
             brandColor={company.brand_primary_color}
           />
         ) : (
-          <StatsView locations={locations} onSelectLocation={openLocation} />
+          <StatsView locations={filteredLocations} onSelectLocation={openLocation} />
         )}
-      </div>
 
-      {!isEmbedMode ? (
-        <div className="pointer-events-none absolute bottom-4 left-1/2 z-[500] -translate-x-1/2">
-          <div className="pointer-events-auto rounded-full border border-slate-200 bg-white/95 px-4 py-1.5 text-xs text-slate-600 shadow-sm backdrop-blur">
-            {mapSummary.totalProjects} project
-            {mapSummary.totalProjects === 1 ? "" : "s"}
-            {typeof mapSummary.averageRating === "number"
-              ? ` · ${mapSummary.averageRating.toFixed(1)} avg rating`
-              : ""}
+        {/* Top overlay bar: projects pill + work type filter */}
+        {!isEmbedMode && activeTab === "map" ? (
+          <div className="pointer-events-none absolute left-0 right-0 top-3 z-[500] flex items-start justify-center gap-2 px-3">
+            <div className="pointer-events-auto rounded-full border border-slate-200 bg-white/95 px-4 py-1.5 text-xs text-slate-600 shadow-sm backdrop-blur">
+              {mapSummary.totalProjects} project
+              {mapSummary.totalProjects === 1 ? "" : "s"}
+              {typeof mapSummary.averageRating === "number"
+                ? ` · ${mapSummary.averageRating.toFixed(1)} avg rating`
+                : ""}
+            </div>
+            {workTypes.length > 1 && (
+              <div className="pointer-events-auto">
+                <WorkTypeFilter
+                  workTypes={workTypes}
+                  selected={selectedWorkTypes}
+                  onChange={setSelectedWorkTypes}
+                />
+              </div>
+            )}
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       <ProjectDrawer
         location={selectedLocation}

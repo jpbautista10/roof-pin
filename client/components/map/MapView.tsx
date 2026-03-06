@@ -92,7 +92,9 @@ export default function MapView({
       },
       () => {
         setLocating(false);
-        alert("Unable to retrieve your location. Please check your permissions.");
+        alert(
+          "Unable to retrieve your location. Please check your permissions.",
+        );
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -252,11 +254,12 @@ export default function MapView({
         ))}
       </Map>
 
+      {/* Locate me button – positioned below the Mapbox +/- NavigationControl */}
       <button
         type="button"
         onClick={handleLocateMe}
         disabled={locating}
-        className="absolute bottom-14 right-3 z-10 flex h-[29px] w-[29px] items-center justify-center rounded-md border border-slate-300 bg-white shadow-sm transition-colors hover:bg-slate-100 disabled:opacity-60"
+        className="absolute right-[10px] top-[96px] z-10 flex h-[29px] w-[29px] items-center justify-center rounded-md border border-slate-300 bg-white shadow-sm transition-colors hover:bg-slate-100 disabled:opacity-60"
         aria-label="Locate me"
         title="Zoom to my location"
       >
