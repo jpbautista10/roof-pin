@@ -16,6 +16,7 @@ interface LocationQueryRow {
   place_label: string;
   address_json: {
     neighborhood?: string | null;
+    city?: string | null;
   } | null;
   latitude: number;
   longitude: number;
@@ -177,7 +178,10 @@ function normalizeLocations(rows: LocationQueryRow[]): PublicLocation[] {
       id: row.id,
       project_name: row.project_name,
       place_label: row.place_label,
-      neighborhood: row.address_json?.neighborhood?.trim() || row.place_label,
+      neighborhood:
+        row.address_json?.neighborhood?.trim() ||
+        row.address_json?.city?.trim() ||
+        row.place_label,
       latitude: displayLatitude,
       longitude: displayLongitude,
       privacy_mode: row.privacy_mode,

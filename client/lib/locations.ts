@@ -129,6 +129,54 @@ export async function deleteLocation(locationId: string) {
   }
 }
 
+/**
+ * One-time cleanup: if address_json.neighborhood equals place_label or
+ * full_address (i.e. it's the full address, not an actual neighborhood),
+ * clear it so the display fallback (neighborhood → city → place_label) works.
+ */
+export async function cleanupNeighborhoodData(companyId: string) {
+  const { data, error } = await supabase
+    .from("locations")
+    .select("id, place_label, address_json")
+    .eq("company_id", companyId);
+
+  if (error || !data) return 0;
+
+  let fixed = 0;
+  for (const row of data) {
+    const json = row.address_json as Record<string, unknown> | null;
+    if (!json) continue;
+
+    const neighborhood =
+      typeof json.neighborhood === "string" ? json.neighborhood.trim() : "";
+    const fullAddress =
+      typeof json.full_address === "string" ? json.full_address.trim() : "";
+    const placeLabel = (row.place_label ?? "").trim();
+
+    if (!neighborhood) continue;
+
+    // If neighborhood is the same as full_address or place_label, it's wrong
+    const isBad =
+      neighborhood === fullAddress ||
+      neighborhood === placeLabel ||
+      // Also catch neighborhoods that look like full addresses (contain commas + numbers)
+      (neighborhood.includes(",") && /\d/.test(neighborhood));
+
+    if (isBad) {
+      const { error: updateError } = await supabase
+        .from("locations")
+        .update({
+          address_json: { ...json, neighborhood: null },
+        })
+        .eq("id", row.id);
+
+      if (!updateError) fixed++;
+    }
+  }
+
+  return fixed;
+}
+
 export async function deleteLocationsBulk(locationIds: string[]) {
   const { error } = await supabase
     .from("locations")

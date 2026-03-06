@@ -252,10 +252,11 @@ export default function DashboardLocationCreate() {
       location.address_json,
       "full_address",
     );
+    const savedCity = getAddressField(location.address_json, "city");
 
     setProjectName(location.project_name ?? "");
     setAddress(savedFullAddress ?? location.place_label ?? "");
-    setNeighborhood(savedNeighborhood ?? location.place_label ?? "");
+    setNeighborhood(savedNeighborhood ?? savedCity ?? "");
     setLatitude(location.latitude);
     setLongitude(location.longitude);
     setWorkType(

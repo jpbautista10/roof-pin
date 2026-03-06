@@ -11,10 +11,11 @@ import {
   QrCode,
   Trash2,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
 import {
+  cleanupNeighborhoodData,
   deleteLocation,
   deleteLocationsBulk,
   fetchLocationsByCompany,
@@ -100,6 +101,18 @@ export default function Dashboard() {
     enabled: Boolean(company?.id),
     queryFn: async () => fetchLocationsByCompany(company!.id),
   });
+
+  // One-time cleanup of bad neighborhood data
+  const cleanupRan = useRef(false);
+  useEffect(() => {
+    if (!company?.id || cleanupRan.current) return;
+    cleanupRan.current = true;
+    cleanupNeighborhoodData(company.id).then((fixed) => {
+      if (fixed > 0) {
+        queryClient.invalidateQueries({ queryKey: ["locations", company.id] });
+      }
+    });
+  }, [company?.id, queryClient]);
 
   if (!company?.slug) {
     return null;
