@@ -177,6 +177,65 @@ export async function cleanupNeighborhoodData(companyId: string) {
   return fixed;
 }
 
+/**
+ * One-time cleanup: strip time portions from date_completed values
+ * e.g. "11/22/24 14:30" → "November 2024"
+ */
+export async function cleanupDateCompletedData(companyId: string) {
+  const { data, error } = await supabase
+    .from("locations")
+    .select("id, date_completed")
+    .eq("company_id", companyId);
+
+  if (error || !data) return 0;
+
+  let fixed = 0;
+  for (const row of data) {
+    const raw = row.date_completed?.trim();
+    if (!raw) continue;
+
+    // Already in "Month Year" format (e.g. "June 2024") — skip
+    if (/^[A-Z][a-z]+ \d{4}$/.test(raw)) continue;
+
+    // Try to parse date formats like "11/22/24 14:30", "11/22/24", "2024-11-22", etc.
+    let parsed: Date | null = null;
+
+    // MM/DD/YY or MM/DD/YYYY with optional time
+    const slashMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if (slashMatch) {
+      const m = parseInt(slashMatch[1], 10);
+      const d = parseInt(slashMatch[2], 10);
+      let y = parseInt(slashMatch[3], 10);
+      if (y < 100) y += 2000;
+      parsed = new Date(y, m - 1, d);
+    }
+
+    // ISO format fallback
+    if (!parsed || isNaN(parsed.getTime())) {
+      parsed = new Date(raw);
+    }
+
+    if (!parsed || isNaN(parsed.getTime())) continue;
+
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
+    ];
+    const cleaned = `${months[parsed.getMonth()]} ${parsed.getFullYear()}`;
+
+    if (cleaned === raw) continue;
+
+    const { error: updateError } = await supabase
+      .from("locations")
+      .update({ date_completed: cleaned })
+      .eq("id", row.id);
+
+    if (!updateError) fixed++;
+  }
+
+  return fixed;
+}
+
 export async function deleteLocationsBulk(locationIds: string[]) {
   const { error } = await supabase
     .from("locations")

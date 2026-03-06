@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
 import {
+  cleanupDateCompletedData,
   cleanupNeighborhoodData,
   deleteLocation,
   deleteLocationsBulk,
@@ -107,8 +108,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (!company?.id || cleanupRan.current) return;
     cleanupRan.current = true;
-    cleanupNeighborhoodData(company.id).then((fixed) => {
-      if (fixed > 0) {
+    Promise.all([
+      cleanupNeighborhoodData(company.id),
+      cleanupDateCompletedData(company.id),
+    ]).then(([n, d]) => {
+      if (n > 0 || d > 0) {
         queryClient.invalidateQueries({ queryKey: ["locations", company.id] });
       }
     });
