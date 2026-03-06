@@ -1,6 +1,8 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ChevronLeft,
+  ChevronRight,
   Eye,
   EyeOff,
   MapPin,
@@ -107,6 +109,8 @@ export default function Dashboard() {
   const locations = locationsQuery.data ?? [];
   const query = searchParams.get("q") ?? "";
   const filter = normalizeFilter(searchParams.get("filter"));
+  const PAGE_SIZE = 20;
+  const currentPage = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
   const filteredLocations = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -132,17 +136,31 @@ export default function Dashboard() {
     });
   }, [locations, query, filter]);
 
-  function updateListParams(next: { q?: string; filter?: ListFilter }) {
+  const totalPages = Math.max(1, Math.ceil(filteredLocations.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedLocations = filteredLocations.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
+
+  function updateListParams(next: { q?: string; filter?: ListFilter; page?: number }) {
     const params = new URLSearchParams(searchParams);
 
     if (next.q !== undefined) {
       if (next.q.trim()) params.set("q", next.q);
       else params.delete("q");
+      params.delete("page");
     }
 
     if (next.filter !== undefined) {
       if (next.filter === "all") params.delete("filter");
       else params.set("filter", next.filter);
+      params.delete("page");
+    }
+
+    if (next.page !== undefined) {
+      if (next.page <= 1) params.delete("page");
+      else params.set("page", String(next.page));
     }
 
     setSearchParams(params, { replace: true });
@@ -191,16 +209,16 @@ export default function Dashboard() {
   }
 
   function toggleSelectAll() {
-    if (selectedIds.size === filteredLocations.length) {
+    if (selectedIds.size === paginatedLocations.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredLocations.map((l) => l.id)));
+      setSelectedIds(new Set(paginatedLocations.map((l) => l.id)));
     }
   }
 
   const allSelected =
-    filteredLocations.length > 0 &&
-    selectedIds.size === filteredLocations.length;
+    paginatedLocations.length > 0 &&
+    paginatedLocations.every((l) => selectedIds.has(l.id));
 
   const reviewLinkMutation = useMutation({
     mutationFn: async (locationId: string) => {
@@ -342,7 +360,7 @@ export default function Dashboard() {
           ) : (
             <>
               <div className="space-y-3 sm:hidden">
-                {filteredLocations.map((location) => {
+                {paginatedLocations.map((location) => {
                   const neighborhood = getNeighborhood(
                     location.address_json,
                     location.place_label,
@@ -469,7 +487,7 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredLocations.map((location) => {
+                      {paginatedLocations.map((location) => {
                         const neighborhood = getNeighborhood(
                           location.address_json,
                           location.place_label,
@@ -567,6 +585,51 @@ export default function Dashboard() {
                   </table>
                 </div>
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                  <p className="text-sm text-slate-600">
+                    Showing{" "}
+                    <span className="font-medium">
+                      {(safePage - 1) * PAGE_SIZE + 1}
+                    </span>
+                    {"–"}
+                    <span className="font-medium">
+                      {Math.min(safePage * PAGE_SIZE, filteredLocations.length)}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-medium">
+                      {filteredLocations.length}
+                    </span>
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      disabled={safePage <= 1}
+                      onClick={() => updateListParams({ page: safePage - 1 })}
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="px-2 text-sm text-slate-600">
+                      {safePage} / {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      disabled={safePage >= totalPages}
+                      onClick={() => updateListParams({ page: safePage + 1 })}
+                      aria-label="Next page"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </>
