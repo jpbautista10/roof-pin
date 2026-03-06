@@ -230,6 +230,8 @@ export default function DashboardOverview() {
         </div>
       ) : (
         <>
+          <GettingStartedChecklist items={checklistItems} />
+
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard
               label="Total Pins"
@@ -271,8 +273,6 @@ export default function DashboardOverview() {
               />
             </div>
           </div>
-
-          <GettingStartedChecklist items={checklistItems} />
         </>
       )}
     </section>
