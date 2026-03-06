@@ -6,6 +6,8 @@ export interface PublicCompany {
   cta_url: string | null;
   brand_primary_color: string;
   brand_secondary_color: string;
+  google_place_id?: string | null;
+  yelp_alias?: string | null;
 }
 
 export interface PublicLocationImage {

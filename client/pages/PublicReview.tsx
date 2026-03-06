@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { Star } from "lucide-react";
+import { Check, Clipboard, ExternalLink, Star } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,109 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+interface PlatformInfo {
+  google_place_id: string | null;
+  yelp_alias: string | null;
+}
+
+function ShareButtons({
+  reviewText,
+  platformInfo,
+}: {
+  reviewText: string;
+  platformInfo: PlatformInfo;
+}) {
+  const [copiedFor, setCopiedFor] = useState<string | null>(null);
+
+  const hasGoogle = Boolean(platformInfo.google_place_id);
+  const hasYelp = Boolean(platformInfo.yelp_alias);
+
+  if (!hasGoogle && !hasYelp) return null;
+
+  async function copyAndOpen(platform: string, url: string) {
+    try {
+      await navigator.clipboard.writeText(reviewText);
+      setCopiedFor(platform);
+      window.open(url, "_blank", "noopener,noreferrer");
+      setTimeout(() => setCopiedFor(null), 3000);
+    } catch {
+      toast.error("Unable to copy review text.");
+    }
+  }
+
+  return (
+    <div className="mt-5 space-y-3">
+      <p className="text-sm font-medium text-slate-700">
+        Share your review on other platforms
+      </p>
+      <p className="text-xs text-slate-500">
+        Your review text will be copied to your clipboard — just paste it on the
+        next page.
+      </p>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        {hasGoogle && (
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1 gap-2"
+            onClick={() =>
+              copyAndOpen(
+                "google",
+                `https://search.google.com/local/writereview?placeid=${platformInfo.google_place_id}`,
+              )
+            }
+          >
+            {copiedFor === "google" ? (
+              <Check className="h-4 w-4 text-emerald-600" />
+            ) : (
+              <ExternalLink className="h-4 w-4" />
+            )}
+            Share on Google
+          </Button>
+        )}
+        {hasYelp && (
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1 gap-2"
+            onClick={() =>
+              copyAndOpen(
+                "yelp",
+                `https://www.yelp.com/writeareview/biz/${platformInfo.yelp_alias}`,
+              )
+            }
+          >
+            {copiedFor === "yelp" ? (
+              <Check className="h-4 w-4 text-emerald-600" />
+            ) : (
+              <ExternalLink className="h-4 w-4" />
+            )}
+            Share on Yelp
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function PublicReview() {
   const { token } = useParams<{ token: string }>();
   const [customerName, setCustomerName] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [stars, setStars] = useState(5);
   const [submitted, setSubmitted] = useState(false);
+
+  const platformQuery = useQuery({
+    queryKey: ["review-company-info", token],
+    enabled: Boolean(token),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_review_company_info", {
+        p_token: token!,
+      });
+      if (error) return null;
+      return (data?.[0] as PlatformInfo) ?? null;
+    },
+  });
 
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -53,6 +150,12 @@ export default function PublicReview() {
     submitMutation.mutate();
   }
 
+  const platformInfo = platformQuery.data;
+  const hasPlatforms =
+    platformInfo &&
+    (Boolean(platformInfo.google_place_id) ||
+      Boolean(platformInfo.yelp_alias));
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
       <div className="mx-auto w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -62,8 +165,17 @@ export default function PublicReview() {
         </p>
 
         {submitted ? (
-          <div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-            Thank you for your feedback.
+          <div className="mt-6">
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+              Thank you for your feedback!
+            </div>
+
+            {hasPlatforms && (
+              <ShareButtons
+                reviewText={reviewText}
+                platformInfo={platformInfo}
+              />
+            )}
           </div>
         ) : (
           <form className="mt-6 space-y-4" onSubmit={onSubmit}>

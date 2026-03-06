@@ -217,7 +217,7 @@ export default function PublicMap() {
       const { data, error } = await supabase
         .from("companies")
         .select(
-          "id, name, slug, logo_url, cta_url, brand_primary_color, brand_secondary_color",
+          "id, name, slug, logo_url, cta_url, brand_primary_color, brand_secondary_color, google_place_id, yelp_alias",
         )
         .eq("slug", slug)
         .maybeSingle<PublicCompany>();

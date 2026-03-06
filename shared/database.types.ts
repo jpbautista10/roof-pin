@@ -46,12 +46,14 @@ export type Database = {
           brand_secondary_color: string;
           created_at: string;
           cta_url: string | null;
+          google_place_id: string | null;
           id: string;
           logo_url: string | null;
           name: string;
           owner_user_id: string;
           slug: string;
           updated_at: string;
+          yelp_alias: string | null;
         };
         Insert: {
           brand_accent_color?: string;
@@ -59,12 +61,14 @@ export type Database = {
           brand_secondary_color?: string;
           created_at?: string;
           cta_url?: string | null;
+          google_place_id?: string | null;
           id?: string;
           logo_url?: string | null;
           name: string;
           owner_user_id: string;
           slug: string;
           updated_at?: string;
+          yelp_alias?: string | null;
         };
         Update: {
           brand_accent_color?: string;
@@ -72,12 +76,14 @@ export type Database = {
           brand_secondary_color?: string;
           created_at?: string;
           cta_url?: string | null;
+          google_place_id?: string | null;
           id?: string;
           logo_url?: string | null;
           name?: string;
           owner_user_id?: string;
           slug?: string;
           updated_at?: string;
+          yelp_alias?: string | null;
         };
         Relationships: [];
       };
@@ -319,6 +325,10 @@ export type Database = {
           p_token: string;
         };
         Returns: string;
+      };
+      get_review_company_info: {
+        Args: { p_token: string };
+        Returns: Array<{ google_place_id: string | null; yelp_alias: string | null }>;
       };
     };
     Enums: {

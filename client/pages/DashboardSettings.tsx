@@ -33,6 +33,8 @@ const settingsSchema = z.object({
       "Use a valid URL starting with http:// or https://",
     ),
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Invalid color"),
+  googlePlaceId: z.string().trim().optional(),
+  yelpAlias: z.string().trim().optional(),
   logoFile: z.any().optional(),
 });
 
@@ -63,6 +65,8 @@ export default function DashboardSettings() {
       slug: company?.slug ?? "",
       ctaUrl: company?.cta_url ?? "",
       primaryColor: company?.brand_primary_color ?? "#0f766e",
+      googlePlaceId: company?.google_place_id ?? "",
+      yelpAlias: company?.yelp_alias ?? "",
       logoFile: undefined,
     },
   });
@@ -178,6 +182,8 @@ export default function DashboardSettings() {
           name: values.companyName.trim(),
           slug: nextSlug,
           cta_url: values.ctaUrl?.trim() || null,
+          google_place_id: values.googlePlaceId?.trim() || null,
+          yelp_alias: values.yelpAlias?.trim() || null,
           logo_url: logoUrl,
           brand_primary_color: values.primaryColor,
         })
@@ -280,6 +286,47 @@ export default function DashboardSettings() {
                   Used for the quote button on the public map drawer.
                 </p>
               )}
+            </div>
+
+            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  Review platforms
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  After a customer submits a review, they'll be prompted to share it on these platforms.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="googlePlaceId">Google Place ID</Label>
+                <Input
+                  id="googlePlaceId"
+                  placeholder="ChIJ..."
+                  {...form.register("googlePlaceId")}
+                />
+                <p className="text-xs text-slate-500">
+                  Find your Place ID at{" "}
+                  <a
+                    href="https://developers.google.com/maps/documentation/places/web-service/place-id-lookup"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline text-blue-600"
+                  >
+                    Google's Place ID Finder
+                  </a>
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="yelpAlias">Yelp Business Alias</Label>
+                <Input
+                  id="yelpAlias"
+                  placeholder="your-business-city"
+                  {...form.register("yelpAlias")}
+                />
+                <p className="text-xs text-slate-500">
+                  The part after /biz/ in your Yelp URL (e.g. yelp.com/biz/<strong>your-business-city</strong>)
+                </p>
+              </div>
             </div>
 
             <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
