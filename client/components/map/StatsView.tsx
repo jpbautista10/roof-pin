@@ -101,9 +101,9 @@ export default function StatsView({ locations }: StatsViewProps) {
 
   if (locations.length === 0) {
     return (
-      <div className="absolute inset-0 overflow-y-auto bg-slate-50">
-        <div className="mx-auto max-w-2xl px-4 pt-6 pb-8">
-          <div className="rounded-lg border border-slate-200/80 bg-white p-10 text-center shadow-sm">
+      <div className="min-h-full bg-slate-50/80">
+      <div className="mx-auto max-w-2xl px-4 pt-6 pb-8">
+          <div className="rounded-xl border border-white/30 bg-white/60 p-10 text-center shadow-sm backdrop-blur-lg">
             <MapPin className="mx-auto mb-3 h-8 w-8 text-slate-300" />
             <p className="text-sm font-medium text-slate-700">
               No locations yet
@@ -121,7 +121,7 @@ export default function StatsView({ locations }: StatsViewProps) {
     stats.workTypes.length > 0 ? stats.workTypes[0].count : 1;
 
   return (
-    <div className="absolute inset-0 overflow-y-auto bg-slate-50">
+    <div className="min-h-full bg-slate-50/80">
       <div className="mx-auto max-w-lg px-4 pt-5 pb-8 space-y-4">
         {/* Summary cards */}
         <div className="grid grid-cols-2 gap-3">
@@ -149,7 +149,7 @@ export default function StatsView({ locations }: StatsViewProps) {
 
         {/* Rating overview */}
         {stats.avgRating !== null && (
-          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-white/30 bg-white/60 p-5 shadow-sm backdrop-blur-lg">
             <h3 className="mb-3 text-sm font-semibold text-slate-900">
               Customer Rating
             </h3>
@@ -196,7 +196,7 @@ export default function StatsView({ locations }: StatsViewProps) {
 
         {/* Work type breakdown */}
         {stats.workTypes.length > 0 && (
-          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="rounded-xl border border-white/30 bg-white/60 p-5 shadow-sm backdrop-blur-lg">
             <h3 className="mb-3 text-sm font-semibold text-slate-900">
               Work Type Breakdown
             </h3>
@@ -240,8 +240,8 @@ function SummaryCard({
   label: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50">
+    <div className="rounded-xl border border-white/30 bg-white/60 p-4 shadow-sm backdrop-blur-lg">
+      <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-white/50">
         {icon}
       </div>
       <p className="text-2xl font-bold text-slate-900">{value}</p>

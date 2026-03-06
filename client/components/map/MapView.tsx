@@ -248,38 +248,38 @@ export default function MapView({
         ))}
       </Map>
 
-      {/* Custom map controls: zoom + locate */}
-      <div className="absolute right-2.5 top-2.5 z-10 flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      {/* Custom map controls: zoom + locate — glass style */}
+      <div className="absolute right-2.5 top-16 z-10 flex flex-col overflow-hidden rounded-xl border border-white/30 bg-white/60 shadow-lg backdrop-blur-lg">
         <button
           type="button"
           onClick={() => mapRef.current?.zoomIn({ duration: 300 })}
-          className="flex h-9 w-9 items-center justify-center border-b border-slate-200 transition-colors hover:bg-slate-100"
+          className="flex h-9 w-9 items-center justify-center border-b border-white/30 transition-colors hover:bg-white/40"
           aria-label="Zoom in"
           title="Zoom in"
         >
-          <Plus className="h-4 w-4 text-slate-600" />
+          <Plus className="h-4 w-4 text-slate-700" />
         </button>
         <button
           type="button"
           onClick={() => mapRef.current?.zoomOut({ duration: 300 })}
-          className="flex h-9 w-9 items-center justify-center border-b border-slate-200 transition-colors hover:bg-slate-100"
+          className="flex h-9 w-9 items-center justify-center border-b border-white/30 transition-colors hover:bg-white/40"
           aria-label="Zoom out"
           title="Zoom out"
         >
-          <Minus className="h-4 w-4 text-slate-600" />
+          <Minus className="h-4 w-4 text-slate-700" />
         </button>
         <button
           type="button"
           onClick={handleLocateMe}
           disabled={locating}
-          className="flex h-9 w-9 items-center justify-center transition-colors hover:bg-slate-100 disabled:opacity-60"
+          className="flex h-9 w-9 items-center justify-center transition-colors hover:bg-white/40 disabled:opacity-60"
           aria-label="Locate me"
           title="Zoom to my location"
         >
           {locating ? (
-            <Loader2 className="h-4 w-4 animate-spin text-slate-600" />
+            <Loader2 className="h-4 w-4 animate-spin text-slate-700" />
           ) : (
-            <LocateFixed className="h-4 w-4 text-slate-600" />
+            <LocateFixed className="h-4 w-4 text-slate-700" />
           )}
         </button>
       </div>

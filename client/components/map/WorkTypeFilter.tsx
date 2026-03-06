@@ -53,7 +53,7 @@ export default function WorkTypeFilter({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm backdrop-blur transition-colors hover:bg-slate-50"
+        className="flex items-center gap-1.5 rounded-full border border-white/30 bg-white/60 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm backdrop-blur-lg transition-colors hover:bg-white/80"
       >
         <Filter className="h-3.5 w-3.5" />
         <span>Work Type</span>
@@ -65,7 +65,7 @@ export default function WorkTypeFilter({
       </button>
 
       {open && (
-        <div className="fixed inset-x-3 top-auto z-50 mt-1.5 rounded-lg border border-slate-200 bg-white shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:left-auto sm:w-52">
+        <div className="fixed inset-x-3 top-auto z-50 mt-1.5 rounded-xl border border-white/30 bg-white/80 shadow-lg backdrop-blur-xl sm:absolute sm:inset-x-auto sm:right-0 sm:left-auto sm:w-52">
           <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
             <span className="text-xs font-semibold text-slate-700">
               Filter by Work Type

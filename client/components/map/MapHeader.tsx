@@ -20,20 +20,20 @@ export default function MapHeader({
   const brandTextColor = getContrastTextColor(brandColor);
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 shrink-0 z-30">
+    <header className="absolute inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-white/20 bg-white/70 px-4 backdrop-blur-xl">
       {/* Left: Logo + Company Name */}
       <div className="flex items-center gap-3 min-w-0">
         {company.logo_url ? (
           <img
             src={company.logo_url}
             alt={`${company.name} logo`}
-            className="w-9 h-9 rounded-lg object-contain bg-white border border-slate-200/60 p-0.5 cursor-pointer select-none shrink-0"
+            className="w-8 h-8 rounded-lg object-contain bg-white/80 border border-white/40 p-0.5 cursor-pointer select-none shrink-0 shadow-sm"
             onDoubleClick={() => navigate(`/dashboard/${company.slug}`)}
             draggable={false}
           />
         ) : (
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer select-none shrink-0"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer select-none shrink-0 shadow-sm"
             style={{
               backgroundColor: brandColor,
               color: brandTextColor,
@@ -48,23 +48,22 @@ export default function MapHeader({
               .toUpperCase()}
           </div>
         )}
-        <span className="text-sm font-bold text-slate-900 truncate">
+        <span className="text-sm font-semibold text-slate-800 truncate">
           {company.name}
         </span>
       </div>
 
       {/* Right: Tabs */}
       <Tabs value={activeTab} onValueChange={onTabChange}>
-        <TabsList className="h-9">
-          <TabsTrigger value="map" className="text-xs gap-1.5 px-3">
+        <TabsList className="h-8 bg-white/50 backdrop-blur-sm border border-white/40 shadow-sm">
+          <TabsTrigger value="map" className="text-xs gap-1.5 px-3 data-[state=active]:bg-white/80 data-[state=active]:shadow-sm">
             <Map className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Map View</span>
+            <span className="hidden sm:inline">Map</span>
             <span className="sm:hidden">Map</span>
           </TabsTrigger>
-          <TabsTrigger value="locations" className="text-xs gap-1.5 px-3">
+          <TabsTrigger value="locations" className="text-xs gap-1.5 px-3 data-[state=active]:bg-white/80 data-[state=active]:shadow-sm">
             <BarChart3 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Stats</span>
-            <span className="sm:hidden">Stats</span>
+            <span>Stats</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

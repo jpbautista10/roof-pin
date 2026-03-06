@@ -363,7 +363,25 @@ export default function PublicMap() {
   }
 
   return (
-    <div className="relative h-screen w-screen flex flex-col overflow-hidden">
+    <div className="relative h-screen w-screen overflow-hidden">
+      {/* Full-bleed content area */}
+      <div className="absolute inset-0">
+        {isEmbedMode || activeTab === "map" ? (
+          <MapView
+            locations={filteredLocations}
+            onSelectLocation={openLocation}
+            brandColor={company.brand_primary_color}
+          />
+        ) : (
+          <div className="h-full pt-14 overflow-hidden">
+            <div className="h-full overflow-y-auto">
+              <StatsView locations={filteredLocations} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Glassy header overlay */}
       {!isEmbedMode ? (
         <MapHeader
           company={company}
@@ -373,44 +391,32 @@ export default function PublicMap() {
       ) : null}
 
       {isDemoMode && !isEmbedMode ? (
-        <div className="absolute left-4 top-[4.5rem] z-[500] rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+        <div className="absolute left-4 top-16 z-[500] rounded-full border border-white/30 bg-emerald-500/80 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm shadow-sm">
           Live Demo Mode
         </div>
       ) : null}
 
-      <div className="relative flex-1 overflow-hidden">
-        {isEmbedMode || activeTab === "map" ? (
-          <MapView
-            locations={filteredLocations}
-            onSelectLocation={openLocation}
-            brandColor={company.brand_primary_color}
-          />
-        ) : (
-          <StatsView locations={filteredLocations} />
-        )}
-
-        {/* Top overlay bar: projects pill + work type filter */}
-        {!isEmbedMode && activeTab === "map" ? (
-          <div className="pointer-events-none absolute left-0 right-0 top-3 z-[500] flex items-start justify-center gap-2 px-3">
-            <div className="pointer-events-auto rounded-full border border-slate-200 bg-white/95 px-4 py-1.5 text-xs text-slate-600 shadow-sm backdrop-blur">
-              {mapSummary.totalProjects} project
-              {mapSummary.totalProjects === 1 ? "" : "s"}
-              {typeof mapSummary.averageRating === "number"
-                ? ` · ${mapSummary.averageRating.toFixed(1)} avg rating`
-                : ""}
-            </div>
-            {workTypes.length > 1 && (
-              <div className="pointer-events-auto">
-                <WorkTypeFilter
-                  workTypes={workTypes}
-                  selected={selectedWorkTypes}
-                  onChange={setSelectedWorkTypes}
-                />
-              </div>
-            )}
+      {/* Top overlay bar: projects pill + work type filter */}
+      {!isEmbedMode && activeTab === "map" ? (
+        <div className="pointer-events-none absolute left-0 right-0 top-16 z-20 flex items-start justify-center gap-2 px-3 pt-2">
+          <div className="pointer-events-auto rounded-full border border-white/30 bg-white/60 px-4 py-1.5 text-xs font-medium text-slate-700 shadow-sm backdrop-blur-lg">
+            {mapSummary.totalProjects} project
+            {mapSummary.totalProjects === 1 ? "" : "s"}
+            {typeof mapSummary.averageRating === "number"
+              ? ` · ${mapSummary.averageRating.toFixed(1)} avg rating`
+              : ""}
           </div>
-        ) : null}
-      </div>
+          {workTypes.length > 1 && (
+            <div className="pointer-events-auto">
+              <WorkTypeFilter
+                workTypes={workTypes}
+                selected={selectedWorkTypes}
+                onChange={setSelectedWorkTypes}
+              />
+            </div>
+          )}
+        </div>
+      ) : null}
 
       <ProjectDrawer
         location={selectedLocation}
