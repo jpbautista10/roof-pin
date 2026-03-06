@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Map, {
   Marker,
   NavigationControl,
   type MapRef,
 } from "react-map-gl/mapbox";
 import { LngLatBounds } from "mapbox-gl";
+import { LocateFixed, Loader2 } from "lucide-react";
 import LocationPin from "@/components/map/LocationPin";
 import { PublicLocation } from "@/types/public-map";
 
@@ -64,6 +65,38 @@ export default function MapView({
   const mapRef = useRef<MapRef | null>(null);
   const hasAppliedInitialViewport = useRef(false);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  const handleLocateMe = useCallback(() => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ latitude, longitude });
+        setLocating(false);
+
+        mapRef.current?.flyTo({
+          center: [longitude, latitude],
+          zoom: 14,
+          duration: 1200,
+        });
+      },
+      () => {
+        setLocating(false);
+        alert("Unable to retrieve your location. Please check your permissions.");
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }, []);
 
   const validLocations = useMemo(
     () =>
@@ -187,6 +220,19 @@ export default function MapView({
       >
         <NavigationControl position="top-right" />
 
+        {userLocation && (
+          <Marker
+            latitude={userLocation.latitude}
+            longitude={userLocation.longitude}
+            anchor="center"
+          >
+            <div className="relative flex items-center justify-center">
+              <span className="absolute h-8 w-8 animate-ping rounded-full bg-blue-400 opacity-30" />
+              <span className="relative h-4 w-4 rounded-full border-2 border-white bg-blue-500 shadow-md" />
+            </div>
+          </Marker>
+        )}
+
         {displayLocations.map((location) => (
           <Marker
             key={location.id}
@@ -205,6 +251,21 @@ export default function MapView({
           </Marker>
         ))}
       </Map>
+
+      <button
+        type="button"
+        onClick={handleLocateMe}
+        disabled={locating}
+        className="absolute bottom-14 right-3 z-10 flex h-[29px] w-[29px] items-center justify-center rounded-md border border-slate-300 bg-white shadow-sm transition-colors hover:bg-slate-100 disabled:opacity-60"
+        aria-label="Locate me"
+        title="Zoom to my location"
+      >
+        {locating ? (
+          <Loader2 className="h-4 w-4 animate-spin text-slate-600" />
+        ) : (
+          <LocateFixed className="h-4 w-4 text-slate-600" />
+        )}
+      </button>
     </div>
   );
 }
