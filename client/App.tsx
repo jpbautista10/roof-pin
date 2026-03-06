@@ -13,6 +13,7 @@ import Onboarding from "./pages/Onboarding";
 import PublicMap from "./pages/PublicMap";
 import PublicReview from "./pages/PublicReview";
 import Dashboard from "./pages/Dashboard";
+import DashboardPins from "./pages/DashboardPins";
 import DashboardRedirect from "./pages/DashboardRedirect";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import DashboardLocationCreate from "./pages/DashboardLocationCreate";
@@ -55,6 +56,7 @@ export default function App() {
                     element={<DashboardLayout />}
                   >
                     <Route index element={<Dashboard />} />
+                    <Route path="pins" element={<DashboardPins />} />
                     <Route
                       path="locations/new"
                       element={<DashboardLocationCreate />}

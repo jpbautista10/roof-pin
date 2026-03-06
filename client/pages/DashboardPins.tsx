@@ -1,18 +1,38 @@
-// TODO: Legacy mock management page not used in router. Rebuild against Supabase locations or remove.
-import { useState, useMemo } from "react";
-import DashboardLayout from "@/components/layout/DashboardLayout";
-import EditPinDialog from "@/components/dashboard/EditPinDialog";
-import { useData } from "@/data/DataContext";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Link, useSearchParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  MapPin,
+  Pencil,
+  PlusCircle,
+  QrCode,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { useAuth } from "@/auth/AuthProvider";
+import {
+  cleanupDateCompletedData,
+  cleanupNeighborhoodData,
+  deleteLocation,
+  deleteLocationsBulk,
+  fetchLocationsByCompany,
+} from "@/lib/locations";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { createOrGetReviewToken } from "@/lib/review-requests";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,312 +43,616 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
 import {
-  Search,
-  Pencil,
-  Trash2,
-  Eye,
-  EyeOff,
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-} from "lucide-react";
-import type { Pin } from "@/types";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import QRCode from "qrcode";
 
-const PINS_PER_PAGE = 8;
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+type ListFilter = "all" | "public" | "private" | "needs_review";
+
+function normalizeFilter(value: string | null): ListFilter {
+  if (value === "public" || value === "private" || value === "needs_review") {
+    return value;
+  }
+  return "all";
+}
+
+function getNeighborhood(addressJson: unknown, fallback: string) {
+  if (addressJson && typeof addressJson === "object") {
+    const obj = addressJson as Record<string, unknown>;
+    const neighborhood = obj.neighborhood;
+    if (typeof neighborhood === "string" && neighborhood.trim()) {
+      return neighborhood;
+    }
+    const city = obj.city;
+    if (typeof city === "string" && city.trim()) {
+      return city;
+    }
+  }
+  return fallback;
+}
 
 export default function DashboardPins() {
-  const { pins, editPin, removePin, togglePinVisibility } = useData();
+  const { company } = useAuth();
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
+  const [reviewLinkLocationId, setReviewLinkLocationId] = useState<string | null>(null);
+  const [reviewLink, setReviewLink] = useState("");
+  const [qrDataUrl, setQrDataUrl] = useState("");
 
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const locationsQuery = useQuery({
+    queryKey: ["locations", company?.id],
+    enabled: Boolean(company?.id),
+    queryFn: async () => fetchLocationsByCompany(company!.id),
+  });
 
-  // Edit dialog
-  const [editingPin, setEditingPin] = useState<Pin | null>(null);
-  const [editOpen, setEditOpen] = useState(false);
+  const cleanupRan = useRef(false);
+  useEffect(() => {
+    if (!company?.id || cleanupRan.current) return;
+    cleanupRan.current = true;
+    Promise.all([
+      cleanupNeighborhoodData(company.id).catch(() => 0),
+      cleanupDateCompletedData(company.id).catch(() => 0),
+    ]).then(([n, d]) => {
+      if (n > 0 || d > 0) {
+        queryClient.invalidateQueries({ queryKey: ["locations", company.id] });
+      }
+    });
+  }, [company?.id, queryClient]);
 
-  // Delete confirmation
-  const [deletingPin, setDeletingPin] = useState<Pin | null>(null);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  if (!company?.slug) return null;
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return pins;
-    return pins.filter(
-      (p) =>
-        p.neighborhood.toLowerCase().includes(q) ||
-        p.customer_name.toLowerCase().includes(q) ||
-        p.work_type.toLowerCase().includes(q) ||
-        p.zip_code.toLowerCase().includes(q),
-    );
-  }, [pins, search]);
+  const locations = locationsQuery.data ?? [];
+  const query = searchParams.get("q") ?? "";
+  const filter = normalizeFilter(searchParams.get("filter"));
+  const PAGE_SIZE = 20;
+  const currentPage = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PINS_PER_PAGE));
-  const currentPage = Math.min(page, totalPages);
-  const paginated = filtered.slice(
-    (currentPage - 1) * PINS_PER_PAGE,
-    currentPage * PINS_PER_PAGE,
+  const filteredLocations = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return locations.filter((location) => {
+      const neighborhood = getNeighborhood(location.address_json, location.place_label);
+      if (filter === "public" && location.privacy_mode) return false;
+      if (filter === "private" && !location.privacy_mode) return false;
+      if (filter === "needs_review" && location.review) return false;
+      if (!normalizedQuery) return true;
+      return (
+        location.project_name.toLowerCase().includes(normalizedQuery) ||
+        neighborhood.toLowerCase().includes(normalizedQuery) ||
+        (location.work_type ?? "").toLowerCase().includes(normalizedQuery) ||
+        (location.date_completed ?? "").toLowerCase().includes(normalizedQuery)
+      );
+    });
+  }, [locations, query, filter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLocations.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedLocations = filteredLocations.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
   );
 
-  // Reset to page 1 when search changes
-  function handleSearch(value: string) {
-    setSearch(value);
-    setPage(1);
+  function updateListParams(next: { q?: string; filter?: ListFilter; page?: number }) {
+    const params = new URLSearchParams(searchParams);
+    if (next.q !== undefined) {
+      if (next.q.trim()) params.set("q", next.q);
+      else params.delete("q");
+      params.delete("page");
+    }
+    if (next.filter !== undefined) {
+      if (next.filter === "all") params.delete("filter");
+      else params.set("filter", next.filter);
+      params.delete("page");
+    }
+    if (next.page !== undefined) {
+      if (next.page <= 1) params.delete("page");
+      else params.set("page", String(next.page));
+    }
+    setSearchParams(params, { replace: true });
   }
 
-  function handleEdit(pin: Pin) {
-    setEditingPin(pin);
-    setEditOpen(true);
+  const deleteMutation = useMutation({
+    mutationFn: async (locationId: string) => deleteLocation(locationId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["locations", company.id] });
+      toast.success("Location deleted.");
+      setDeleteTargetId(null);
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to delete location.");
+    },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => deleteLocationsBulk(ids),
+    onSuccess: async (_data, ids) => {
+      await queryClient.invalidateQueries({ queryKey: ["locations", company.id] });
+      toast.success(`${ids.length} location(s) deleted.`);
+      setSelectedIds(new Set());
+      setShowBulkDeleteDialog(false);
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to delete locations.");
+    },
+  });
+
+  function toggleSelection(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
-  function handleSaveEdit(id: string, updates: Partial<Pin>) {
-    editPin(id, updates);
-    toast.success("Pin updated successfully!");
+  function toggleSelectAll() {
+    if (selectedIds.size === paginatedLocations.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paginatedLocations.map((l) => l.id)));
+    }
   }
 
-  function handleToggleVisibility(pin: Pin) {
-    togglePinVisibility(pin.id);
-    toast.success(
-      pin.hidden
-        ? "Pin is now visible on the map."
-        : "Pin hidden from the map.",
-    );
+  const allSelected =
+    paginatedLocations.length > 0 &&
+    paginatedLocations.every((l) => selectedIds.has(l.id));
+
+  const reviewLinkMutation = useMutation({
+    mutationFn: async (locationId: string) => {
+      const token = await createOrGetReviewToken(locationId);
+      const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+      const link = `${baseUrl}/review/${token}`;
+      const qr = await QRCode.toDataURL(link, { margin: 1, width: 280 });
+      return { link, qr };
+    },
+    onSuccess: ({ link, qr }) => {
+      setReviewLink(link);
+      setQrDataUrl(qr);
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Unable to generate review link.");
+    },
+  });
+
+  function openReviewRequest(locationId: string) {
+    setReviewLinkLocationId(locationId);
+    setReviewLink("");
+    setQrDataUrl("");
+    reviewLinkMutation.mutate(locationId);
   }
 
-  function handleDeleteClick(pin: Pin) {
-    setDeletingPin(pin);
-    setDeleteOpen(true);
-  }
-
-  function handleConfirmDelete() {
-    if (!deletingPin) return;
-    removePin(deletingPin.id);
-    toast.success("Pin removed successfully.");
-    setDeleteOpen(false);
-    setDeletingPin(null);
+  async function handleCopyReviewLink() {
+    try {
+      await navigator.clipboard.writeText(reviewLink);
+      toast.success("Review link copied.");
+    } catch {
+      toast.error("Unable to copy review link.");
+    }
   }
 
   return (
-    <DashboardLayout>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Manage Pins</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              {pins.length} total pin{pins.length !== 1 && "s"} &middot;{" "}
-              {pins.filter((p) => p.hidden).length} hidden
-            </p>
-          </div>
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Search pins..."
-              value={search}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+    <section className="space-y-6 pt-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">Pins</h1>
+        <div className="flex items-center gap-2">
+          <Button asChild>
+            <Link to={`/dashboard/${company.slug}/locations/new`}>
+              <PlusCircle className="h-4 w-4" />
+              Add Pin
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to={`/dashboard/${company.slug}/import`}>
+              <Upload className="h-4 w-4" />
+              Import CSV
+            </Link>
+          </Button>
         </div>
+      </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <MapPin className="w-10 h-10 text-slate-300 mb-3" />
-              <p className="text-sm font-medium text-slate-500">
-                {search ? "No pins match your search." : "No pins yet."}
-              </p>
+      {locationsQuery.isLoading ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-600">
+          Loading locations...
+        </div>
+      ) : locations.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+            <MapPin className="h-5 w-5 text-slate-500" />
+          </div>
+          <h2 className="text-lg font-semibold text-slate-900">No pins yet</h2>
+          <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">
+            Add your first pin to start showing real work on your public map.
+          </p>
+          <Button asChild className="mt-6">
+            <Link to={`/dashboard/${company.slug}/locations/new`}>Create your first pin</Link>
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <Input
+                value={query}
+                onChange={(event) => updateListParams({ q: event.target.value })}
+                placeholder="Search project, location, work type..."
+                className="sm:max-w-md"
+              />
+              <Select
+                value={filter}
+                onValueChange={(value) => updateListParams({ filter: value as ListFilter })}
+              >
+                <SelectTrigger className="h-9 w-full sm:w-[170px]">
+                  <SelectValue placeholder="Filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="public">Public</SelectItem>
+                  <SelectItem value="private">Private</SelectItem>
+                  <SelectItem value="needs_review">Needs Review</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 shadow-sm">
+              <span className="text-sm font-medium text-slate-700">
+                {selectedIds.size} selected
+              </span>
+              <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
+                Deselect all
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowBulkDeleteDialog(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete selected
+              </Button>
+            </div>
+          )}
+
+          {filteredLocations.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center text-sm text-slate-600">
+              No locations match your current search or filter.
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50/60">
-                      <TableHead className="text-xs font-medium w-[180px]">
-                        Neighborhood
-                      </TableHead>
-                      <TableHead className="text-xs font-medium">
-                        Work Type
-                      </TableHead>
-                      <TableHead className="text-xs font-medium hidden sm:table-cell">
-                        Customer
-                      </TableHead>
-                      <TableHead className="text-xs font-medium hidden md:table-cell">
-                        Completed
-                      </TableHead>
-                      <TableHead className="text-xs font-medium text-center">
-                        Status
-                      </TableHead>
-                      <TableHead className="text-xs font-medium text-right">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginated.map((pin) => (
-                      <TableRow
-                        key={pin.id}
-                        className={pin.hidden ? "opacity-50" : ""}
-                      >
-                        <TableCell className="font-medium text-sm text-slate-900">
-                          {pin.neighborhood}
-                        </TableCell>
-                        <TableCell>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-xs font-medium text-slate-700">
-                            {pin.work_type}
+              {/* Mobile cards */}
+              <div className="space-y-3 sm:hidden">
+                {paginatedLocations.map((location) => {
+                  const neighborhood = getNeighborhood(location.address_json, location.place_label);
+                  return (
+                    <article
+                      key={location.id}
+                      className={`rounded-xl border bg-white p-4 shadow-sm ${
+                        selectedIds.has(location.id)
+                          ? "border-primary ring-1 ring-primary/30"
+                          : "border-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <Checkbox
+                          checked={selectedIds.has(location.id)}
+                          onCheckedChange={() => toggleSelection(location.id)}
+                          className="mt-0.5 shrink-0"
+                        />
+                        <div className="min-w-0 space-y-1">
+                          <h3 className="truncate text-sm font-semibold text-slate-900">
+                            {neighborhood}
+                          </h3>
+                          <p className="truncate text-sm text-slate-600">
+                            {location.project_name}
+                          </p>
+                        </div>
+                        {location.privacy_mode ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                            <EyeOff className="h-3 w-3" />
+                            Private
                           </span>
-                        </TableCell>
-                        <TableCell className="text-sm text-slate-600 hidden sm:table-cell">
-                          {pin.privacy_mode ? (
-                            <span className="text-slate-400 italic">
-                              Private
-                            </span>
-                          ) : (
-                            pin.customer_name || "—"
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-slate-500 hidden md:table-cell">
-                          {pin.date_completed}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {pin.hidden ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-medium">
-                              <EyeOff className="w-3 h-3" />
-                              Hidden
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium">
-                              <Eye className="w-3 h-3" />
-                              Visible
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-slate-900"
-                              onClick={() => handleEdit(pin)}
-                              title="Edit pin"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-slate-900"
-                              onClick={() => handleToggleVisibility(pin)}
-                              title={
-                                pin.hidden ? "Show on map" : "Hide from map"
-                              }
-                            >
-                              {pin.hidden ? (
-                                <Eye className="w-3.5 h-3.5" />
-                              ) : (
-                                <EyeOff className="w-3.5 h-3.5" />
-                              )}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-red-600"
-                              onClick={() => handleDeleteClick(pin)}
-                              title="Remove pin"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        ) : (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                            <Eye className="h-3 w-3" />
+                            Public
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                        <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
+                          {location.work_type ?? "Unknown"}
+                        </span>
+                        <span>{location.date_completed || formatDate(location.created_at)}</span>
+                      </div>
+                      <div className="mt-3 flex items-center justify-end gap-1 border-t border-slate-100 pt-2">
+                        {!location.review && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                            onClick={() => openReviewRequest(location.id)}
+                            title="Get review QR"
+                            aria-label="Get review QR"
+                          >
+                            <QrCode className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900" asChild>
+                          <Link
+                            to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
+                            title="Edit location"
+                            aria-label="Edit location"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-red-600"
+                          onClick={() => setDeleteTargetId(location.id)}
+                          title="Delete location"
+                          aria-label="Delete location"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
 
-              {/* Pagination */}
+              {/* Desktop table */}
+              <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full caption-bottom text-sm">
+                    <thead>
+                      <tr className="border-b bg-slate-50/60">
+                        <th className="h-12 w-12 px-4 text-center align-middle">
+                          <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                        </th>
+                        <th className="h-12 w-[180px] px-4 text-left align-middle text-xs font-medium text-slate-500">Neighborhood</th>
+                        <th className="h-12 px-4 text-left align-middle text-xs font-medium text-slate-500">Work Type</th>
+                        <th className="h-12 px-4 text-left align-middle text-xs font-medium text-slate-500">Project</th>
+                        <th className="hidden h-12 px-4 text-left align-middle text-xs font-medium text-slate-500 md:table-cell">Completed</th>
+                        <th className="h-12 px-4 text-center align-middle text-xs font-medium text-slate-500">Status</th>
+                        <th className="h-12 px-4 text-right align-middle text-xs font-medium text-slate-500">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedLocations.map((location) => {
+                        const neighborhood = getNeighborhood(location.address_json, location.place_label);
+                        return (
+                          <tr
+                            key={location.id}
+                            className={`border-b transition-colors hover:bg-slate-50 ${
+                              selectedIds.has(location.id) ? "bg-primary/5" : ""
+                            }`}
+                          >
+                            <td className="w-12 p-4 text-center align-middle">
+                              <Checkbox
+                                checked={selectedIds.has(location.id)}
+                                onCheckedChange={() => toggleSelection(location.id)}
+                              />
+                            </td>
+                            <td className="p-4 align-middle text-sm font-medium text-slate-900">{neighborhood}</td>
+                            <td className="p-4 align-middle">
+                              <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                                {location.work_type ?? "Unknown"}
+                              </span>
+                            </td>
+                            <td className="p-4 align-middle text-sm text-slate-600">{location.project_name}</td>
+                            <td className="hidden p-4 align-middle text-sm text-slate-500 md:table-cell">
+                              {location.date_completed || formatDate(location.created_at)}
+                            </td>
+                            <td className="p-4 text-center align-middle">
+                              {location.privacy_mode ? (
+                                <span className="whitespace-nowrap inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                                  <EyeOff className="h-3 w-3" />
+                                  Private
+                                </span>
+                              ) : (
+                                <span className="whitespace-nowrap inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                                  <Eye className="h-3 w-3" />
+                                  Public
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4 text-right align-middle">
+                              <div className="flex items-center justify-end gap-1">
+                                {!location.review && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                    onClick={() => openReviewRequest(location.id)}
+                                    title="Get review QR"
+                                    aria-label="Get review QR"
+                                  >
+                                    <QrCode className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900" asChild>
+                                  <Link
+                                    to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
+                                    title="Edit location"
+                                    aria-label="Edit location"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Link>
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-red-600"
+                                  onClick={() => setDeleteTargetId(location.id)}
+                                  title="Delete location"
+                                  aria-label="Delete location"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
               {totalPages > 1 && (
-                <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100">
-                  <p className="text-xs text-slate-500">
-                    Showing {(currentPage - 1) * PINS_PER_PAGE + 1}–
-                    {Math.min(currentPage * PINS_PER_PAGE, filtered.length)} of{" "}
-                    {filtered.length}
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                  <p className="text-sm text-slate-600">
+                    Showing{" "}
+                    <span className="font-medium">{(safePage - 1) * PAGE_SIZE + 1}</span>
+                    {"\u2013"}
+                    <span className="font-medium">{Math.min(safePage * PAGE_SIZE, filteredLocations.length)}</span>
+                    {" "}of{" "}
+                    <span className="font-medium">{filteredLocations.length}</span>
                   </p>
                   <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="icon"
                       className="h-8 w-8"
-                      disabled={currentPage <= 1}
-                      onClick={() => setPage((p) => p - 1)}
+                      disabled={safePage <= 1}
+                      onClick={() => updateListParams({ page: safePage - 1 })}
+                      aria-label="Previous page"
                     >
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (p) => (
-                        <Button
-                          key={p}
-                          variant={p === currentPage ? "default" : "outline"}
-                          size="icon"
-                          className="h-8 w-8 text-xs"
-                          onClick={() => setPage(p)}
-                        >
-                          {p}
-                        </Button>
-                      ),
-                    )}
+                    <span className="px-2 text-sm text-slate-600">
+                      {safePage} / {totalPages}
+                    </span>
                     <Button
                       variant="outline"
                       size="icon"
                       className="h-8 w-8"
-                      disabled={currentPage >= totalPages}
-                      onClick={() => setPage((p) => p + 1)}
+                      disabled={safePage >= totalPages}
+                      onClick={() => updateListParams({ page: safePage + 1 })}
+                      aria-label="Next page"
                     >
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               )}
             </>
           )}
-        </div>
-      </div>
+        </>
+      )}
 
-      {/* Edit Dialog */}
-      <EditPinDialog
-        pin={editingPin}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        onSave={handleSaveEdit}
-      />
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      {/* Bulk delete dialog */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={(open) => { if (!open) setShowBulkDeleteDialog(false); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove this pin?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete {selectedIds.size} location{selectedIds.size !== 1 ? "s" : ""}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the pin for{" "}
-              <span className="font-medium text-slate-700">
-                {deletingPin?.neighborhood}
-              </span>
-              . This action cannot be undone.
+              This will permanently remove the selected locations, their reviews, and image references. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700"
+              disabled={bulkDeleteMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                bulkDeleteMutation.mutate(Array.from(selectedIds));
+              }}
             >
-              Remove Pin
+              {bulkDeleteMutation.isPending ? "Deleting..." : `Delete ${selectedIds.size}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
+
+      {/* Single delete dialog */}
+      <AlertDialog open={Boolean(deleteTargetId)} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete location?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the location, review, and image references.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                if (deleteTargetId) deleteMutation.mutate(deleteTargetId);
+              }}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Review QR dialog */}
+      <Dialog
+        open={Boolean(reviewLinkLocationId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setReviewLinkLocationId(null);
+            setReviewLink("");
+            setQrDataUrl("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Customer review request</DialogTitle>
+            <DialogDescription>
+              Send this link to your customer so they can submit their own review.
+            </DialogDescription>
+          </DialogHeader>
+          {reviewLinkMutation.isPending ? (
+            <p className="text-sm text-slate-600">Generating review link...</p>
+          ) : (
+            <div className="space-y-3">
+              {qrDataUrl && (
+                <img
+                  src={qrDataUrl}
+                  alt="Review request QR code"
+                  className="mx-auto h-48 w-48 rounded-lg border border-slate-200 p-2"
+                />
+              )}
+              {reviewLink && (
+                <>
+                  <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 break-all">
+                    {reviewLink}
+                  </p>
+                  <Button className="w-full" onClick={() => void handleCopyReviewLink()}>
+                    Copy link
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </section>
   );
 }
