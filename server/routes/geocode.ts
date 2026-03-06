@@ -59,6 +59,7 @@ export const handleGeocodeSuggest: RequestHandler = async (req, res) => {
       "types",
       "address,place,postcode,locality,neighborhood",
     );
+    url.searchParams.set("country", "us");
     url.searchParams.set("access_token", token);
 
     const response = await fetch(url.toString());
