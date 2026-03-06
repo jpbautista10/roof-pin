@@ -101,7 +101,7 @@ export default function StatsView({ locations }: StatsViewProps) {
 
   if (locations.length === 0) {
     return (
-      <div className="min-h-full bg-slate-50/80">
+      <div className="min-h-full bg-slate-50">
       <div className="mx-auto max-w-2xl px-4 pt-6 pb-8">
           <div className="rounded-xl border border-white/30 bg-white/60 p-10 text-center shadow-sm backdrop-blur-lg">
             <MapPin className="mx-auto mb-3 h-8 w-8 text-slate-300" />
@@ -121,7 +121,7 @@ export default function StatsView({ locations }: StatsViewProps) {
     stats.workTypes.length > 0 ? stats.workTypes[0].count : 1;
 
   return (
-    <div className="min-h-full bg-slate-50/80">
+    <div className="min-h-full bg-slate-50">
       <div className="mx-auto max-w-lg px-4 pt-5 pb-8 space-y-4">
         {/* Summary cards */}
         <div className="grid grid-cols-2 gap-3">

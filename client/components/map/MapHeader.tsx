@@ -19,20 +19,31 @@ export default function MapHeader({
   const brandTextColor = getContrastTextColor(brandColor);
 
   return (
-    <div className="absolute inset-x-0 top-0 z-30 flex flex-col items-center pointer-events-none">
-      {/* Floating logo — no background */}
-      <div className="pointer-events-auto mt-3 mb-2 flex items-center justify-center">
+    <div className="absolute inset-x-0 top-0 z-30 flex justify-center pointer-events-none">
+      {/* Single horizontal liquid glass pill: logo + segmented control */}
+      <div
+        className="pointer-events-auto mt-3 inline-flex items-center gap-3 rounded-2xl px-2.5 py-1.5"
+        style={{
+          background: "rgba(255,255,255,0.55)",
+          backdropFilter: "saturate(170%) blur(16px)",
+          WebkitBackdropFilter: "saturate(170%) blur(16px)",
+          border: "1px solid rgba(255,255,255,0.5)",
+          boxShadow:
+            "0 2px 12px rgba(0,0,0,0.08), inset 0 0.5px 0 rgba(255,255,255,0.7)",
+        }}
+      >
+        {/* Logo */}
         {company.logo_url ? (
           <img
             src={company.logo_url}
             alt={`${company.name} logo`}
-            className="h-11 w-11 rounded-xl object-contain bg-white/60 border border-white/50 p-0.5 cursor-pointer select-none shrink-0 shadow-sm"
+            className="h-9 w-auto max-w-[80px] rounded-lg object-contain cursor-pointer select-none shrink-0"
             onDoubleClick={() => navigate(`/dashboard/${company.slug}`)}
             draggable={false}
           />
         ) : (
           <div
-            className="h-11 w-11 rounded-xl flex items-center justify-center text-sm font-bold cursor-pointer select-none shrink-0 shadow-sm"
+            className="h-9 w-9 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer select-none shrink-0"
             style={{
               backgroundColor: brandColor,
               color: brandTextColor,
@@ -48,21 +59,12 @@ export default function MapHeader({
               .toUpperCase()}
           </div>
         )}
-      </div>
 
-      {/* Liquid glass segmented control */}
-      <div className="pointer-events-auto">
-        <div
-          className="inline-flex rounded-2xl p-1.5"
-          style={{
-            background: "rgba(255,255,255,0.45)",
-            backdropFilter: "saturate(150%) blur(12px)",
-            WebkitBackdropFilter: "saturate(150%) blur(12px)",
-            border: "1px solid rgba(255,255,255,0.5)",
-            boxShadow:
-              "0 2px 12px rgba(0,0,0,0.08), inset 0 0.5px 0 rgba(255,255,255,0.7)",
-          }}
-        >
+        {/* Divider */}
+        <div className="h-6 w-px bg-slate-300/40" />
+
+        {/* Segmented control */}
+        <div className="inline-flex rounded-xl p-1">
           <SegmentButton
             active={activeTab === "map"}
             onClick={() => onTabChange("map")}

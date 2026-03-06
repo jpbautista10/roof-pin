@@ -250,7 +250,7 @@ export default function MapView({
 
       {/* Custom map controls: zoom + locate — iOS glass style */}
       <div
-        className="absolute right-2.5 top-[6.75rem] z-10 flex flex-col overflow-hidden rounded-2xl"
+        className="absolute right-2.5 top-[4.75rem] z-10 flex flex-col overflow-hidden rounded-2xl"
         style={{
           background: "rgba(255,255,255,0.65)",
           backdropFilter: "saturate(180%) blur(20px)",
