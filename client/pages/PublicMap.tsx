@@ -373,7 +373,7 @@ export default function PublicMap() {
             brandColor={company.brand_primary_color}
           />
         ) : (
-          <div className="h-full pt-[5.5rem] overflow-hidden">
+          <div className="h-full pt-[6.5rem] overflow-hidden">
             <div className="h-full overflow-y-auto">
               <StatsView locations={filteredLocations} />
             </div>
@@ -391,14 +391,14 @@ export default function PublicMap() {
       ) : null}
 
       {isDemoMode && !isEmbedMode ? (
-        <div className="absolute left-4 top-[6rem] z-[500] rounded-full border border-white/30 bg-emerald-500/80 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm shadow-sm">
+        <div className="absolute left-4 top-[7rem] z-[500] rounded-full border border-white/30 bg-emerald-500/80 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm shadow-sm">
           Live Demo Mode
         </div>
       ) : null}
 
       {/* Top overlay bar: projects pill + work type filter */}
       {!isEmbedMode && activeTab === "map" ? (
-        <div className="pointer-events-none absolute left-0 right-0 top-[5.5rem] z-20 flex items-start justify-center gap-2 px-3 pt-1">
+        <div className="pointer-events-none absolute left-0 right-0 top-[6.5rem] z-20 flex items-start justify-center gap-2 px-3 pt-1">
           <div className="pointer-events-auto rounded-full px-4 py-1.5 text-xs font-medium text-slate-700/90 shadow-sm" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)', boxShadow: '0 0.5px 0 rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.06)' }}>
             {mapSummary.totalProjects} project
             {mapSummary.totalProjects === 1 ? "" : "s"}
