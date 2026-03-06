@@ -109,8 +109,8 @@ export default function Dashboard() {
     if (!company?.id || cleanupRan.current) return;
     cleanupRan.current = true;
     Promise.all([
-      cleanupNeighborhoodData(company.id),
-      cleanupDateCompletedData(company.id),
+      cleanupNeighborhoodData(company.id).catch(() => 0),
+      cleanupDateCompletedData(company.id).catch(() => 0),
     ]).then(([n, d]) => {
       if (n > 0 || d > 0) {
         queryClient.invalidateQueries({ queryKey: ["locations", company.id] });
