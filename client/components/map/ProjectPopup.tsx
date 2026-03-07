@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Calendar, Hammer, ImageOff, Lock, MapPin, Star, X } from "lucide-react";
 import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
 import BeforeAfterSlider from "./BeforeAfterSlider";
@@ -219,6 +219,7 @@ function DesktopPopup({
   anchorPoint: { x: number; y: number } | null;
 }) {
   const popupRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
   // Close on click outside
   useEffect(() => {
@@ -231,24 +232,39 @@ function DesktopPopup({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [onClose]);
 
-  // Position above the pin, clamped to viewport
-  const style: React.CSSProperties = {};
-  if (anchorPoint) {
+  // Measure actual popup height after render and position accordingly
+  useLayoutEffect(() => {
+    if (!anchorPoint || !popupRef.current) return;
+
     const popupWidth = 340;
-    const popupMaxHeight = 480;
+    const popupHeight = popupRef.current.offsetHeight;
+    const margin = 12;
+    const pinGap = 16; // gap between pin and popup
+
+    // Horizontal: center on pin, clamp to viewport
     let left = anchorPoint.x - popupWidth / 2;
-    let top = anchorPoint.y - popupMaxHeight - 16;
+    if (left < margin) left = margin;
+    if (left + popupWidth > window.innerWidth - margin) left = window.innerWidth - popupWidth - margin;
 
-    // Clamp horizontal
-    if (left < 8) left = 8;
-    if (left + popupWidth > window.innerWidth - 8) left = window.innerWidth - popupWidth - 8;
+    // Vertical: prefer above the pin
+    let top = anchorPoint.y - popupHeight - pinGap;
 
-    // If no room above, place below
-    if (top < 8) top = anchorPoint.y + 24;
+    if (top < margin) {
+      // Not enough room above — try below the pin (+ ~40px for pin height)
+      top = anchorPoint.y + 40;
 
-    style.left = `${left}px`;
-    style.top = `${top}px`;
-  }
+      // If below also overflows, clamp to bottom
+      if (top + popupHeight > window.innerHeight - margin) {
+        top = window.innerHeight - popupHeight - margin;
+      }
+    }
+
+    setPos({ left, top });
+  }, [anchorPoint, location]);
+
+  const style: React.CSSProperties = pos
+    ? { left: `${pos.left}px`, top: `${pos.top}px`, visibility: "visible" as const }
+    : { left: 0, top: 0, visibility: "hidden" as const };
 
   return (
     <div
@@ -290,14 +306,16 @@ function MobileSheet({
       <div
         ref={sheetRef}
         className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] animate-in slide-in-from-bottom duration-200"
-        style={{ maxHeight: "60vh" }}
+        style={{ maxHeight: "75vh" }}
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-2.5 pb-1">
           <div className="w-10 h-1 rounded-full bg-slate-300" />
         </div>
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(60vh - 20px)" }}>
+        <div className="overflow-y-auto" style={{ maxHeight: "calc(75vh - 20px)" }}>
           <PopupContent location={location} company={company} onClose={onClose} />
+          {/* Extra space for mobile browser bottom bar */}
+          <div className="h-16" />
         </div>
       </div>
     </div>
