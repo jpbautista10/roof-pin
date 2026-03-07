@@ -7,7 +7,7 @@ import { getValidBrandColor } from "@/lib/color";
 import MapHeader from "@/components/map/MapHeader";
 import MapView from "@/components/map/MapView";
 import StatsView from "@/components/map/StatsView";
-import ProjectDrawer from "@/components/map/ProjectDrawer";
+import ProjectPopup from "@/components/map/ProjectPopup";
 import WorkTypeFilter from "@/components/map/WorkTypeFilter";
 import { PublicCompany, PublicLocation } from "@/types/public-map";
 
@@ -207,7 +207,8 @@ export default function PublicMap() {
   const [activeTab, setActiveTab] = useState("map");
   const [selectedLocation, setSelectedLocation] =
     useState<PublicLocation | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupAnchor, setPopupAnchor] = useState<{ x: number; y: number } | null>(null);
   const [selectedWorkTypes, setSelectedWorkTypes] = useState<string[]>([]);
 
   const companyQuery = useQuery({
@@ -333,9 +334,10 @@ export default function PublicMap() {
     };
   }, [filteredLocations]);
 
-  function openLocation(location: PublicLocation) {
+  function openLocation(location: PublicLocation, screenPoint?: { x: number; y: number }) {
     setSelectedLocation(location);
-    setDrawerOpen(true);
+    setPopupAnchor(screenPoint ?? null);
+    setPopupOpen(true);
   }
 
   if (!isDemoMode && (companyQuery.isLoading || locationsQuery.isLoading)) {
@@ -369,7 +371,7 @@ export default function PublicMap() {
         {isEmbedMode || activeTab === "map" ? (
           <MapView
             locations={filteredLocations}
-            onSelectLocation={openLocation}
+            onSelectLocation={(loc, pt) => openLocation(loc, pt)}
             brandColor={company.brand_primary_color}
           />
         ) : (
@@ -418,11 +420,12 @@ export default function PublicMap() {
         </div>
       ) : null}
 
-      <ProjectDrawer
+      <ProjectPopup
         location={selectedLocation}
         company={company}
-        open={drawerOpen}
-        onOpenChange={setDrawerOpen}
+        open={popupOpen}
+        onClose={() => setPopupOpen(false)}
+        anchorPoint={popupAnchor}
       />
     </div>
   );

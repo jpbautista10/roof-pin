@@ -7,7 +7,7 @@ import { PublicLocation } from "@/types/public-map";
 
 interface MapViewProps {
   locations: PublicLocation[];
-  onSelectLocation: (location: PublicLocation) => void;
+  onSelectLocation: (location: PublicLocation, screenPoint: { x: number; y: number }) => void;
   brandColor?: string;
 }
 
@@ -217,7 +217,7 @@ export default function MapView({
         }}
         onError={(e) => {
           // Suppress benign Mapbox GL AbortError from tile cancellation
-          if (e?.error?.name === "AbortError") return;
+          if ((e?.error as any)?.name === "AbortError") return;
         }}
       >
         {userLocation && (
@@ -243,7 +243,10 @@ export default function MapView({
             <button
               type="button"
               className="group relative cursor-pointer border-0 bg-transparent p-0"
-              onClick={() => onSelectLocation(location)}
+              onClick={(e) => {
+                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                onSelectLocation(location, { x: rect.left + rect.width / 2, y: rect.top });
+              }}
               aria-label={location.project_name}
             >
               <LocationPin className="-mt-1" color={brandColor} />
