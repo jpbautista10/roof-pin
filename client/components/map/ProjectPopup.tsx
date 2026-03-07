@@ -277,7 +277,7 @@ function DesktopPopup({
   );
 }
 
-/** Mobile: bottom sheet at 60% viewport height */
+/** Mobile: bottom sheet with swipe-to-dismiss */
 function MobileSheet({
   location,
   company,
@@ -288,28 +288,64 @@ function MobileSheet({
   onClose: () => void;
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
-  const backdropRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef<number | null>(null);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [dismissing, setDismissing] = useState(false);
+
+  function onTouchStart(e: React.TouchEvent) {
+    dragStartY.current = e.touches[0].clientY;
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    if (dragStartY.current === null) return;
+    const delta = e.touches[0].clientY - dragStartY.current;
+    // Only allow dragging downward (positive delta) or a small upward peek
+    setDragOffset(Math.max(-20, delta));
+  }
+
+  function onTouchEnd() {
+    if (dragStartY.current === null) return;
+    dragStartY.current = null;
+
+    if (dragOffset > 80) {
+      // Swiped down enough — dismiss
+      setDismissing(true);
+      setTimeout(onClose, 200);
+    } else {
+      // Snap back
+      setDragOffset(0);
+    }
+  }
+
+  const translateY = dismissing ? "100%" : `${Math.max(0, dragOffset)}px`;
 
   return (
-    <div
-      ref={backdropRef}
-      className="fixed inset-0 z-[600]"
-    >
+    <div className="fixed inset-0 z-[600]">
       <div
         ref={sheetRef}
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] animate-in slide-in-from-bottom duration-200"
-        style={{ maxHeight: "75vh" }}
+        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)]"
+        style={{
+          maxHeight: "75vh",
+          transform: `translateY(${translateY})`,
+          transition: dragStartY.current !== null ? "none" : "transform 0.2s ease-out",
+        }}
       >
-        {/* Drag handle — tapping this closes the sheet */}
-        <button
-          type="button"
+        {/* Drag handle area — swipe down to dismiss, tap to close */}
+        <div
+          className="touch-none"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
           onClick={onClose}
-          className="flex w-full justify-center pt-2.5 pb-1 cursor-pointer bg-transparent border-0"
-          aria-label="Close"
+          role="button"
+          tabIndex={0}
+          aria-label="Drag down or tap to close"
         >
-          <div className="w-10 h-1 rounded-full bg-slate-300" />
-        </button>
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(75vh - 20px)" }}>
+          <div className="flex justify-center pt-3 pb-2">
+            <div className="w-10 h-1 rounded-full bg-slate-300" />
+          </div>
+        </div>
+        <div className="overflow-y-auto" style={{ maxHeight: "calc(75vh - 28px)" }}>
           <PopupContent location={location} company={company} onClose={onClose} />
           {/* Extra space for mobile browser bottom bar */}
           <div className="h-16" />
