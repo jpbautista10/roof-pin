@@ -269,7 +269,7 @@ function DesktopPopup({
   return (
     <div
       ref={popupRef}
-      className="fixed z-[600] w-[340px] max-h-[480px] overflow-y-auto rounded-xl bg-white shadow-2xl border border-slate-200/80 animate-in fade-in zoom-in-95 duration-150"
+      className="fixed z-[600] w-[340px] max-h-[480px] overflow-y-auto rounded-xl bg-white shadow-2xl border border-slate-200/80"
       style={style}
     >
       <PopupContent location={location} company={company} onClose={onClose} />
@@ -290,28 +290,25 @@ function MobileSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
 
-  // Close on backdrop tap
-  function handleBackdropClick(e: React.MouseEvent) {
-    if (e.target === backdropRef.current) {
-      onClose();
-    }
-  }
-
   return (
     <div
       ref={backdropRef}
       className="fixed inset-0 z-[600]"
-      onClick={handleBackdropClick}
     >
       <div
         ref={sheetRef}
         className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] animate-in slide-in-from-bottom duration-200"
         style={{ maxHeight: "75vh" }}
       >
-        {/* Drag handle */}
-        <div className="flex justify-center pt-2.5 pb-1">
+        {/* Drag handle — tapping this closes the sheet */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex w-full justify-center pt-2.5 pb-1 cursor-pointer bg-transparent border-0"
+          aria-label="Close"
+        >
           <div className="w-10 h-1 rounded-full bg-slate-300" />
-        </div>
+        </button>
         <div className="overflow-y-auto" style={{ maxHeight: "calc(75vh - 20px)" }}>
           <PopupContent location={location} company={company} onClose={onClose} />
           {/* Extra space for mobile browser bottom bar */}
