@@ -277,80 +277,71 @@ function DesktopPopup({
   );
 }
 
-/** Mobile: bottom sheet with swipe-to-dismiss */
-function MobileSheet({
+/** Mobile: same popup style as desktop, sized for smaller screens */
+function MobilePopup({
   location,
   company,
   onClose,
+  anchorPoint,
 }: {
   location: PublicLocation;
   company: PublicCompany;
   onClose: () => void;
+  anchorPoint: { x: number; y: number } | null;
 }) {
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const dragStartY = useRef<number | null>(null);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [dismissing, setDismissing] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
-  function onTouchStart(e: React.TouchEvent) {
-    dragStartY.current = e.touches[0].clientY;
-  }
-
-  function onTouchMove(e: React.TouchEvent) {
-    if (dragStartY.current === null) return;
-    const delta = e.touches[0].clientY - dragStartY.current;
-    // Only allow dragging downward (positive delta) or a small upward peek
-    setDragOffset(Math.max(-20, delta));
-  }
-
-  function onTouchEnd() {
-    if (dragStartY.current === null) return;
-    dragStartY.current = null;
-
-    if (dragOffset > 80) {
-      // Swiped down enough — dismiss
-      setDismissing(true);
-      setTimeout(onClose, 200);
-    } else {
-      // Snap back
-      setDragOffset(0);
+  // Close on click outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        onClose();
+      }
     }
-  }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [onClose]);
 
-  const translateY = dismissing ? "100%" : `${Math.max(0, dragOffset)}px`;
+  useLayoutEffect(() => {
+    if (!anchorPoint || !popupRef.current) return;
+
+    const margin = 8;
+    const pinGap = 12;
+    const popupWidth = Math.min(300, window.innerWidth - margin * 2);
+    const popupHeight = popupRef.current.offsetHeight;
+
+    // Horizontal: center on pin, clamp to viewport
+    let left = anchorPoint.x - popupWidth / 2;
+    if (left < margin) left = margin;
+    if (left + popupWidth > window.innerWidth - margin) left = window.innerWidth - popupWidth - margin;
+
+    // Vertical: prefer above the pin
+    let top = anchorPoint.y - popupHeight - pinGap;
+
+    if (top < margin) {
+      top = anchorPoint.y + 36;
+      if (top + popupHeight > window.innerHeight - margin) {
+        top = window.innerHeight - popupHeight - margin;
+      }
+    }
+
+    setPos({ left, top });
+  }, [anchorPoint, location]);
+
+  const popupWidth = Math.min(300, window.innerWidth - 16);
+
+  const style: React.CSSProperties = pos
+    ? { left: `${pos.left}px`, top: `${pos.top}px`, width: `${popupWidth}px`, visibility: "visible" as const }
+    : { left: 0, top: 0, width: `${popupWidth}px`, visibility: "hidden" as const };
 
   return (
-    <div className="fixed inset-0 z-[600]">
-      <div
-        ref={sheetRef}
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)]"
-        style={{
-          maxHeight: "75vh",
-          transform: `translateY(${translateY})`,
-          transition: dragStartY.current !== null ? "none" : "transform 0.2s ease-out",
-        }}
-      >
-        {/* Drag handle area — swipe down to dismiss, tap to close */}
-        <div
-          className="touch-none"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-          onClick={onClose}
-          role="button"
-          tabIndex={0}
-          aria-label="Drag down or tap to close"
-        >
-          <div className="flex justify-center pt-3 pb-2">
-            <div className="w-10 h-1 rounded-full bg-slate-300" />
-          </div>
-        </div>
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(75vh - 28px)" }}>
-          <PopupContent location={location} company={company} onClose={onClose} />
-          {/* Extra space for mobile browser bottom bar */}
-          <div className="h-16" />
-        </div>
-      </div>
+    <div
+      ref={popupRef}
+      className="fixed z-[600] max-h-[70vh] overflow-y-auto rounded-xl bg-white shadow-2xl border border-slate-200/80"
+      style={style}
+    >
+      <PopupContent location={location} company={company} onClose={onClose} />
     </div>
   );
 }
@@ -377,7 +368,12 @@ export default function ProjectPopup({
       </div>
       {/* Mobile */}
       <div className="md:hidden">
-        <MobileSheet location={location} company={company} onClose={onClose} />
+        <MobilePopup
+          location={location}
+          company={company}
+          onClose={onClose}
+          anchorPoint={anchorPoint ?? null}
+        />
       </div>
     </>
   );
