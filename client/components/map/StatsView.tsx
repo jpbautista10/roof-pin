@@ -61,13 +61,11 @@ export default function StatsView({ locations }: StatsViewProps) {
       .sort(([, a], [, b]) => b - a)
       .map(([type, count]) => ({ type, count }));
 
-    // Ratings
+    // Ratings — include reviews from all locations (privacy mode only anonymizes names, not stats)
     const ratingValues = locations.flatMap((loc) =>
-      loc.privacy_mode
-        ? []
-        : loc.reviews
-            .map((r) => r.stars)
-            .filter((s): s is number => typeof s === "number"),
+      loc.reviews
+        .map((r) => r.stars)
+        .filter((s): s is number => typeof s === "number"),
     );
     const avgRating =
       ratingValues.length > 0
