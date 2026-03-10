@@ -218,7 +218,7 @@ export default function PublicMap() {
       const { data, error } = await supabase
         .from("companies")
         .select(
-          "id, name, slug, logo_url, cta_url, brand_primary_color, brand_secondary_color",
+          "id, name, slug, logo_url, cta_url, brand_primary_color, brand_secondary_color, show_completed_date, show_work_type, show_neighborhood, show_reviews, show_images",
         )
         .eq("slug", slug)
         .maybeSingle<PublicCompany>();
@@ -317,9 +317,7 @@ export default function PublicMap() {
   const mapSummary = useMemo(() => {
     const ratings = filteredLocations
       .flatMap((location) =>
-        location.privacy_mode
-          ? []
-          : location.reviews.map((review) => review.stars ?? null),
+        location.reviews.map((review) => review.stars ?? null),
       )
       .filter((value): value is number => typeof value === "number");
 
@@ -377,7 +375,7 @@ export default function PublicMap() {
         ) : (
           <div className="h-full pt-[4.5rem] overflow-hidden">
             <div className="h-full overflow-y-auto">
-              <StatsView locations={filteredLocations} />
+              <StatsView locations={filteredLocations} company={company} />
             </div>
           </div>
         )}

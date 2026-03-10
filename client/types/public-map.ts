@@ -8,6 +8,11 @@ export interface PublicCompany {
   brand_secondary_color: string;
   google_place_id?: string | null;
   yelp_alias?: string | null;
+  show_completed_date?: boolean;
+  show_work_type?: boolean;
+  show_neighborhood?: boolean;
+  show_reviews?: boolean;
+  show_images?: boolean;
 }
 
 export interface PublicLocationImage {

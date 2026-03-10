@@ -13,8 +13,25 @@ interface ProjectPopupProps {
   anchorPoint?: { x: number; y: number } | null;
 }
 
+const MONTH_NAMES: Record<string, string> = {
+  january: "Jan", february: "Feb", march: "Mar", april: "Apr",
+  may: "May", june: "Jun", july: "Jul", august: "Aug",
+  september: "Sep", october: "Oct", november: "Nov", december: "Dec",
+};
+
 function formatProjectDate(dateCompleted: string | null, createdAt: string) {
   if (dateCompleted) {
+    // date_completed is stored as "Month YYYY" (e.g. "January 2026")
+    // Safari can't parse "January 2026 1" so we parse manually
+    const parts = dateCompleted.trim().split(/\s+/);
+    if (parts.length === 2) {
+      const monthShort = MONTH_NAMES[parts[0].toLowerCase()];
+      const year = parts[1];
+      if (monthShort && /^\d{4}$/.test(year)) {
+        return `${monthShort} ${year}`;
+      }
+    }
+    // Fallback: try native parse for other formats (e.g. "11/2024")
     const parsedDate = new Date(`${dateCompleted} 1`);
     if (!Number.isNaN(parsedDate.getTime())) {
       return parsedDate.toLocaleDateString(undefined, {
@@ -74,6 +91,13 @@ function PopupContent({
   const brandTextColor = getContrastTextColor(brandColor);
   const projectDate = formatProjectDate(location.date_completed, location.created_at);
 
+  // Visibility settings (default true when columns haven't been added yet)
+  const showDate = company.show_completed_date ?? true;
+  const showWorkType = company.show_work_type ?? true;
+  const showNeighborhood = company.show_neighborhood ?? true;
+  const showReviews = company.show_reviews ?? true;
+  const showImages = company.show_images ?? true;
+
   return (
     <>
       {/* Header */}
@@ -99,42 +123,48 @@ function PopupContent({
       </div>
 
       {/* Privacy mode details */}
-      {location.privacy_mode && (
+      {location.privacy_mode && (showWorkType || showDate || showNeighborhood) && (
         <div className="px-4 pb-3">
           <div className="rounded-lg bg-slate-50 p-3 space-y-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: `${brandColor}1A` }}>
-                <Hammer className="w-3.5 h-3.5" style={{ color: brandColor }} />
+            {showWorkType && (
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: `${brandColor}1A` }}>
+                  <Hammer className="w-3.5 h-3.5" style={{ color: brandColor }} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-500">Work Type</p>
+                  <p className="text-xs font-semibold text-slate-900">{location.work_type || "Not specified"}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] text-slate-500">Work Type</p>
-                <p className="text-xs font-semibold text-slate-900">{location.work_type || "Not specified"}</p>
+            )}
+            {showDate && (
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: `${brandColor}1A` }}>
+                  <Calendar className="w-3.5 h-3.5" style={{ color: brandColor }} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-500">Completed</p>
+                  <p className="text-xs font-semibold text-slate-900">{projectDate}</p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: `${brandColor}1A` }}>
-                <Calendar className="w-3.5 h-3.5" style={{ color: brandColor }} />
+            )}
+            {showNeighborhood && (
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: `${brandColor}1A` }}>
+                  <MapPin className="w-3.5 h-3.5" style={{ color: brandColor }} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-500">Neighborhood</p>
+                  <p className="text-xs font-semibold text-slate-900">{location.neighborhood || location.place_label}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] text-slate-500">Completed</p>
-                <p className="text-xs font-semibold text-slate-900">{projectDate}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: `${brandColor}1A` }}>
-                <MapPin className="w-3.5 h-3.5" style={{ color: brandColor }} />
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-500">Neighborhood</p>
-                <p className="text-xs font-semibold text-slate-900">{location.neighborhood || location.place_label}</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}
 
       {/* Images */}
-      {!location.privacy_mode && (
+      {!location.privacy_mode && showImages && (
         <div className="px-4 pb-3">
           {beforeImage?.public_url && afterImage?.public_url ? (
             <BeforeAfterSlider beforeImg={beforeImage.public_url} afterImg={afterImage.public_url} />
@@ -150,15 +180,19 @@ function PopupContent({
       {/* Tags */}
       {!location.privacy_mode && (
         <div className="px-4 pb-3 flex gap-1.5 flex-wrap">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-medium text-slate-700">
-            <MapPin className="w-3 h-3" />
-            {location.neighborhood || location.place_label}
-          </span>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-medium text-slate-700">
-            <Calendar className="w-3 h-3" />
-            {projectDate}
-          </span>
-          {location.work_type && (
+          {showNeighborhood && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-medium text-slate-700">
+              <MapPin className="w-3 h-3" />
+              {location.neighborhood || location.place_label}
+            </span>
+          )}
+          {showDate && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-medium text-slate-700">
+              <Calendar className="w-3 h-3" />
+              {projectDate}
+            </span>
+          )}
+          {showWorkType && location.work_type && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-medium text-slate-700">
               <Hammer className="w-3 h-3" />
               {location.work_type}
@@ -168,7 +202,7 @@ function PopupContent({
       )}
 
       {/* Reviews */}
-      {reviews.length > 0 && (
+      {showReviews && reviews.length > 0 && (
         <div className="px-4 pb-3 space-y-2">
           {reviews.map((review, i) => (
             <div key={`${review.customer_name ?? "r"}-${i}`} className="rounded-lg bg-slate-50 p-3">

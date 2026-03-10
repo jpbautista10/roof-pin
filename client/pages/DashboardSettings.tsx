@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import slugify from "slugify";
-import { Check, Copy, Loader2, Upload } from "lucide-react";
+import { Check, Copy, Loader2, Upload, Eye } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const settingsSchema = z.object({
@@ -36,6 +37,11 @@ const settingsSchema = z.object({
   googlePlaceId: z.string().trim().optional(),
   yelpAlias: z.string().trim().optional(),
   logoFile: z.any().optional(),
+  showCompletedDate: z.boolean(),
+  showWorkType: z.boolean(),
+  showNeighborhood: z.boolean(),
+  showReviews: z.boolean(),
+  showImages: z.boolean(),
 });
 
 type SettingsValues = z.infer<typeof settingsSchema>;
@@ -68,6 +74,11 @@ export default function DashboardSettings() {
       googlePlaceId: company?.google_place_id ?? "",
       yelpAlias: company?.yelp_alias ?? "",
       logoFile: undefined,
+      showCompletedDate: (company as any)?.show_completed_date ?? true,
+      showWorkType: (company as any)?.show_work_type ?? true,
+      showNeighborhood: (company as any)?.show_neighborhood ?? true,
+      showReviews: (company as any)?.show_reviews ?? true,
+      showImages: (company as any)?.show_images ?? true,
     },
   });
 
@@ -186,7 +197,12 @@ export default function DashboardSettings() {
           yelp_alias: values.yelpAlias?.trim() || null,
           logo_url: logoUrl,
           brand_primary_color: values.primaryColor,
-        })
+          show_completed_date: values.showCompletedDate,
+          show_work_type: values.showWorkType,
+          show_neighborhood: values.showNeighborhood,
+          show_reviews: values.showReviews,
+          show_images: values.showImages,
+        } as any)
         .eq("id", company.id);
 
       if (updateResult.error) {
@@ -460,6 +476,51 @@ export default function DashboardSettings() {
               ) : null}
             </div>
 
+            {/* Pin visibility settings */}
+            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Eye className="h-4 w-4 text-slate-600" />
+                  <p className="text-sm font-semibold text-slate-900">
+                    Pin popup visibility
+                  </p>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Control what information is visible on pin popups in the public map.
+                </p>
+              </div>
+              <VisibilityToggle
+                label="Completed date"
+                description="Show when the project was completed"
+                checked={form.watch("showCompletedDate")}
+                onCheckedChange={(v) => form.setValue("showCompletedDate", v, { shouldDirty: true })}
+              />
+              <VisibilityToggle
+                label="Work type"
+                description="Show the type of work performed"
+                checked={form.watch("showWorkType")}
+                onCheckedChange={(v) => form.setValue("showWorkType", v, { shouldDirty: true })}
+              />
+              <VisibilityToggle
+                label="Neighborhood"
+                description="Show the project neighborhood or city"
+                checked={form.watch("showNeighborhood")}
+                onCheckedChange={(v) => form.setValue("showNeighborhood", v, { shouldDirty: true })}
+              />
+              <VisibilityToggle
+                label="Reviews"
+                description="Show customer reviews on pin popups and stats"
+                checked={form.watch("showReviews")}
+                onCheckedChange={(v) => form.setValue("showReviews", v, { shouldDirty: true })}
+              />
+              <VisibilityToggle
+                label="Before/After images"
+                description="Show project images in pin popups"
+                checked={form.watch("showImages")}
+                onCheckedChange={(v) => form.setValue("showImages", v, { shouldDirty: true })}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="logoFile">Company logo</Label>
               <p className="text-xs text-slate-500">
@@ -514,5 +575,27 @@ export default function DashboardSettings() {
         </CardContent>
       </Card>
     </section>
+  );
+}
+
+function VisibilityToggle({
+  label,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center justify-between gap-3 rounded-md bg-white p-3 border border-slate-200 cursor-pointer">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-900">{label}</p>
+        <p className="text-xs text-slate-500">{description}</p>
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    </label>
   );
 }

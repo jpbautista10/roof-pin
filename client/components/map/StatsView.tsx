@@ -7,10 +7,11 @@ import {
   StarHalf,
   TrendingUp,
 } from "lucide-react";
-import { PublicLocation } from "@/types/public-map";
+import { PublicCompany, PublicLocation } from "@/types/public-map";
 
 interface StatsViewProps {
   locations: PublicLocation[];
+  company?: PublicCompany;
 }
 
 function formatWorkType(value: string | null) {
@@ -45,7 +46,10 @@ function RatingStars({ rating }: { rating: number }) {
   );
 }
 
-export default function StatsView({ locations }: StatsViewProps) {
+export default function StatsView({ locations, company }: StatsViewProps) {
+  const showReviews = company?.show_reviews ?? true;
+  const showWorkType = company?.show_work_type ?? true;
+  const showNeighborhood = company?.show_neighborhood ?? true;
   const stats = useMemo(() => {
     const total = locations.length;
 
@@ -128,25 +132,31 @@ export default function StatsView({ locations }: StatsViewProps) {
             value={stats.total}
             label="Total Projects"
           />
-          <SummaryCard
-            icon={<MapPin className="h-5 w-5 text-emerald-600" />}
-            value={stats.neighborhoodCount}
-            label="Neighborhoods"
-          />
-          <SummaryCard
-            icon={<Hammer className="h-5 w-5 text-violet-600" />}
-            value={stats.workTypes.length}
-            label="Work Types"
-          />
-          <SummaryCard
-            icon={<TrendingUp className="h-5 w-5 text-amber-600" />}
-            value={stats.totalReviews}
-            label="Total Reviews"
-          />
+          {showNeighborhood && (
+            <SummaryCard
+              icon={<MapPin className="h-5 w-5 text-emerald-600" />}
+              value={stats.neighborhoodCount}
+              label="Neighborhoods"
+            />
+          )}
+          {showWorkType && (
+            <SummaryCard
+              icon={<Hammer className="h-5 w-5 text-violet-600" />}
+              value={stats.workTypes.length}
+              label="Work Types"
+            />
+          )}
+          {showReviews && (
+            <SummaryCard
+              icon={<TrendingUp className="h-5 w-5 text-amber-600" />}
+              value={stats.totalReviews}
+              label="Total Reviews"
+            />
+          )}
         </div>
 
         {/* Rating overview */}
-        {stats.avgRating !== null && (
+        {showReviews && stats.avgRating !== null && (
           <div className="rounded-xl border border-white/30 bg-white/60 p-5 shadow-sm backdrop-blur-lg">
             <h3 className="mb-3 text-sm font-semibold text-slate-900">
               Customer Rating
@@ -193,7 +203,7 @@ export default function StatsView({ locations }: StatsViewProps) {
         )}
 
         {/* Work type breakdown */}
-        {stats.workTypes.length > 0 && (
+        {showWorkType && stats.workTypes.length > 0 && (
           <div className="rounded-xl border border-white/30 bg-white/60 p-5 shadow-sm backdrop-blur-lg">
             <h3 className="mb-3 text-sm font-semibold text-slate-900">
               Work Type Breakdown
