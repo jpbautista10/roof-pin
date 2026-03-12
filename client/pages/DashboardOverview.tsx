@@ -14,7 +14,7 @@ import {
   Star,
 } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
-import { fetchLocationsByCompany, LocationWithAssets } from "@/lib/locations";
+import { fetchLocationsByCompany, type LocationWithAssets } from "@/lib/locations";
 
 interface StatCardProps {
   label: string;

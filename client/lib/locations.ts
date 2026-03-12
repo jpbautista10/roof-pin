@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Database, TablesInsert } from "@shared/database.types";
+import type { Database, TablesInsert } from "@shared/database.types";
 
 export type LocationRow = Database["public"]["Tables"]["locations"]["Row"];
 

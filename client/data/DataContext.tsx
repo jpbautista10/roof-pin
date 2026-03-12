@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback } from "react";
-import { Tenant, Pin } from "@/types";
+import type { Tenant, Pin } from "@/types";
 import { mockTenants, mockPins } from "./mock";
 
 interface DataContextValue {

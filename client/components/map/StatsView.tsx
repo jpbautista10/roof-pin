@@ -7,7 +7,7 @@ import {
   StarHalf,
   TrendingUp,
 } from "lucide-react";
-import { PublicCompany, PublicLocation } from "@/types/public-map";
+import type { PublicCompany, PublicLocation } from "@/types/public-map";
 
 interface StatsViewProps {
   locations: PublicLocation[];

@@ -51,13 +51,13 @@ export type Database = {
           logo_url: string | null
           name: string
           owner_user_id: string
-          slug: string
-          updated_at: string
           show_completed_date: boolean
           show_images: boolean
           show_neighborhood: boolean
           show_reviews: boolean
           show_work_type: boolean
+          slug: string
+          updated_at: string
           yelp_alias: string | null
         }
         Insert: {
@@ -71,13 +71,13 @@ export type Database = {
           logo_url?: string | null
           name: string
           owner_user_id: string
-          slug: string
-          updated_at?: string
           show_completed_date?: boolean
           show_images?: boolean
           show_neighborhood?: boolean
           show_reviews?: boolean
           show_work_type?: boolean
+          slug: string
+          updated_at?: string
           yelp_alias?: string | null
         }
         Update: {
@@ -91,13 +91,13 @@ export type Database = {
           logo_url?: string | null
           name?: string
           owner_user_id?: string
-          slug?: string
-          updated_at?: string
           show_completed_date?: boolean
           show_images?: boolean
           show_neighborhood?: boolean
           show_reviews?: boolean
           show_work_type?: boolean
+          slug?: string
+          updated_at?: string
           yelp_alias?: string | null
         }
         Relationships: []

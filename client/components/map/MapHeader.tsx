@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
-import { PublicCompany } from "@/types/public-map";
+import type { PublicCompany } from "@/types/public-map";
 import { BarChart3, Map } from "lucide-react";
 
 interface MapHeaderProps {

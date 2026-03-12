@@ -8,7 +8,7 @@ import {
 import { Calendar, Hammer, ImageOff, Lock, MapPin, Star } from "lucide-react";
 import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
 import BeforeAfterSlider from "./BeforeAfterSlider";
-import { PublicCompany, PublicLocation } from "@/types/public-map";
+import type { PublicCompany, PublicLocation } from "@/types/public-map";
 
 interface ProjectDrawerProps {
   location: PublicLocation | null;

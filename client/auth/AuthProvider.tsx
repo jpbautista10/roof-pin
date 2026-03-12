@@ -10,7 +10,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { Database } from "@shared/database.types";
+import type { Database } from "@shared/database.types";
 
 type DbUser = Database["public"]["Tables"]["users"]["Row"];
 type Company = Database["public"]["Tables"]["companies"]["Row"];
