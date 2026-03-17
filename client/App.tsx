@@ -19,6 +19,9 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import DashboardLocationCreate from "./pages/DashboardLocationCreate";
 import DashboardSettings from "./pages/DashboardSettings";
 import DashboardImport from "./pages/DashboardImport";
+import SalesPage from "./pages/SalesPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import WelcomePage from "./pages/WelcomePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +44,9 @@ export default function App() {
             <Route path="/" element={<Index />} />
             <Route path="/s/:slug" element={<PublicMap />} />
             <Route path="/review/:token" element={<PublicReview />} />
+            <Route path="/get-started" element={<SalesPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/welcome" element={<WelcomePage />} />
 
             <Route element={<AuthRoutes />}>
               <Route path="/auth/login" element={<Login />} />
