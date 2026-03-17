@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Calendar, Hammer, ImageOff, Lock, MapPin, Star, X } from "lucide-react";
 import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
+import type { PublicCompany, PublicLocation } from "@/types/public-map";
+import { format, parse } from 'date-fns';
+import { Calendar, Hammer, ImageOff, MapPin, Star, X } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import BeforeAfterSlider from "./BeforeAfterSlider";
-import { PublicCompany, PublicLocation } from "@/types/public-map";
 
 interface ProjectPopupProps {
   location: PublicLocation | null;
@@ -21,31 +22,8 @@ const MONTH_NAMES: Record<string, string> = {
 
 function formatProjectDate(dateCompleted: string | null, createdAt: string) {
   if (dateCompleted) {
-    // date_completed is stored as "Month YYYY" (e.g. "January 2026")
-    // Safari can't parse "January 2026 1" so we parse manually
-    const parts = dateCompleted.trim().split(/\s+/);
-    if (parts.length === 2) {
-      const monthShort = MONTH_NAMES[parts[0].toLowerCase()];
-      const year = parts[1];
-      if (monthShort && /^\d{4}$/.test(year)) {
-        return `${monthShort} ${year}`;
-      }
-    }
-    // Fallback: try native parse for other formats (e.g. "11/2024")
-    const parsedDate = new Date(`${dateCompleted} 1`);
-    if (!Number.isNaN(parsedDate.getTime())) {
-      return parsedDate.toLocaleDateString(undefined, {
-        month: "short",
-        year: "numeric",
-      });
-    }
-  }
-  const fallbackDate = new Date(createdAt);
-  if (!Number.isNaN(fallbackDate.getTime())) {
-    return fallbackDate.toLocaleDateString(undefined, {
-      month: "short",
-      year: "numeric",
-    });
+    const parsed = parse(dateCompleted, "MMMM yyyy", new Date());
+    return format(parsed, "MMM yyyy");
   }
   return "Date unavailable";
 }

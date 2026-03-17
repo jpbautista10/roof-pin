@@ -40,7 +40,7 @@ import {
 } from "@/lib/locations";
 import { createOrGetReviewToken } from "@/lib/review-requests";
 import { supabase } from "@/lib/supabase";
-import { GeocodeSuggestResponse, GeocodeSuggestion } from "@shared/api";
+import type { GeocodeSuggestResponse, GeocodeSuggestion } from "@shared/api";
 
 const WORK_TYPES = ["Shingle", "Flat", "Tile", "Metal"] as const;
 const MONTHS = [

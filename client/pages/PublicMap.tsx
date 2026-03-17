@@ -9,7 +9,7 @@ import MapView from "@/components/map/MapView";
 import StatsView from "@/components/map/StatsView";
 import ProjectPopup from "@/components/map/ProjectPopup";
 import WorkTypeFilter from "@/components/map/WorkTypeFilter";
-import { PublicCompany, PublicLocation } from "@/types/public-map";
+import type { PublicCompany, PublicLocation } from "@/types/public-map";
 
 interface LocationQueryRow {
   id: string;

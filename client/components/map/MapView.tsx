@@ -3,7 +3,7 @@ import Map, { Marker, type MapRef } from "react-map-gl/mapbox";
 import { LngLatBounds } from "mapbox-gl";
 import { LocateFixed, Loader2, Plus, Minus } from "lucide-react";
 import LocationPin from "@/components/map/LocationPin";
-import { PublicLocation } from "@/types/public-map";
+import type { PublicLocation } from "@/types/public-map";
 
 interface MapViewProps {
   locations: PublicLocation[];

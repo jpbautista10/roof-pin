@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { Check, ExternalLink, HeartHandshake, Star } from "lucide-react";
