@@ -59,6 +59,8 @@ export type Database = {
           show_reviews: boolean
           show_work_type: boolean
           yelp_alias: string | null
+          review_min_stars: number
+          review_trigger_words: string[]
         }
         Insert: {
           brand_accent_color?: string
@@ -79,6 +81,8 @@ export type Database = {
           show_reviews?: boolean
           show_work_type?: boolean
           yelp_alias?: string | null
+          review_min_stars?: number
+          review_trigger_words?: string[]
         }
         Update: {
           brand_accent_color?: string
@@ -188,6 +192,8 @@ export type Database = {
           source: string
           stars: number | null
           updated_at: string
+          is_visible: boolean
+          deleted_at: string | null
         }
         Insert: {
           created_at?: string
@@ -198,6 +204,8 @@ export type Database = {
           source?: string
           stars?: number | null
           updated_at?: string
+          is_visible?: boolean
+          deleted_at?: string | null
         }
         Update: {
           created_at?: string
@@ -208,6 +216,8 @@ export type Database = {
           source?: string
           stars?: number | null
           updated_at?: string
+          is_visible?: boolean
+          deleted_at?: string | null
         }
         Relationships: [
           {
@@ -337,6 +347,8 @@ export type Database = {
         Returns: {
           google_place_id: string
           yelp_alias: string
+          review_min_stars: number
+          review_trigger_words: string[]
         }[]
       }
       submit_location_review: {

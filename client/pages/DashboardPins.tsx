@@ -6,9 +6,11 @@ import {
   Eye,
   EyeOff,
   MapPin,
+  MessageSquareText,
   Pencil,
   PlusCircle,
   QrCode,
+  Star,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -51,6 +53,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import QRCode from "qrcode";
+import ReviewsTab from "@/components/dashboard/ReviewsTab";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -84,10 +87,24 @@ function getNeighborhood(addressJson: unknown, fallback: string) {
   return fallback;
 }
 
+type PageTab = "pins" | "reviews";
+
 export default function DashboardPins() {
   const { company } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get("tab") === "reviews" ? "reviews" : "pins") as PageTab;
+
+  function setActiveTab(tab: PageTab) {
+    const params = new URLSearchParams(searchParams);
+    if (tab === "pins") params.delete("tab");
+    else params.set("tab", tab);
+    // Reset other params when switching tabs
+    params.delete("q");
+    params.delete("filter");
+    params.delete("page");
+    setSearchParams(params, { replace: true });
+  }
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
@@ -129,7 +146,8 @@ export default function DashboardPins() {
       const neighborhood = getNeighborhood(location.address_json, location.place_label);
       if (filter === "public" && location.privacy_mode) return false;
       if (filter === "private" && !location.privacy_mode) return false;
-      if (filter === "needs_review" && location.review) return false;
+      const hasActiveReview = location.review && !location.review.deleted_at;
+      if (filter === "needs_review" && hasActiveReview) return false;
       if (!normalizedQuery) return true;
       return (
         location.project_name.toLowerCase().includes(normalizedQuery) ||
@@ -248,7 +266,32 @@ export default function DashboardPins() {
   return (
     <section className="space-y-6 pt-2">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Pins</h1>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("pins")}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+              activeTab === "pins"
+                ? "bg-primary text-white"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <MapPin className="mr-1.5 inline h-4 w-4" />
+            Pins
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("reviews")}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+              activeTab === "reviews"
+                ? "bg-primary text-white"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <MessageSquareText className="mr-1.5 inline h-4 w-4" />
+            Reviews
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           <Button asChild>
             <Link to={`/dashboard/${company.slug}/locations/new`}>
@@ -265,7 +308,13 @@ export default function DashboardPins() {
         </div>
       </div>
 
-      {locationsQuery.isLoading ? (
+      {activeTab === "reviews" ? (
+        <ReviewsTab
+          locations={locations}
+          companyId={company.id}
+          onRequestReview={openReviewRequest}
+        />
+      ) : locationsQuery.isLoading ? (
         <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-600">
           Loading locations...
         </div>
@@ -379,8 +428,17 @@ export default function DashboardPins() {
                         </span>
                         <span>{location.date_completed || formatDate(location.created_at)}</span>
                       </div>
-                      <div className="mt-3 flex items-center justify-end gap-1 border-t border-slate-100 pt-2">
-                        {!location.review && (
+                      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2">
+                        <div>
+                          {location.review && typeof location.review.stars === "number" && !location.review.deleted_at && (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+                              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                              {location.review.stars}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                        {(!location.review || location.review.deleted_at) && (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -411,6 +469,7 @@ export default function DashboardPins() {
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
+                        </div>
                       </div>
                     </article>
                   );
@@ -431,6 +490,7 @@ export default function DashboardPins() {
                         <th className="h-12 px-4 text-left align-middle text-xs font-medium text-slate-500">Project</th>
                         <th className="hidden h-12 px-4 text-left align-middle text-xs font-medium text-slate-500 md:table-cell">Completed</th>
                         <th className="h-12 px-4 text-center align-middle text-xs font-medium text-slate-500">Status</th>
+                        <th className="hidden h-12 px-4 text-center align-middle text-xs font-medium text-slate-500 lg:table-cell">Review</th>
                         <th className="h-12 px-4 text-right align-middle text-xs font-medium text-slate-500">Actions</th>
                       </tr>
                     </thead>
@@ -473,9 +533,19 @@ export default function DashboardPins() {
                                 </span>
                               )}
                             </td>
+                            <td className="hidden p-4 text-center align-middle lg:table-cell">
+                              {location.review && typeof location.review.stars === "number" && !location.review.deleted_at ? (
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+                                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                  {location.review.stars}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-slate-400">&mdash;</span>
+                              )}
+                            </td>
                             <td className="p-4 text-right align-middle">
                               <div className="flex items-center justify-end gap-1">
-                                {!location.review && (
+                                {(!location.review || location.review.deleted_at) && (
                                   <Button
                                     variant="ghost"
                                     size="icon"

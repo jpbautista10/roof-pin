@@ -1,7 +1,7 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { Check, Clipboard, ExternalLink, Star } from "lucide-react";
+import { Check, ExternalLink, HeartHandshake, Star } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,20 @@ import { Textarea } from "@/components/ui/textarea";
 interface PlatformInfo {
   google_place_id: string | null;
   yelp_alias: string | null;
+  review_min_stars: number;
+  review_trigger_words: string[];
+}
+
+function isBadReview(
+  stars: number,
+  reviewText: string,
+  minStars: number,
+  triggerWords: string[],
+): boolean {
+  if (stars < minStars) return true;
+  if (triggerWords.length === 0) return false;
+  const lowerText = reviewText.toLowerCase();
+  return triggerWords.some((word) => lowerText.includes(word.toLowerCase()));
 }
 
 function ShareButtons({
@@ -94,6 +108,22 @@ function ShareButtons({
   );
 }
 
+function BadReviewAcknowledgment() {
+  return (
+    <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-5 text-center">
+      <HeartHandshake className="mx-auto mb-3 h-8 w-8 text-blue-500" />
+      <h3 className="text-base font-semibold text-slate-900">
+        Thank you for your feedback
+      </h3>
+      <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+        We truly appreciate you taking the time to share your experience. A team
+        member will reach out to you shortly to discuss your feedback and make
+        things right.
+      </p>
+    </div>
+  );
+}
+
 export default function PublicReview() {
   const { token } = useParams<{ token: string }>();
   const [customerName, setCustomerName] = useState("");
@@ -109,7 +139,14 @@ export default function PublicReview() {
         p_token: token!,
       });
       if (error) return null;
-      return (data?.[0] as PlatformInfo) ?? null;
+      const row = data?.[0] ?? null;
+      if (!row) return null;
+      return {
+        google_place_id: row.google_place_id ?? null,
+        yelp_alias: row.yelp_alias ?? null,
+        review_min_stars: row.review_min_stars ?? 4,
+        review_trigger_words: row.review_trigger_words ?? [],
+      } as PlatformInfo;
     },
   });
 
@@ -151,10 +188,27 @@ export default function PublicReview() {
   }
 
   const platformInfo = platformQuery.data;
-  const hasPlatforms =
-    platformInfo &&
-    (Boolean(platformInfo.google_place_id) ||
-      Boolean(platformInfo.yelp_alias));
+
+  const showShareButtons = useMemo(() => {
+    if (!platformInfo) return false;
+    if (!platformInfo.google_place_id && !platformInfo.yelp_alias) return false;
+    return !isBadReview(
+      stars,
+      reviewText,
+      platformInfo.review_min_stars,
+      platformInfo.review_trigger_words,
+    );
+  }, [platformInfo, stars, reviewText]);
+
+  const reviewIsBad = useMemo(() => {
+    if (!platformInfo) return false;
+    return isBadReview(
+      stars,
+      reviewText,
+      platformInfo.review_min_stars,
+      platformInfo.review_trigger_words,
+    );
+  }, [platformInfo, stars, reviewText]);
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
@@ -166,15 +220,20 @@ export default function PublicReview() {
 
         {submitted ? (
           <div className="mt-6">
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-              Thank you for your feedback!
-            </div>
-
-            {hasPlatforms && (
-              <ShareButtons
-                reviewText={reviewText}
-                platformInfo={platformInfo}
-              />
+            {reviewIsBad ? (
+              <BadReviewAcknowledgment />
+            ) : (
+              <>
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+                  Thank you for your feedback!
+                </div>
+                {showShareButtons && platformInfo && (
+                  <ShareButtons
+                    reviewText={reviewText}
+                    platformInfo={platformInfo}
+                  />
+                )}
+              </>
             )}
           </div>
         ) : (

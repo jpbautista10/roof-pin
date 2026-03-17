@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import slugify from "slugify";
-import { Check, Copy, Loader2, Upload, Eye } from "lucide-react";
+import { Check, Copy, Loader2, Upload, Eye, ShieldAlert } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -14,7 +14,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const settingsSchema = z.object({
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
@@ -42,6 +50,8 @@ const settingsSchema = z.object({
   showNeighborhood: z.boolean(),
   showReviews: z.boolean(),
   showImages: z.boolean(),
+  reviewMinStars: z.number().min(1).max(5),
+  reviewTriggerWords: z.string(),
 });
 
 type SettingsValues = z.infer<typeof settingsSchema>;
@@ -79,6 +89,8 @@ export default function DashboardSettings() {
       showNeighborhood: (company as any)?.show_neighborhood ?? true,
       showReviews: (company as any)?.show_reviews ?? true,
       showImages: (company as any)?.show_images ?? true,
+      reviewMinStars: (company as any)?.review_min_stars ?? 4,
+      reviewTriggerWords: ((company as any)?.review_trigger_words ?? []).join(", "),
     },
   });
 
@@ -202,6 +214,11 @@ export default function DashboardSettings() {
           show_neighborhood: values.showNeighborhood,
           show_reviews: values.showReviews,
           show_images: values.showImages,
+          review_min_stars: values.reviewMinStars,
+          review_trigger_words: values.reviewTriggerWords
+            .split(",")
+            .map((w: string) => w.trim().toLowerCase())
+            .filter(Boolean),
         } as any)
         .eq("id", company.id);
 
@@ -474,6 +491,54 @@ export default function DashboardSettings() {
                   {form.formState.errors.primaryColor.message}
                 </p>
               ) : null}
+            </div>
+
+            {/* Review routing settings */}
+            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4 text-slate-600" />
+                  <p className="text-sm font-semibold text-slate-900">
+                    Review routing
+                  </p>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Control when customers are prompted to share reviews on Google or Yelp. Reviews below the threshold or containing trigger words will be kept internal so your team can follow up.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reviewMinStars">Minimum stars for sharing</Label>
+                <Select
+                  value={String(form.watch("reviewMinStars"))}
+                  onValueChange={(v) => form.setValue("reviewMinStars", Number(v), { shouldDirty: true })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <SelectItem key={n} value={String(n)}>
+                        {n} star{n !== 1 ? "s" : ""} and above
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500">
+                  Reviews below this rating won't prompt customers to share on Google or Yelp.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reviewTriggerWords">Trigger words</Label>
+                <Textarea
+                  id="reviewTriggerWords"
+                  {...form.register("reviewTriggerWords")}
+                  rows={2}
+                  placeholder="scam, terrible, horrible, worst, rip off, unprofessional"
+                />
+                <p className="text-xs text-slate-500">
+                  Comma-separated. If a review contains any of these words, the customer won't be prompted to share publicly, regardless of star rating.
+                </p>
+              </div>
             </div>
 
             {/* Pin visibility settings */}

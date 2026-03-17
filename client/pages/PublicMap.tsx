@@ -45,6 +45,7 @@ interface LocationQueryRow {
         stars: number | null;
       }[]
     | null;
+  // Note: is_visible and deleted_at filtering happens via RLS policy on public reads
 }
 
 const DEMO_SLUGS = new Set(["demo"]);

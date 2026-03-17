@@ -15,6 +15,10 @@ export interface LocationWithAssets extends LocationRow {
     review_text: string | null;
     stars: number | null;
     source: string;
+    is_visible: boolean;
+    deleted_at: string | null;
+    created_at: string;
+    location_id: string;
   } | null;
 }
 
@@ -31,11 +35,21 @@ function mapLocationRow(
           customer_name: string | null;
           review_text: string | null;
           stars: number | null;
+          source: string;
+          is_visible: boolean;
+          deleted_at: string | null;
+          created_at: string;
+          location_id: string;
         }
       | {
           customer_name: string | null;
           review_text: string | null;
           stars: number | null;
+          source: string;
+          is_visible: boolean;
+          deleted_at: string | null;
+          created_at: string;
+          location_id: string;
         }[]
       | null;
   },
@@ -53,7 +67,7 @@ export async function fetchLocationsByCompany(companyId: string) {
   const { data, error } = await supabase
     .from("locations")
     .select(
-      "*, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars, source)",
+      "*, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars, source, is_visible, deleted_at, created_at, location_id)",
     )
     .eq("company_id", companyId)
     .order("created_at", { ascending: false });
@@ -69,7 +83,7 @@ export async function fetchLocationById(locationId: string) {
   const { data, error } = await supabase
     .from("locations")
     .select(
-      "*, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars, source)",
+      "*, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars, source, is_visible, deleted_at, created_at, location_id)",
     )
     .eq("id", locationId)
     .maybeSingle();
