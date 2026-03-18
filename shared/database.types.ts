@@ -51,6 +51,8 @@ export type Database = {
           logo_url: string | null
           name: string
           owner_user_id: string
+          review_min_stars: number
+          review_trigger_words: string[]
           show_completed_date: boolean
           show_images: boolean
           show_neighborhood: boolean
@@ -59,8 +61,6 @@ export type Database = {
           slug: string
           updated_at: string
           yelp_alias: string | null
-          review_min_stars: number
-          review_trigger_words: string[]
         }
         Insert: {
           brand_accent_color?: string
@@ -73,6 +73,8 @@ export type Database = {
           logo_url?: string | null
           name: string
           owner_user_id: string
+          review_min_stars?: number
+          review_trigger_words?: string[]
           show_completed_date?: boolean
           show_images?: boolean
           show_neighborhood?: boolean
@@ -81,8 +83,6 @@ export type Database = {
           slug: string
           updated_at?: string
           yelp_alias?: string | null
-          review_min_stars?: number
-          review_trigger_words?: string[]
         }
         Update: {
           brand_accent_color?: string
@@ -95,6 +95,8 @@ export type Database = {
           logo_url?: string | null
           name?: string
           owner_user_id?: string
+          review_min_stars?: number
+          review_trigger_words?: string[]
           show_completed_date?: boolean
           show_images?: boolean
           show_neighborhood?: boolean
@@ -186,38 +188,38 @@ export type Database = {
         Row: {
           created_at: string
           customer_name: string | null
+          deleted_at: string | null
+          is_visible: boolean
           location_id: string
           review_request_id: string | null
           review_text: string | null
           source: string
           stars: number | null
           updated_at: string
-          is_visible: boolean
-          deleted_at: string | null
         }
         Insert: {
           created_at?: string
           customer_name?: string | null
+          deleted_at?: string | null
+          is_visible?: boolean
           location_id: string
           review_request_id?: string | null
           review_text?: string | null
           source?: string
           stars?: number | null
           updated_at?: string
-          is_visible?: boolean
-          deleted_at?: string | null
         }
         Update: {
           created_at?: string
           customer_name?: string | null
+          deleted_at?: string | null
+          is_visible?: boolean
           location_id?: string
           review_request_id?: string | null
           review_text?: string | null
           source?: string
           stars?: number | null
           updated_at?: string
-          is_visible?: boolean
-          deleted_at?: string | null
         }
         Relationships: [
           {
@@ -346,9 +348,9 @@ export type Database = {
         Args: { p_token: string }
         Returns: {
           google_place_id: string
-          yelp_alias: string
           review_min_stars: number
           review_trigger_words: string[]
+          yelp_alias: string
         }[]
       }
       submit_location_review: {

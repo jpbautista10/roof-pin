@@ -58,7 +58,9 @@ USING (
 -- The existing "Owners can read location reviews" policy already covers this.
 
 -- 5. Extend get_review_company_info to return review routing settings
-CREATE OR REPLACE FUNCTION public.get_review_company_info(p_token text)
+DROP FUNCTION IF EXISTS public.get_review_company_info(text);
+
+CREATE FUNCTION public.get_review_company_info(p_token text)
 RETURNS TABLE(google_place_id text, yelp_alias text, review_min_stars integer, review_trigger_words text[])
 LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
