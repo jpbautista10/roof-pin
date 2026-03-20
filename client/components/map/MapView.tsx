@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Map, { Marker, type MapRef } from "react-map-gl/mapbox";
+import { Loader2, LocateFixed, Minus, Plus } from "lucide-react";
 import { LngLatBounds } from "mapbox-gl";
-import { LocateFixed, Loader2, Plus, Minus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import MapComponent, { type MapRef, Marker } from "react-map-gl/mapbox";
 import LocationPin from "@/components/map/LocationPin";
 import type { PublicLocation } from "@/types/public-map";
 
 interface MapViewProps {
   locations: PublicLocation[];
-  onSelectLocation: (location: PublicLocation, screenPoint: { x: number; y: number }) => void;
+  onSelectLocation: (
+    location: PublicLocation,
+    screenPoint: { x: number; y: number },
+  ) => void;
   brandColor?: string;
 }
 
@@ -205,7 +208,7 @@ export default function MapView({
   return (
     <div className="relative h-full w-full">
       {!isMapReady && <div className="absolute inset-0 z-10 bg-slate-100" />}
-      <Map
+      <MapComponent
         ref={mapRef}
         initialViewState={initialViewState}
         mapboxAccessToken={MAPBOX_TOKEN}
@@ -217,7 +220,8 @@ export default function MapView({
         }}
         onError={(e) => {
           // Suppress benign Mapbox GL AbortError from tile cancellation
-          if ((e?.error as any)?.name === "AbortError") return;
+          const maybeError = e as unknown as { error?: { name?: string } };
+          if (maybeError.error?.name === "AbortError") return;
         }}
       >
         {userLocation && (
@@ -244,8 +248,13 @@ export default function MapView({
               type="button"
               className="group relative cursor-pointer border-0 bg-transparent p-0"
               onClick={(e) => {
-                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                onSelectLocation(location, { x: rect.left + rect.width / 2, y: rect.top });
+                const rect = (
+                  e.currentTarget as HTMLElement
+                ).getBoundingClientRect();
+                onSelectLocation(location, {
+                  x: rect.left + rect.width / 2,
+                  y: rect.top,
+                });
               }}
               aria-label={location.project_name}
             >
@@ -253,17 +262,16 @@ export default function MapView({
             </button>
           </Marker>
         ))}
-      </Map>
+      </MapComponent>
 
       {/* Custom map controls: zoom + locate — iOS glass style */}
       <div
-        className="absolute right-2.5 top-[4.75rem] z-10 flex flex-col overflow-hidden rounded-2xl"
+        className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 flex flex-col overflow-hidden rounded-2xl"
         style={{
           background: "rgba(255,255,255,0.65)",
           backdropFilter: "saturate(180%) blur(20px)",
           WebkitBackdropFilter: "saturate(180%) blur(20px)",
-          boxShadow:
-            "0 0.5px 0 rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)",
+          boxShadow: "0 0.5px 0 rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)",
         }}
       >
         <button
