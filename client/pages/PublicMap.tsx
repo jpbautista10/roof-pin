@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { getValidBrandColor } from "@/lib/color";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import MapHeader from "@/components/map/MapHeader";
 import MapView from "@/components/map/MapView";
-import StatsView from "@/components/map/StatsView";
 import ProjectPopup from "@/components/map/ProjectPopup";
+import StatsView from "@/components/map/StatsView";
 import WorkTypeFilter from "@/components/map/WorkTypeFilter";
+import { getValidBrandColor } from "@/lib/color";
+import { supabase } from "@/lib/supabase";
 import type { PublicCompany, PublicLocation } from "@/types/public-map";
 
 interface LocationQueryRow {
@@ -209,7 +209,10 @@ export default function PublicMap() {
   const [selectedLocation, setSelectedLocation] =
     useState<PublicLocation | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
-  const [popupAnchor, setPopupAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [popupAnchor, setPopupAnchor] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [selectedWorkTypes, setSelectedWorkTypes] = useState<string[]>([]);
 
   const companyQuery = useQuery({
@@ -236,12 +239,17 @@ export default function PublicMap() {
     queryKey: ["public-map", "locations", companyQuery.data?.id],
     enabled: Boolean(companyQuery.data?.id) && !isDemoMode,
     queryFn: async () => {
+      const companyId = companyQuery.data?.id;
+      if (!companyId) {
+        throw new Error("Missing company id for locations query");
+      }
+
       const { data, error } = await supabase
         .from("locations")
         .select(
           "id, project_name, place_label, address_json, latitude, longitude, geocode_latitude, geocode_longitude, privacy_mode, date_completed, created_at, work_type, location_images(id, kind, public_url, sort_order), location_reviews(customer_name, review_text, stars)",
         )
-        .eq("company_id", companyQuery.data!.id)
+        .eq("company_id", companyId)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -311,7 +319,8 @@ export default function PublicMap() {
   const filteredLocations = useMemo(() => {
     if (selectedWorkTypes.length === 0) return locations;
     return locations.filter(
-      (loc) => loc.work_type && selectedWorkTypes.includes(loc.work_type.trim()),
+      (loc) =>
+        loc.work_type && selectedWorkTypes.includes(loc.work_type.trim()),
     );
   }, [locations, selectedWorkTypes]);
 
@@ -333,7 +342,10 @@ export default function PublicMap() {
     };
   }, [filteredLocations]);
 
-  function openLocation(location: PublicLocation, screenPoint?: { x: number; y: number }) {
+  function openLocation(
+    location: PublicLocation,
+    screenPoint?: { x: number; y: number },
+  ) {
     setSelectedLocation(location);
     setPopupAnchor(screenPoint ?? null);
     setPopupOpen(true);
@@ -341,7 +353,7 @@ export default function PublicMap() {
 
   if (!isDemoMode && (companyQuery.isLoading || locationsQuery.isLoading)) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-50">
+      <div className="flex min-h-dvh h-dvh w-screen items-center justify-center bg-slate-50">
         <p className="text-sm text-slate-600">Loading public map...</p>
       </div>
     );
@@ -349,7 +361,7 @@ export default function PublicMap() {
 
   if (!company || !slug) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-50">
+      <div className="flex min-h-dvh h-dvh w-screen items-center justify-center bg-slate-50">
         <div className="max-w-sm px-6 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-200">
             <MapPin className="h-7 w-7 text-slate-400" />
@@ -364,7 +376,7 @@ export default function PublicMap() {
   }
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
+    <div className="relative min-h-dvh h-dvh w-screen overflow-hidden">
       {/* Full-bleed content area */}
       <div className="absolute inset-0">
         {isEmbedMode || activeTab === "map" ? (
@@ -374,7 +386,7 @@ export default function PublicMap() {
             brandColor={company.brand_primary_color}
           />
         ) : (
-          <div className="h-full pt-[4.5rem] overflow-hidden">
+          <div className="h-full overflow-hidden pt-[calc(4.5rem+env(safe-area-inset-top))]">
             <div className="h-full overflow-y-auto">
               <StatsView locations={filteredLocations} company={company} />
             </div>
@@ -392,15 +404,24 @@ export default function PublicMap() {
       ) : null}
 
       {isDemoMode && !isEmbedMode ? (
-        <div className="absolute left-4 top-[5rem] z-[500] rounded-full border border-white/30 bg-emerald-500/80 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm shadow-sm">
+        <div className="absolute left-4 top-[calc(5rem+env(safe-area-inset-top))] z-[500] rounded-full border border-white/30 bg-emerald-500/80 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm shadow-sm">
           Live Demo Mode
         </div>
       ) : null}
 
       {/* Top overlay bar: projects pill + work type filter */}
       {!isEmbedMode && activeTab === "map" ? (
-        <div className="pointer-events-none absolute left-0 right-0 top-[4.5rem] z-20 flex items-start justify-center gap-3 px-3 pt-2">
-          <div className="pointer-events-auto rounded-full px-4 py-1.5 text-xs font-medium text-slate-700/90 shadow-sm" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)', boxShadow: '0 0.5px 0 rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.06)' }}>
+        <div className="pointer-events-none absolute left-0 right-0 top-[calc(4.5rem+env(safe-area-inset-top))] z-20 flex items-start justify-center gap-3 px-3 pt-2">
+          <div
+            className="pointer-events-auto rounded-full px-4 py-1.5 text-xs font-medium text-slate-700/90 shadow-sm"
+            style={{
+              background: "rgba(255,255,255,0.65)",
+              backdropFilter: "saturate(180%) blur(20px)",
+              WebkitBackdropFilter: "saturate(180%) blur(20px)",
+              boxShadow:
+                "0 0.5px 0 rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.06)",
+            }}
+          >
             {mapSummary.totalProjects} project
             {mapSummary.totalProjects === 1 ? "" : "s"}
             {typeof mapSummary.averageRating === "number"
