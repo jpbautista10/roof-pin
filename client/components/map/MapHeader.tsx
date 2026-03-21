@@ -1,7 +1,7 @@
+import { BarChart3, Map as MapIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
 import type { PublicCompany } from "@/types/public-map";
-import { BarChart3, Map } from "lucide-react";
 
 interface MapHeaderProps {
   company: PublicCompany;
@@ -19,10 +19,10 @@ export default function MapHeader({
   const brandTextColor = getContrastTextColor(brandColor);
 
   return (
-    <div className="absolute inset-x-0 top-0 z-30 flex justify-center pointer-events-none">
+    <div className="absolute inset-x-0 top-0 z-30 flex justify-center pointer-events-none pt-[max(0.75rem,env(safe-area-inset-top))]">
       {/* Single horizontal liquid glass pill: logo + segmented control */}
       <div
-        className="pointer-events-auto mt-3 inline-flex items-center gap-3 rounded-2xl px-2.5 py-1.5"
+        className="pointer-events-auto inline-flex items-center gap-3 rounded-2xl px-2.5 py-1.5"
         style={{
           background: "rgba(255,255,255,0.55)",
           backdropFilter: "saturate(170%) blur(16px)",
@@ -42,8 +42,9 @@ export default function MapHeader({
             draggable={false}
           />
         ) : (
-          <div
-            className="h-9 w-9 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer select-none shrink-0"
+          <button
+            type="button"
+            className="h-9 w-9 shrink-0 cursor-pointer select-none rounded-lg border-0 text-xs font-bold flex items-center justify-center"
             style={{
               backgroundColor: brandColor,
               color: brandTextColor,
@@ -57,7 +58,7 @@ export default function MapHeader({
               .join("")
               .slice(0, 2)
               .toUpperCase()}
-          </div>
+          </button>
         )}
 
         {/* Divider */}
@@ -68,7 +69,7 @@ export default function MapHeader({
           <SegmentButton
             active={activeTab === "map"}
             onClick={() => onTabChange("map")}
-            icon={<Map className="w-3.5 h-3.5" />}
+            icon={<MapIcon className="w-3.5 h-3.5" />}
             label="Map"
           />
           <SegmentButton
