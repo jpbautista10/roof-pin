@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import MapHeader from "@/components/map/MapHeader";
 import MapView from "@/components/map/MapView";
@@ -213,7 +213,18 @@ export default function PublicMap() {
     x: number;
     y: number;
   } | null>(null);
-  const [selectedWorkTypes, setSelectedWorkTypes] = useState<string[]>([]);
+  /** null = all work types selected (no filter); explicit array = only those types */
+  const [selectedWorkTypes, setSelectedWorkTypes] = useState<string[] | null>(
+    null,
+  );
+
+  // Before the checkbox fix, `[]` meant "show all projects". After, `[]` means "no types
+  // selected". Hot reload can keep the old `[]` in state — normalize once on mount.
+  useLayoutEffect(() => {
+    setSelectedWorkTypes((prev) =>
+      prev !== null && prev.length === 0 ? null : prev,
+    );
+  }, []);
 
   const companyQuery = useQuery({
     queryKey: ["public-map", "company", slug],
@@ -317,7 +328,8 @@ export default function PublicMap() {
   }, [locations]);
 
   const filteredLocations = useMemo(() => {
-    if (selectedWorkTypes.length === 0) return locations;
+    if (selectedWorkTypes === null) return locations;
+    if (selectedWorkTypes.length === 0) return [];
     return locations.filter(
       (loc) =>
         loc.work_type && selectedWorkTypes.includes(loc.work_type.trim()),
@@ -378,7 +390,7 @@ export default function PublicMap() {
   return (
     <div className="relative min-h-dvh h-dvh w-screen overflow-hidden">
       {/* Full-bleed content area */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 min-h-0">
         {isEmbedMode || activeTab === "map" ? (
           <MapView
             locations={filteredLocations}

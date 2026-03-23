@@ -2,7 +2,7 @@ import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
 import type { PublicCompany, PublicLocation } from "@/types/public-map";
 import { format, parse } from 'date-fns';
 import { Calendar, Hammer, ImageOff, MapPin, Star, X } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import BeforeAfterSlider from "./BeforeAfterSlider";
 
 interface ProjectPopupProps {
@@ -233,17 +233,6 @@ function DesktopPopup({
   const popupRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
-  // Close on click outside
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [onClose]);
-
   // Measure actual popup height after render and position accordingly
   useLayoutEffect(() => {
     if (!anchorPoint || !popupRef.current) return;
@@ -303,17 +292,6 @@ function MobilePopup({
 }) {
   const popupRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
-
-  // Close on click outside
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [onClose]);
 
   useLayoutEffect(() => {
     if (!anchorPoint || !popupRef.current) return;

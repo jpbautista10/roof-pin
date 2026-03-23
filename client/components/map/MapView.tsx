@@ -217,6 +217,9 @@ export default function MapView({
         attributionControl
         onLoad={() => {
           setIsMapReady(true);
+          requestAnimationFrame(() => {
+            mapRef.current?.resize();
+          });
         }}
         onError={(e) => {
           // Suppress benign Mapbox GL AbortError from tile cancellation
