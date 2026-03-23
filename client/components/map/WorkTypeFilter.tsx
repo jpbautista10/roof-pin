@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from "react";
 
 interface WorkTypeFilterProps {
   workTypes: string[];
-  selected: string[];
-  onChange: (selected: string[]) => void;
+  /** null = all types selected (default) */
+  selected: string[] | null;
+  onChange: (selected: string[] | null) => void;
 }
 
 export default function WorkTypeFilter({
@@ -32,18 +33,27 @@ export default function WorkTypeFilter({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  const hasFilter = selected.length > 0 && selected.length < workTypes.length;
+  const hasFilter = selected !== null;
 
   function toggleType(type: string) {
+    if (selected === null) {
+      onChange(workTypes.filter((t) => t !== type));
+      return;
+    }
     if (selected.includes(type)) {
       onChange(selected.filter((t) => t !== type));
+      return;
+    }
+    const next = [...selected, type];
+    if (next.length === workTypes.length) {
+      onChange(null);
     } else {
-      onChange([...selected, type]);
+      onChange(next);
     }
   }
 
   function selectAll() {
-    onChange([]);
+    onChange(null);
   }
 
   if (workTypes.length === 0) return null;
@@ -65,7 +75,7 @@ export default function WorkTypeFilter({
         <span className="hidden sm:inline">Work Type</span>
         {hasFilter && (
           <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-slate-700 px-1 text-[10px] font-semibold text-white">
-            {selected.length}
+            {selected?.length ?? 0}
           </span>
         )}
       </button>
@@ -99,7 +109,7 @@ export default function WorkTypeFilter({
           <div className="max-h-48 overflow-y-auto p-1">
             {workTypes.map((type) => {
               const isSelected =
-                selected.length === 0 || selected.includes(type);
+                selected === null || selected.includes(type);
               return (
                 <button
                   key={type}
