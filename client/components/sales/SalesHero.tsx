@@ -2,7 +2,10 @@ import { ArrowRight, MapPin, CheckCircle2 } from "lucide-react";
 
 export default function SalesHero() {
   return (
-    <section className="relative pt-28 pb-16 sm:pt-36 sm:pb-24 overflow-hidden">
+    <section
+      id="sales-hero"
+      className="relative pt-28 pb-16 sm:pt-36 sm:pb-24 overflow-hidden"
+    >
       <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50/40 to-teal-50/30" />
       <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-500/5 rounded-full blur-3xl" />

@@ -3,7 +3,10 @@ import { Link } from "react-router-dom";
 
 export default function FinalCTA() {
   return (
-    <section className="py-16 sm:py-24 bg-gradient-to-br from-slate-900 to-slate-800 relative overflow-hidden">
+    <section
+      id="sales-final-cta"
+      className="py-16 sm:py-24 bg-gradient-to-br from-slate-900 to-slate-800 relative overflow-hidden"
+    >
       <div
         className="absolute inset-0 opacity-5"
         style={{

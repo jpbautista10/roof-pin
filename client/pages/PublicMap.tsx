@@ -52,7 +52,7 @@ const DEMO_SLUGS = new Set(["demo"]);
 
 const demoCompany: PublicCompany = {
   id: "demo-company",
-  name: "Neighborhood Roofing Co.",
+  name: "Roof Wise Pro",
   slug: "demo",
   logo_url: null,
   cta_url: "https://example.com/contact",

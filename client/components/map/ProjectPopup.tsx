@@ -2,7 +2,7 @@ import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
 import type { PublicCompany, PublicLocation } from "@/types/public-map";
 import { format, parse } from 'date-fns';
 import { Calendar, Hammer, ImageOff, MapPin, Star, X } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import BeforeAfterSlider from "./BeforeAfterSlider";
 
 interface ProjectPopupProps {
@@ -232,6 +232,17 @@ function DesktopPopup({
 }) {
   const popupRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+
+  // Desktop: close when clicking outside the popup (e.g. on the map)
+  useEffect(() => {
+    function handlePointerDown(e: MouseEvent) {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [onClose]);
 
   // Measure actual popup height after render and position accordingly
   useLayoutEffect(() => {
