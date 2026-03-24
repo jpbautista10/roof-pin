@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
 import { MapPin, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -35,7 +35,7 @@ export default function Navbar() {
               to="/auth/login"
               className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
             >
-              Get Started Free
+              Get Started
             </Link>
           </div>
 
@@ -73,7 +73,7 @@ export default function Navbar() {
             onClick={() => setMobileOpen(false)}
             className="block w-full text-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white"
           >
-            Get Started Free
+            Get Started
           </Link>
         </div>
       )}

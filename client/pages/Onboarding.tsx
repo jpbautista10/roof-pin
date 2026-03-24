@@ -1,15 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import slugify from "slugify";
-import { Loader2, Upload } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2, Upload } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useNavigate } from "react-router-dom";
+import slugify from "slugify";
 import { toast } from "sonner";
+import { z } from "zod";
+import { useAuth } from "@/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -17,7 +16,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/auth/AuthProvider";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 
 const DEFAULT_COLORS = {
@@ -299,7 +299,9 @@ export default function Onboarding() {
 
               <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Brand colors</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Brand colors
+                  </p>
                   <p className="text-xs text-slate-500 mt-1">
                     Used for your public map branding (markers, buttons, logo).
                   </p>

@@ -1,4 +1,3 @@
-import { Link, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronLeft,
@@ -14,27 +13,12 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import QRCode from "qrcode";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
-import {
-  cleanupDateCompletedData,
-  cleanupNeighborhoodData,
-  deleteLocation,
-  deleteLocationsBulk,
-  fetchLocationsByCompany,
-} from "@/lib/locations";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { createOrGetReviewToken } from "@/lib/review-requests";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import ReviewsTab from "@/components/dashboard/ReviewsTab";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -52,8 +38,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import QRCode from "qrcode";
-import ReviewsTab from "@/components/dashboard/ReviewsTab";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  cleanupDateCompletedData,
+  cleanupNeighborhoodData,
+  deleteLocation,
+  deleteLocationsBulk,
+  fetchLocationsByCompany,
+} from "@/lib/locations";
+import { createOrGetReviewToken } from "@/lib/review-requests";
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -93,7 +93,9 @@ export default function DashboardPins() {
   const { company } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get("tab") === "reviews" ? "reviews" : "pins") as PageTab;
+  const activeTab = (
+    searchParams.get("tab") === "reviews" ? "reviews" : "pins"
+  ) as PageTab;
 
   function setActiveTab(tab: PageTab) {
     const params = new URLSearchParams(searchParams);
@@ -108,7 +110,9 @@ export default function DashboardPins() {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
-  const [reviewLinkLocationId, setReviewLinkLocationId] = useState<string | null>(null);
+  const [reviewLinkLocationId, setReviewLinkLocationId] = useState<
+    string | null
+  >(null);
   const [reviewLink, setReviewLink] = useState("");
   const [qrDataUrl, setQrDataUrl] = useState("");
 
@@ -138,12 +142,18 @@ export default function DashboardPins() {
   const query = searchParams.get("q") ?? "";
   const filter = normalizeFilter(searchParams.get("filter"));
   const PAGE_SIZE = 20;
-  const currentPage = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
+  const currentPage = Math.max(
+    1,
+    parseInt(searchParams.get("page") ?? "1", 10) || 1,
+  );
 
   const filteredLocations = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return locations.filter((location) => {
-      const neighborhood = getNeighborhood(location.address_json, location.place_label);
+      const neighborhood = getNeighborhood(
+        location.address_json,
+        location.place_label,
+      );
       if (filter === "public" && location.privacy_mode) return false;
       if (filter === "private" && !location.privacy_mode) return false;
       const hasActiveReview = location.review && !location.review.deleted_at;
@@ -158,14 +168,21 @@ export default function DashboardPins() {
     });
   }, [locations, query, filter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredLocations.length / PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredLocations.length / PAGE_SIZE),
+  );
   const safePage = Math.min(currentPage, totalPages);
   const paginatedLocations = filteredLocations.slice(
     (safePage - 1) * PAGE_SIZE,
     safePage * PAGE_SIZE,
   );
 
-  function updateListParams(next: { q?: string; filter?: ListFilter; page?: number }) {
+  function updateListParams(next: {
+    q?: string;
+    filter?: ListFilter;
+    page?: number;
+  }) {
     const params = new URLSearchParams(searchParams);
     if (next.q !== undefined) {
       if (next.q.trim()) params.set("q", next.q);
@@ -187,25 +204,33 @@ export default function DashboardPins() {
   const deleteMutation = useMutation({
     mutationFn: async (locationId: string) => deleteLocation(locationId),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["locations", company.id] });
+      await queryClient.invalidateQueries({
+        queryKey: ["locations", company.id],
+      });
       toast.success("Location deleted.");
       setDeleteTargetId(null);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Unable to delete location.");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to delete location.",
+      );
     },
   });
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => deleteLocationsBulk(ids),
     onSuccess: async (_data, ids) => {
-      await queryClient.invalidateQueries({ queryKey: ["locations", company.id] });
+      await queryClient.invalidateQueries({
+        queryKey: ["locations", company.id],
+      });
       toast.success(`${ids.length} location(s) deleted.`);
       setSelectedIds(new Set());
       setShowBulkDeleteDialog(false);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Unable to delete locations.");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to delete locations.",
+      );
     },
   });
 
@@ -243,7 +268,11 @@ export default function DashboardPins() {
       setQrDataUrl(qr);
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Unable to generate review link.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to generate review link.",
+      );
     },
   });
 
@@ -328,7 +357,9 @@ export default function DashboardPins() {
             Add your first pin to start showing real work on your public map.
           </p>
           <Button asChild className="mt-6">
-            <Link to={`/dashboard/${company.slug}/locations/new`}>Create your first pin</Link>
+            <Link to={`/dashboard/${company.slug}/locations/new`}>
+              Create your first pin
+            </Link>
           </Button>
         </div>
       ) : (
@@ -337,13 +368,17 @@ export default function DashboardPins() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Input
                 value={query}
-                onChange={(event) => updateListParams({ q: event.target.value })}
+                onChange={(event) =>
+                  updateListParams({ q: event.target.value })
+                }
                 placeholder="Search project, location, work type..."
                 className="sm:max-w-md"
               />
               <Select
                 value={filter}
-                onValueChange={(value) => updateListParams({ filter: value as ListFilter })}
+                onValueChange={(value) =>
+                  updateListParams({ filter: value as ListFilter })
+                }
               >
                 <SelectTrigger className="h-9 w-full sm:w-[170px]">
                   <SelectValue placeholder="Filter" />
@@ -363,7 +398,11 @@ export default function DashboardPins() {
               <span className="text-sm font-medium text-slate-700">
                 {selectedIds.size} selected
               </span>
-              <Button variant="outline" size="sm" onClick={() => setSelectedIds(new Set())}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedIds(new Set())}
+              >
                 Deselect all
               </Button>
               <Button
@@ -386,7 +425,10 @@ export default function DashboardPins() {
               {/* Mobile cards */}
               <div className="space-y-3 sm:hidden">
                 {paginatedLocations.map((location) => {
-                  const neighborhood = getNeighborhood(location.address_json, location.place_label);
+                  const neighborhood = getNeighborhood(
+                    location.address_json,
+                    location.place_label,
+                  );
                   return (
                     <article
                       key={location.id}
@@ -426,49 +468,59 @@ export default function DashboardPins() {
                         <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-medium text-slate-700">
                           {location.work_type ?? "Unknown"}
                         </span>
-                        <span>{location.date_completed || formatDate(location.created_at)}</span>
+                        <span>
+                          {location.date_completed ||
+                            formatDate(location.created_at)}
+                        </span>
                       </div>
                       <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2">
                         <div>
-                          {location.review && typeof location.review.stars === "number" && !location.review.deleted_at && (
-                            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
-                              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                              {location.review.stars}
-                            </span>
-                          )}
+                          {location.review &&
+                            typeof location.review.stars === "number" &&
+                            !location.review.deleted_at && (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
+                                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                {location.review.stars}
+                              </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-1">
-                        {(!location.review || location.review.deleted_at) && (
+                          {(!location.review || location.review.deleted_at) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                              onClick={() => openReviewRequest(location.id)}
+                              title="Get review QR"
+                              aria-label="Get review QR"
+                            >
+                              <QrCode className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                            onClick={() => openReviewRequest(location.id)}
-                            title="Get review QR"
-                            aria-label="Get review QR"
+                            asChild
                           >
-                            <QrCode className="h-3.5 w-3.5" />
+                            <Link
+                              to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
+                              title="Edit location"
+                              aria-label="Edit location"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Link>
                           </Button>
-                        )}
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900" asChild>
-                          <Link
-                            to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
-                            title="Edit location"
-                            aria-label="Edit location"
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-red-600"
+                            onClick={() => setDeleteTargetId(location.id)}
+                            title="Delete location"
+                            aria-label="Delete location"
                           >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-red-600"
-                          onClick={() => setDeleteTargetId(location.id)}
-                          title="Delete location"
-                          aria-label="Delete location"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </div>
                     </article>
@@ -483,20 +535,40 @@ export default function DashboardPins() {
                     <thead>
                       <tr className="border-b bg-slate-50/60">
                         <th className="h-12 w-12 px-4 text-center align-middle">
-                          <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                          <Checkbox
+                            checked={allSelected}
+                            onCheckedChange={toggleSelectAll}
+                          />
                         </th>
-                        <th className="h-12 w-[180px] px-4 text-left align-middle text-xs font-medium text-slate-500">Neighborhood</th>
-                        <th className="h-12 px-4 text-left align-middle text-xs font-medium text-slate-500">Work Type</th>
-                        <th className="h-12 px-4 text-left align-middle text-xs font-medium text-slate-500">Project</th>
-                        <th className="hidden h-12 px-4 text-left align-middle text-xs font-medium text-slate-500 md:table-cell">Completed</th>
-                        <th className="h-12 px-4 text-center align-middle text-xs font-medium text-slate-500">Status</th>
-                        <th className="hidden h-12 px-4 text-center align-middle text-xs font-medium text-slate-500 lg:table-cell">Review</th>
-                        <th className="h-12 px-4 text-right align-middle text-xs font-medium text-slate-500">Actions</th>
+                        <th className="h-12 w-[180px] px-4 text-left align-middle text-xs font-medium text-slate-500">
+                          Neighborhood
+                        </th>
+                        <th className="h-12 px-4 text-left align-middle text-xs font-medium text-slate-500">
+                          Work Type
+                        </th>
+                        <th className="h-12 px-4 text-left align-middle text-xs font-medium text-slate-500">
+                          Project
+                        </th>
+                        <th className="hidden h-12 px-4 text-left align-middle text-xs font-medium text-slate-500 md:table-cell">
+                          Completed
+                        </th>
+                        <th className="h-12 px-4 text-center align-middle text-xs font-medium text-slate-500">
+                          Status
+                        </th>
+                        <th className="hidden h-12 px-4 text-center align-middle text-xs font-medium text-slate-500 lg:table-cell">
+                          Review
+                        </th>
+                        <th className="h-12 px-4 text-right align-middle text-xs font-medium text-slate-500">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedLocations.map((location) => {
-                        const neighborhood = getNeighborhood(location.address_json, location.place_label);
+                        const neighborhood = getNeighborhood(
+                          location.address_json,
+                          location.place_label,
+                        );
                         return (
                           <tr
                             key={location.id}
@@ -507,18 +579,25 @@ export default function DashboardPins() {
                             <td className="w-12 p-4 text-center align-middle">
                               <Checkbox
                                 checked={selectedIds.has(location.id)}
-                                onCheckedChange={() => toggleSelection(location.id)}
+                                onCheckedChange={() =>
+                                  toggleSelection(location.id)
+                                }
                               />
                             </td>
-                            <td className="p-4 align-middle text-sm font-medium text-slate-900">{neighborhood}</td>
+                            <td className="p-4 align-middle text-sm font-medium text-slate-900">
+                              {neighborhood}
+                            </td>
                             <td className="p-4 align-middle">
                               <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
                                 {location.work_type ?? "Unknown"}
                               </span>
                             </td>
-                            <td className="p-4 align-middle text-sm text-slate-600">{location.project_name}</td>
+                            <td className="p-4 align-middle text-sm text-slate-600">
+                              {location.project_name}
+                            </td>
                             <td className="hidden p-4 align-middle text-sm text-slate-500 md:table-cell">
-                              {location.date_completed || formatDate(location.created_at)}
+                              {location.date_completed ||
+                                formatDate(location.created_at)}
                             </td>
                             <td className="p-4 text-center align-middle">
                               {location.privacy_mode ? (
@@ -534,30 +613,42 @@ export default function DashboardPins() {
                               )}
                             </td>
                             <td className="hidden p-4 text-center align-middle lg:table-cell">
-                              {location.review && typeof location.review.stars === "number" && !location.review.deleted_at ? (
+                              {location.review &&
+                              typeof location.review.stars === "number" &&
+                              !location.review.deleted_at ? (
                                 <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600">
                                   <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                                   {location.review.stars}
                                 </span>
                               ) : (
-                                <span className="text-xs text-slate-400">&mdash;</span>
+                                <span className="text-xs text-slate-400">
+                                  &mdash;
+                                </span>
                               )}
                             </td>
                             <td className="p-4 text-right align-middle">
                               <div className="flex items-center justify-end gap-1">
-                                {(!location.review || location.review.deleted_at) && (
+                                {(!location.review ||
+                                  location.review.deleted_at) && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                                    onClick={() => openReviewRequest(location.id)}
+                                    onClick={() =>
+                                      openReviewRequest(location.id)
+                                    }
                                     title="Get review QR"
                                     aria-label="Get review QR"
                                   >
                                     <QrCode className="h-3.5 w-3.5" />
                                   </Button>
                                 )}
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900" asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                  asChild
+                                >
                                   <Link
                                     to={`/dashboard/${company.slug}/locations/${location.id}/edit`}
                                     title="Edit location"
@@ -590,11 +681,17 @@ export default function DashboardPins() {
                 <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                   <p className="text-sm text-slate-600">
                     Showing{" "}
-                    <span className="font-medium">{(safePage - 1) * PAGE_SIZE + 1}</span>
+                    <span className="font-medium">
+                      {(safePage - 1) * PAGE_SIZE + 1}
+                    </span>
                     {"\u2013"}
-                    <span className="font-medium">{Math.min(safePage * PAGE_SIZE, filteredLocations.length)}</span>
-                    {" "}of{" "}
-                    <span className="font-medium">{filteredLocations.length}</span>
+                    <span className="font-medium">
+                      {Math.min(safePage * PAGE_SIZE, filteredLocations.length)}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-medium">
+                      {filteredLocations.length}
+                    </span>
                   </p>
                   <div className="flex items-center gap-1">
                     <Button
@@ -629,18 +726,27 @@ export default function DashboardPins() {
       )}
 
       {/* Bulk delete dialog */}
-      <AlertDialog open={showBulkDeleteDialog} onOpenChange={(open) => { if (!open) setShowBulkDeleteDialog(false); }}>
+      <AlertDialog
+        open={showBulkDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open) setShowBulkDeleteDialog(false);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete {selectedIds.size} location{selectedIds.size !== 1 ? "s" : ""}?
+              Delete {selectedIds.size} location
+              {selectedIds.size !== 1 ? "s" : ""}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the selected locations, their reviews, and image references. This action cannot be undone.
+              This will permanently remove the selected locations, their
+              reviews, and image references. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
               disabled={bulkDeleteMutation.isPending}
@@ -649,23 +755,33 @@ export default function DashboardPins() {
                 bulkDeleteMutation.mutate(Array.from(selectedIds));
               }}
             >
-              {bulkDeleteMutation.isPending ? "Deleting..." : `Delete ${selectedIds.size}`}
+              {bulkDeleteMutation.isPending
+                ? "Deleting..."
+                : `Delete ${selectedIds.size}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Single delete dialog */}
-      <AlertDialog open={Boolean(deleteTargetId)} onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}>
+      <AlertDialog
+        open={Boolean(deleteTargetId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTargetId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete location?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the location, review, and image references.
+              This will permanently remove the location, review, and image
+              references.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
               disabled={deleteMutation.isPending}
@@ -695,7 +811,8 @@ export default function DashboardPins() {
           <DialogHeader>
             <DialogTitle>Customer review request</DialogTitle>
             <DialogDescription>
-              Send this link to your customer so they can submit their own review.
+              Send this link to your customer so they can submit their own
+              review.
             </DialogDescription>
           </DialogHeader>
           {reviewLinkMutation.isPending ? (
@@ -714,7 +831,10 @@ export default function DashboardPins() {
                   <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 break-all">
                     {reviewLink}
                   </p>
-                  <Button className="w-full" onClick={() => void handleCopyReviewLink()}>
+                  <Button
+                    className="w-full"
+                    onClick={() => void handleCopyReviewLink()}
+                  >
                     Copy link
                   </Button>
                 </>

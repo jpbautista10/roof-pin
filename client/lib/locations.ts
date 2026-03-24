@@ -1,5 +1,5 @@
-import { supabase } from "@/lib/supabase";
 import type { Database, TablesInsert } from "@shared/database.types";
+import { supabase } from "@/lib/supabase";
 
 export type LocationRow = Database["public"]["Tables"]["locations"]["Row"];
 
@@ -232,8 +232,18 @@ export async function cleanupDateCompletedData(companyId: string) {
     if (!parsed || isNaN(parsed.getTime())) continue;
 
     const months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     const cleaned = `${months[parsed.getMonth()]} ${parsed.getFullYear()}`;
 

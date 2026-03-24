@@ -1,25 +1,54 @@
-import { Link } from "react-router-dom";
-import { MapPin, CheckCircle2, ArrowRight, Rocket, Upload, Palette } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  MapPin,
+  Palette,
+  Rocket,
+  Upload,
+} from "lucide-react";
+import { Link, Navigate } from "react-router-dom";
+import { useAuth } from "@/auth/AuthProvider";
 
 const nextSteps = [
   {
     icon: Palette,
     title: "Set Up Your Brand",
-    description: "Upload your logo, pick your colors, and name your map. Takes 2 minutes.",
+    description:
+      "Upload your logo, pick your colors, and name your map. Takes 2 minutes.",
   },
   {
     icon: Upload,
     title: "Import Your Jobs",
-    description: "CSV-import your past projects. Hundreds of pins in minutes — no typing.",
+    description:
+      "CSV-import your past projects. Hundreds of pins in minutes — no typing.",
   },
   {
     icon: Rocket,
     title: "Start Closing",
-    description: "Pull up your branded map at your next appointment. Watch prospects say yes.",
+    description:
+      "Pull up your branded map at your next appointment. Watch prospects say yes.",
   },
 ];
 
 export default function WelcomePage() {
+  const { company, dbUser, hasPaidAccess, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+        <p className="text-sm text-slate-600">Checking your account...</p>
+      </div>
+    );
+  }
+
+  if (!hasPaidAccess) {
+    return <Navigate to="/checkout" replace />;
+  }
+
+  if (dbUser?.onboarding_completed_at && company?.slug) {
+    return <Navigate to={`/dashboard/${company.slug}`} replace />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-teal-50/30 flex items-center justify-center px-4 py-12">
       <div className="max-w-2xl w-full text-center">
@@ -72,7 +101,9 @@ export default function WelcomePage() {
 
         <p className="mt-4 text-sm text-slate-500">
           Need help? Email us at{" "}
-          <span className="font-medium text-slate-700">support@neighborhoodproof.com</span>{" "}
+          <span className="font-medium text-slate-700">
+            support@neighborhoodproof.com
+          </span>{" "}
           — we'll set it up with you.
         </p>
 

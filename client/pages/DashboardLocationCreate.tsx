@@ -1,13 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import type { GeocodeSuggestion, GeocodeSuggestResponse } from "@shared/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Map, {
-  Marker,
-  NavigationControl,
-  type MapMouseEvent,
-  type MarkerDragEvent,
-  type ViewState,
-} from "react-map-gl/mapbox";
 import imageCompression from "browser-image-compression";
 import {
   ArrowLeft,
@@ -19,11 +11,21 @@ import {
   X,
 } from "lucide-react";
 import QRCode from "qrcode";
+import { useEffect, useState } from "react";
+import Map, {
+  type MapMouseEvent,
+  Marker,
+  type MarkerDragEvent,
+  NavigationControl,
+  type ViewState,
+} from "react-map-gl/mapbox";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/auth/AuthProvider";
+import LocationPin from "@/components/map/LocationPin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -31,8 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/auth/AuthProvider";
-import LocationPin from "@/components/map/LocationPin";
+import { Switch } from "@/components/ui/switch";
 import {
   createLocation,
   fetchLocationById,
@@ -40,7 +41,6 @@ import {
 } from "@/lib/locations";
 import { createOrGetReviewToken } from "@/lib/review-requests";
 import { supabase } from "@/lib/supabase";
-import type { GeocodeSuggestResponse, GeocodeSuggestion } from "@shared/api";
 
 const WORK_TYPES = ["Shingle", "Flat", "Tile", "Metal"] as const;
 const MONTHS = [

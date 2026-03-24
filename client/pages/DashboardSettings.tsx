@@ -1,21 +1,17 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import slugify from "slugify";
-import { Check, Copy, Loader2, Upload, Eye, ShieldAlert } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Copy, Eye, Loader2, ShieldAlert, Upload } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useNavigate } from "react-router-dom";
+import slugify from "slugify";
 import { toast } from "sonner";
+import { z } from "zod";
 import { useAuth } from "@/auth/AuthProvider";
-import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -23,6 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
+import { supabase } from "@/lib/supabase";
 
 const settingsSchema = z.object({
   companyName: z.string().min(2, "Company name must be at least 2 characters"),
@@ -90,7 +90,9 @@ export default function DashboardSettings() {
       showReviews: (company as any)?.show_reviews ?? true,
       showImages: (company as any)?.show_images ?? true,
       reviewMinStars: (company as any)?.review_min_stars ?? 4,
-      reviewTriggerWords: ((company as any)?.review_trigger_words ?? []).join(", "),
+      reviewTriggerWords: ((company as any)?.review_trigger_words ?? []).join(
+        ", ",
+      ),
     },
   });
 
@@ -327,7 +329,8 @@ export default function DashboardSettings() {
                   Review platforms
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  After a customer submits a review, they'll be prompted to share it on these platforms.
+                  After a customer submits a review, they'll be prompted to
+                  share it on these platforms.
                 </p>
               </div>
               <div className="space-y-2">
@@ -357,7 +360,8 @@ export default function DashboardSettings() {
                   {...form.register("yelpAlias")}
                 />
                 <p className="text-xs text-slate-500">
-                  The part after /biz/ in your Yelp URL (e.g. yelp.com/biz/<strong>your-business-city</strong>)
+                  The part after /biz/ in your Yelp URL (e.g. yelp.com/biz/
+                  <strong>your-business-city</strong>)
                 </p>
               </div>
             </div>
@@ -503,14 +507,22 @@ export default function DashboardSettings() {
                   </p>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Control when customers are prompted to share reviews on Google or Yelp. Reviews below the threshold or containing trigger words will be kept internal so your team can follow up.
+                  Control when customers are prompted to share reviews on Google
+                  or Yelp. Reviews below the threshold or containing trigger
+                  words will be kept internal so your team can follow up.
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="reviewMinStars">Minimum stars for sharing</Label>
+                <Label htmlFor="reviewMinStars">
+                  Minimum stars for sharing
+                </Label>
                 <Select
                   value={String(form.watch("reviewMinStars"))}
-                  onValueChange={(v) => form.setValue("reviewMinStars", Number(v), { shouldDirty: true })}
+                  onValueChange={(v) =>
+                    form.setValue("reviewMinStars", Number(v), {
+                      shouldDirty: true,
+                    })
+                  }
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -524,7 +536,8 @@ export default function DashboardSettings() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-slate-500">
-                  Reviews below this rating won't prompt customers to share on Google or Yelp.
+                  Reviews below this rating won't prompt customers to share on
+                  Google or Yelp.
                 </p>
               </div>
               <div className="space-y-2">
@@ -536,7 +549,9 @@ export default function DashboardSettings() {
                   placeholder="scam, terrible, horrible, worst, rip off, unprofessional"
                 />
                 <p className="text-xs text-slate-500">
-                  Comma-separated. If a review contains any of these words, the customer won't be prompted to share publicly, regardless of star rating.
+                  Comma-separated. If a review contains any of these words, the
+                  customer won't be prompted to share publicly, regardless of
+                  star rating.
                 </p>
               </div>
             </div>
@@ -551,38 +566,49 @@ export default function DashboardSettings() {
                   </p>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Control what information is visible on pin popups in the public map.
+                  Control what information is visible on pin popups in the
+                  public map.
                 </p>
               </div>
               <VisibilityToggle
                 label="Completed date"
                 description="Show when the project was completed"
                 checked={form.watch("showCompletedDate")}
-                onCheckedChange={(v) => form.setValue("showCompletedDate", v, { shouldDirty: true })}
+                onCheckedChange={(v) =>
+                  form.setValue("showCompletedDate", v, { shouldDirty: true })
+                }
               />
               <VisibilityToggle
                 label="Work type"
                 description="Show the type of work performed"
                 checked={form.watch("showWorkType")}
-                onCheckedChange={(v) => form.setValue("showWorkType", v, { shouldDirty: true })}
+                onCheckedChange={(v) =>
+                  form.setValue("showWorkType", v, { shouldDirty: true })
+                }
               />
               <VisibilityToggle
                 label="Neighborhood"
                 description="Show the project neighborhood or city"
                 checked={form.watch("showNeighborhood")}
-                onCheckedChange={(v) => form.setValue("showNeighborhood", v, { shouldDirty: true })}
+                onCheckedChange={(v) =>
+                  form.setValue("showNeighborhood", v, { shouldDirty: true })
+                }
               />
               <VisibilityToggle
                 label="Reviews"
                 description="Show customer reviews on pin popups and stats"
                 checked={form.watch("showReviews")}
-                onCheckedChange={(v) => form.setValue("showReviews", v, { shouldDirty: true })}
+                onCheckedChange={(v) =>
+                  form.setValue("showReviews", v, { shouldDirty: true })
+                }
               />
               <VisibilityToggle
                 label="Before/After images"
                 description="Show project images in pin popups"
                 checked={form.watch("showImages")}
-                onCheckedChange={(v) => form.setValue("showImages", v, { shouldDirty: true })}
+                onCheckedChange={(v) =>
+                  form.setValue("showImages", v, { shouldDirty: true })
+                }
               />
             </div>
 

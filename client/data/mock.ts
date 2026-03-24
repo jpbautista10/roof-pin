@@ -1,4 +1,4 @@
-import type { Tenant, Pin } from "@/types";
+import type { Pin, Tenant } from "@/types";
 
 export const mockTenants: Tenant[] = [
   {

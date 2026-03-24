@@ -19,8 +19,12 @@ function useCountUp(target: number, isVisible: boolean, decimal = false) {
     function animate(now: number) {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCurrent(decimal ? parseFloat((eased * target).toFixed(1)) : Math.floor(eased * target));
+      const eased = 1 - (1 - progress) ** 3;
+      setCurrent(
+        decimal
+          ? parseFloat((eased * target).toFixed(1))
+          : Math.floor(eased * target),
+      );
       if (progress < 1) {
         rafRef.current = requestAnimationFrame(animate);
       }
@@ -33,7 +37,13 @@ function useCountUp(target: number, isVisible: boolean, decimal = false) {
   return current;
 }
 
-function StatCard({ value, suffix, label, decimal, isVisible }: {
+function StatCard({
+  value,
+  suffix,
+  label,
+  decimal,
+  isVisible,
+}: {
   value: number;
   suffix: string;
   label: string;
@@ -66,7 +76,7 @@ export default function LiveNumbers() {
           observer.disconnect();
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.3 },
     );
     observer.observe(el);
     return () => observer.disconnect();

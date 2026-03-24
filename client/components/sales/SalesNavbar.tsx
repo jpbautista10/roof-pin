@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function SalesNavbar() {
   return (

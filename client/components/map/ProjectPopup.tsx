@@ -1,8 +1,8 @@
-import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
-import type { PublicCompany, PublicLocation } from "@/types/public-map";
-import { format, parse } from 'date-fns';
+import { format, parse } from "date-fns";
 import { Calendar, Hammer, ImageOff, MapPin, Star, X } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
+import type { PublicCompany, PublicLocation } from "@/types/public-map";
 import BeforeAfterSlider from "./BeforeAfterSlider";
 
 interface ProjectPopupProps {
@@ -15,9 +15,18 @@ interface ProjectPopupProps {
 }
 
 const MONTH_NAMES: Record<string, string> = {
-  january: "Jan", february: "Feb", march: "Mar", april: "Apr",
-  may: "May", june: "Jun", july: "Jul", august: "Aug",
-  september: "Sep", october: "Oct", november: "Nov", december: "Dec",
+  january: "Jan",
+  february: "Feb",
+  march: "Mar",
+  april: "Apr",
+  may: "May",
+  june: "Jun",
+  july: "Jul",
+  august: "Aug",
+  september: "Sep",
+  october: "Oct",
+  november: "Nov",
+  december: "Dec",
 };
 
 function formatProjectDate(dateCompleted: string | null, createdAt: string) {
@@ -63,11 +72,17 @@ function PopupContent({
   const afterImage = location.images.find((img) => img.kind === "after");
   const ctaUrl = company.cta_url;
   const reviews = location.privacy_mode
-    ? location.reviews.map((r) => ({ ...r, customer_name: anonymizeName(r.customer_name) }))
+    ? location.reviews.map((r) => ({
+        ...r,
+        customer_name: anonymizeName(r.customer_name),
+      }))
     : location.reviews;
   const brandColor = getValidBrandColor(company.brand_primary_color);
   const brandTextColor = getContrastTextColor(brandColor);
-  const projectDate = formatProjectDate(location.date_completed, location.created_at);
+  const projectDate = formatProjectDate(
+    location.date_completed,
+    location.created_at,
+  );
 
   // Visibility settings (default true when columns haven't been added yet)
   const showDate = company.show_completed_date ?? true;
@@ -81,7 +96,10 @@ function PopupContent({
       {/* Header */}
       <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: brandColor }}>
+          <p
+            className="text-[11px] font-semibold uppercase tracking-wider"
+            style={{ color: brandColor }}
+          >
             {company.name}
           </p>
           <h3 className="text-base font-bold text-slate-900 leading-tight mt-0.5">
@@ -101,55 +119,85 @@ function PopupContent({
       </div>
 
       {/* Privacy mode details */}
-      {location.privacy_mode && (showWorkType || showDate || showNeighborhood) && (
-        <div className="px-4 pb-3">
-          <div className="rounded-lg bg-slate-50 p-3 space-y-2">
-            {showWorkType && (
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: `${brandColor}1A` }}>
-                  <Hammer className="w-3.5 h-3.5" style={{ color: brandColor }} />
+      {location.privacy_mode &&
+        (showWorkType || showDate || showNeighborhood) && (
+          <div className="px-4 pb-3">
+            <div className="rounded-lg bg-slate-50 p-3 space-y-2">
+              {showWorkType && (
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="w-7 h-7 rounded-md flex items-center justify-center"
+                    style={{ backgroundColor: `${brandColor}1A` }}
+                  >
+                    <Hammer
+                      className="w-3.5 h-3.5"
+                      style={{ color: brandColor }}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500">Work Type</p>
+                    <p className="text-xs font-semibold text-slate-900">
+                      {location.work_type || "Not specified"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] text-slate-500">Work Type</p>
-                  <p className="text-xs font-semibold text-slate-900">{location.work_type || "Not specified"}</p>
+              )}
+              {showDate && (
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="w-7 h-7 rounded-md flex items-center justify-center"
+                    style={{ backgroundColor: `${brandColor}1A` }}
+                  >
+                    <Calendar
+                      className="w-3.5 h-3.5"
+                      style={{ color: brandColor }}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500">Completed</p>
+                    <p className="text-xs font-semibold text-slate-900">
+                      {projectDate}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
-            {showDate && (
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: `${brandColor}1A` }}>
-                  <Calendar className="w-3.5 h-3.5" style={{ color: brandColor }} />
+              )}
+              {showNeighborhood && (
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="w-7 h-7 rounded-md flex items-center justify-center"
+                    style={{ backgroundColor: `${brandColor}1A` }}
+                  >
+                    <MapPin
+                      className="w-3.5 h-3.5"
+                      style={{ color: brandColor }}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500">Neighborhood</p>
+                    <p className="text-xs font-semibold text-slate-900">
+                      {location.neighborhood || location.place_label}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] text-slate-500">Completed</p>
-                  <p className="text-xs font-semibold text-slate-900">{projectDate}</p>
-                </div>
-              </div>
-            )}
-            {showNeighborhood && (
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: `${brandColor}1A` }}>
-                  <MapPin className="w-3.5 h-3.5" style={{ color: brandColor }} />
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-500">Neighborhood</p>
-                  <p className="text-xs font-semibold text-slate-900">{location.neighborhood || location.place_label}</p>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Images */}
       {!location.privacy_mode && showImages && (
         <div className="px-4 pb-3">
           {beforeImage?.public_url && afterImage?.public_url ? (
-            <BeforeAfterSlider beforeImg={beforeImage.public_url} afterImg={afterImage.public_url} />
+            <BeforeAfterSlider
+              beforeImg={beforeImage.public_url}
+              afterImg={afterImage.public_url}
+            />
           ) : (
             <div className="bg-slate-100 rounded-lg aspect-[4/3] flex flex-col items-center justify-center gap-2">
               <ImageOff className="w-7 h-7 text-slate-300" />
-              <p className="text-xs text-slate-400 font-medium">Images not available</p>
+              <p className="text-xs text-slate-400 font-medium">
+                Images not available
+              </p>
             </div>
           )}
         </div>
@@ -183,9 +231,14 @@ function PopupContent({
       {showReviews && reviews.length > 0 && (
         <div className="px-4 pb-3 space-y-2">
           {reviews.map((review, i) => (
-            <div key={`${review.customer_name ?? "r"}-${i}`} className="rounded-lg bg-slate-50 p-3">
+            <div
+              key={`${review.customer_name ?? "r"}-${i}`}
+              className="rounded-lg bg-slate-50 p-3"
+            >
               {typeof review.stars === "number" && (
-                <div className="mb-1.5"><StarRow stars={review.stars} /></div>
+                <div className="mb-1.5">
+                  <StarRow stars={review.stars} />
+                </div>
               )}
               {review.review_text && (
                 <blockquote className="text-xs text-slate-700 leading-relaxed italic">
@@ -245,7 +298,8 @@ function DesktopPopup({
     // Horizontal: center on pin, clamp to viewport
     let left = anchorPoint.x - popupWidth / 2;
     if (left < margin) left = margin;
-    if (left + popupWidth > window.innerWidth - margin) left = window.innerWidth - popupWidth - margin;
+    if (left + popupWidth > window.innerWidth - margin)
+      left = window.innerWidth - popupWidth - margin;
 
     // Vertical: prefer above the pin
     let top = anchorPoint.y - popupHeight - pinGap;
@@ -264,7 +318,11 @@ function DesktopPopup({
   }, [anchorPoint, location]);
 
   const style: React.CSSProperties = pos
-    ? { left: `${pos.left}px`, top: `${pos.top}px`, visibility: "visible" as const }
+    ? {
+        left: `${pos.left}px`,
+        top: `${pos.top}px`,
+        visibility: "visible" as const,
+      }
     : { left: 0, top: 0, visibility: "hidden" as const };
 
   return (
@@ -304,7 +362,8 @@ function MobilePopup({
     // Horizontal: center on pin, clamp to viewport
     let left = anchorPoint.x - popupWidth / 2;
     if (left < margin) left = margin;
-    if (left + popupWidth > window.innerWidth - margin) left = window.innerWidth - popupWidth - margin;
+    if (left + popupWidth > window.innerWidth - margin)
+      left = window.innerWidth - popupWidth - margin;
 
     // Vertical: prefer above the pin
     let top = anchorPoint.y - popupHeight - pinGap;
@@ -322,8 +381,18 @@ function MobilePopup({
   const popupWidth = Math.min(300, window.innerWidth - 16);
 
   const style: React.CSSProperties = pos
-    ? { left: `${pos.left}px`, top: `${pos.top}px`, width: `${popupWidth}px`, visibility: "visible" as const }
-    : { left: 0, top: 0, width: `${popupWidth}px`, visibility: "hidden" as const };
+    ? {
+        left: `${pos.left}px`,
+        top: `${pos.top}px`,
+        width: `${popupWidth}px`,
+        visibility: "visible" as const,
+      }
+    : {
+        left: 0,
+        top: 0,
+        width: `${popupWidth}px`,
+        visibility: "hidden" as const,
+      };
 
   return (
     <div

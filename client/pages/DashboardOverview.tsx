@@ -1,20 +1,23 @@
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart3,
   CheckCircle2,
   Circle,
+  ExternalLink,
   Eye,
   EyeOff,
-  ExternalLink,
   Image,
   MapPin,
   MessageSquare,
   Palette,
   Star,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
-import { fetchLocationsByCompany, type LocationWithAssets } from "@/lib/locations";
+import {
+  fetchLocationsByCompany,
+  type LocationWithAssets,
+} from "@/lib/locations";
 
 interface StatCardProps {
   label: string;
@@ -57,14 +60,18 @@ function WorkTypeBreakdown({ locations }: { locations: LocationWithAssets[] }) {
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center gap-2">
         <BarChart3 className="h-4 w-4 text-slate-500" />
-        <p className="text-sm font-semibold text-slate-900">Pins by Work Type</p>
+        <p className="text-sm font-semibold text-slate-900">
+          Pins by Work Type
+        </p>
       </div>
       <div className="space-y-2">
         {sorted.map(([type, count]) => (
           <div key={type}>
             <div className="mb-1 flex items-center justify-between">
               <span className="text-sm text-slate-700">{type}</span>
-              <span className="text-sm font-semibold text-slate-900">{count}</span>
+              <span className="text-sm font-semibold text-slate-900">
+                {count}
+              </span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-slate-100">
               <div
@@ -87,11 +94,7 @@ interface ChecklistItem {
   external?: boolean;
 }
 
-function GettingStartedChecklist({
-  items,
-}: {
-  items: ChecklistItem[];
-}) {
+function GettingStartedChecklist({ items }: { items: ChecklistItem[] }) {
   const allDone = items.every((i) => i.done);
   if (allDone) return null;
 
@@ -100,7 +103,9 @@ function GettingStartedChecklist({
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-1 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-900">Getting Started</h3>
+        <h3 className="text-sm font-semibold text-slate-900">
+          Getting Started
+        </h3>
         <span className="text-xs text-slate-500">
           {completed}/{items.length} done
         </span>
@@ -113,7 +118,10 @@ function GettingStartedChecklist({
       </div>
       <ul className="space-y-3">
         {items.map((item) => (
-          <li key={item.label} className="flex items-center justify-between gap-3">
+          <li
+            key={item.label}
+            className="flex items-center justify-between gap-3"
+          >
             <div className="flex items-center gap-2.5">
               {item.done ? (
                 <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />

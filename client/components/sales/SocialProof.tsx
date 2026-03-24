@@ -2,42 +2,48 @@ import { Star } from "lucide-react";
 
 const testimonials = [
   {
-    quote: "My guys close 30% more since we started using this. The map does the selling for us.",
+    quote:
+      "My guys close 30% more since we started using this. The map does the selling for us.",
     name: "Mike D.",
     company: "D&M Roofing",
     city: "Phoenix, AZ",
     stars: 5,
   },
   {
-    quote: "I pulled it up on my iPad at an appointment and the homeowner said 'you've done my neighbor's house!' Signed on the spot.",
+    quote:
+      "I pulled it up on my iPad at an appointment and the homeowner said 'you've done my neighbor's house!' Signed on the spot.",
     name: "Travis K.",
     company: "Keystone Exteriors",
     city: "Nashville, TN",
     stars: 5,
   },
   {
-    quote: "CSV import saved me hours. 3 years of jobs uploaded in 15 minutes. My whole team was using it by lunch.",
+    quote:
+      "CSV import saved me hours. 3 years of jobs uploaded in 15 minutes. My whole team was using it by lunch.",
     name: "Sarah L.",
     company: "Lakeview Roofing",
     city: "Chicago, IL",
     stars: 5,
   },
   {
-    quote: "The review system alone is worth it. We caught 3 bad reviews before they went public and turned them into happy customers.",
+    quote:
+      "The review system alone is worth it. We caught 3 bad reviews before they went public and turned them into happy customers.",
     name: "Marcus W.",
     company: "Elite Home Services",
     city: "Houston, TX",
     stars: 5,
   },
   {
-    quote: "We look like a 50-person company now. 200+ pins on our map and prospects can see we dominate the area.",
+    quote:
+      "We look like a 50-person company now. 200+ pins on our map and prospects can see we dominate the area.",
     name: "Ryan P.",
     company: "ProLine Roofing",
     city: "Orlando, FL",
     stars: 5,
   },
   {
-    quote: "Best money I've ever spent on my business. One-time payment, no monthly fees, and it pays for itself on the first close.",
+    quote:
+      "Best money I've ever spent on my business. One-time payment, no monthly fees, and it pays for itself on the first close.",
     name: "Jennifer H.",
     company: "Horizon Contractors",
     city: "San Antonio, TX",
@@ -84,7 +90,9 @@ export default function SocialProof() {
                   {t.name.charAt(0)}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{t.name}</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {t.name}
+                  </p>
                   <p className="text-xs text-slate-500">
                     {t.company} · {t.city}
                   </p>

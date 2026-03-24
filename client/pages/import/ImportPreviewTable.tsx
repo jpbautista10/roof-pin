@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -6,7 +7,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import type { ValidatedRow } from "./csv-template";
 
 interface ImportPreviewTableProps {
@@ -48,9 +48,7 @@ export default function ImportPreviewTable({ rows }: ImportPreviewTableProps) {
                   {row.project_name?.trim() || "—"}
                 </TableCell>
                 <TableCell
-                  className={
-                    !row.address?.trim() ? "text-red-500 italic" : ""
-                  }
+                  className={!row.address?.trim() ? "text-red-500 italic" : ""}
                 >
                   {row.address?.trim() || "—"}
                 </TableCell>

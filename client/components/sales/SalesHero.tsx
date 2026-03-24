@@ -1,4 +1,4 @@
-import { ArrowRight, MapPin, CheckCircle2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, MapPin } from "lucide-react";
 
 export default function SalesHero() {
   return (
@@ -70,24 +70,42 @@ export default function SalesHero() {
               </span>
               <div className="mt-2 space-y-3">
                 <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-red-100">
-                  <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center text-lg">📱</div>
+                  <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center text-lg">
+                    📱
+                  </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-800">iPhone Camera Roll</p>
-                    <p className="text-xs text-slate-500">2,847 photos — good luck finding that roof job</p>
+                    <p className="text-sm font-medium text-slate-800">
+                      iPhone Camera Roll
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      2,847 photos — good luck finding that roof job
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-red-100">
-                  <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center text-lg">🤦</div>
+                  <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center text-lg">
+                    🤦
+                  </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-800">Personal Photos Mixed In</p>
-                    <p className="text-xs text-slate-500">Selfies, lunch, kids — not a great look</p>
+                    <p className="text-sm font-medium text-slate-800">
+                      Personal Photos Mixed In
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Selfies, lunch, kids — not a great look
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-red-100">
-                  <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center text-lg">😬</div>
+                  <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center text-lg">
+                    😬
+                  </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-800">Zero Organization</p>
-                    <p className="text-xs text-slate-500">No reviews, no addresses, no professionalism</p>
+                    <p className="text-sm font-medium text-slate-800">
+                      Zero Organization
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      No reviews, no addresses, no professionalism
+                    </p>
                   </div>
                 </div>
               </div>
@@ -104,22 +122,38 @@ export default function SalesHero() {
                     <MapPin className="w-6 h-6 text-teal-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-800">Branded Interactive Map</p>
-                    <p className="text-xs text-slate-500">Every job pinned, organized, and beautiful</p>
+                    <p className="text-sm font-medium text-slate-800">
+                      Branded Interactive Map
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Every job pinned, organized, and beautiful
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-teal-100">
-                  <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center text-lg">⭐</div>
+                  <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center text-lg">
+                    ⭐
+                  </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-800">Reviews & Before/After Photos</p>
-                    <p className="text-xs text-slate-500">Tap any pin to see proof of quality work</p>
+                    <p className="text-sm font-medium text-slate-800">
+                      Reviews & Before/After Photos
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Tap any pin to see proof of quality work
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-teal-100">
-                  <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center text-lg">🏆</div>
+                  <div className="w-12 h-12 rounded-lg bg-teal-100 flex items-center justify-center text-lg">
+                    🏆
+                  </div>
                   <div>
-                    <p className="text-sm font-medium text-slate-800">Professional Presentation</p>
-                    <p className="text-xs text-slate-500">Your logo, your colors, your brand — instant credibility</p>
+                    <p className="text-sm font-medium text-slate-800">
+                      Professional Presentation
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Your logo, your colors, your brand — instant credibility
+                    </p>
                   </div>
                 </div>
               </div>

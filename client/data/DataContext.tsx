@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useCallback } from "react";
-import type { Tenant, Pin } from "@/types";
-import { mockTenants, mockPins } from "./mock";
+import { createContext, useCallback, useContext, useState } from "react";
+import type { Pin, Tenant } from "@/types";
+import { mockPins, mockTenants } from "./mock";
 
 interface DataContextValue {
   tenant: Tenant;

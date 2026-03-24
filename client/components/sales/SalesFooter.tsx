@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function SalesFooter() {
   return (
@@ -29,8 +29,14 @@ export default function SalesFooter() {
         </div>
 
         <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>&copy; {new Date().getFullYear()} Neighborhood Proof. All rights reserved.</p>
-          <p>30-Day Money-Back Guarantee &middot; Lifetime Access &middot; No Monthly Fees</p>
+          <p>
+            &copy; {new Date().getFullYear()} Neighborhood Proof. All rights
+            reserved.
+          </p>
+          <p>
+            30-Day Money-Back Guarantee &middot; Lifetime Access &middot; No
+            Monthly Fees
+          </p>
         </div>
       </div>
     </footer>

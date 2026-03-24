@@ -1,4 +1,4 @@
-import { MapPin, Star, Image, Code2 } from "lucide-react";
+import { Code2, Image, MapPin, Star } from "lucide-react";
 
 const features = [
   {

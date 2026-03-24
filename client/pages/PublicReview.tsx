@@ -1,13 +1,13 @@
-import { type FormEvent, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
 import { Check, ExternalLink, HeartHandshake, Star } from "lucide-react";
+import { type FormEvent, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/lib/supabase";
 
 interface PlatformInfo {
   google_place_id: string | null;

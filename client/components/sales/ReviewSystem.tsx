@@ -1,22 +1,25 @@
-import { Star, ShieldAlert, ThumbsUp, ArrowRight } from "lucide-react";
+import { ArrowRight, ShieldAlert, Star, ThumbsUp } from "lucide-react";
 
 const steps = [
   {
     num: "1",
     title: "Finish the job",
-    description: "Hand the homeowner a QR code or send them your branded review link.",
+    description:
+      "Hand the homeowner a QR code or send them your branded review link.",
     icon: "🏠",
   },
   {
     num: "2",
     title: "They submit a review",
-    description: "Through your branded page — clean, professional, takes 30 seconds.",
+    description:
+      "Through your branded page — clean, professional, takes 30 seconds.",
     icon: "📝",
   },
   {
     num: "3",
     title: "Smart routing kicks in",
-    description: "Our system automatically routes the review based on the rating.",
+    description:
+      "Our system automatically routes the review based on the rating.",
     icon: "🔀",
   },
 ];
@@ -72,8 +75,12 @@ export default function ReviewSystem() {
                 <ShieldAlert className="w-5 h-5 text-red-500" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Bad review?</p>
-                <p className="text-xs text-red-600 font-medium">Routed to your team</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  Bad review?
+                </p>
+                <p className="text-xs text-red-600 font-medium">
+                  Routed to your team
+                </p>
               </div>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed">
@@ -92,8 +99,12 @@ export default function ReviewSystem() {
                 <ThumbsUp className="w-5 h-5 text-teal-600" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Good review?</p>
-                <p className="text-xs text-teal-600 font-medium">Amplified everywhere</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  Good review?
+                </p>
+                <p className="text-xs text-teal-600 font-medium">
+                  Amplified everywhere
+                </p>
               </div>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed">
@@ -109,7 +120,8 @@ export default function ReviewSystem() {
 
         <p className="text-center mt-8 text-sm text-slate-500 max-w-lg mx-auto">
           Win-win: customers feel taken care of. You get 5-star reviews where
-          they matter. Bad experiences get resolved instead of ignored on Google.
+          they matter. Bad experiences get resolved instead of ignored on
+          Google.
         </p>
       </div>
     </section>

@@ -1,23 +1,26 @@
-import { CreditCard, Upload, Rocket } from "lucide-react";
+import { CreditCard, Rocket, Upload } from "lucide-react";
 
 const steps = [
   {
     icon: CreditCard,
     num: "1",
     title: "Buy",
-    description: "One-time payment, instant access. No subscriptions, no contracts.",
+    description:
+      "One-time payment, instant access. No subscriptions, no contracts.",
   },
   {
     icon: Upload,
     num: "2",
     title: "Import",
-    description: "Upload your logo, CSV-import your past jobs, pick your brand colors. 5 minutes.",
+    description:
+      "Upload your logo, CSV-import your past jobs, pick your brand colors. 5 minutes.",
   },
   {
     icon: Rocket,
     num: "3",
     title: "Close",
-    description: "Pull it up at your next appointment. Watch prospects say yes.",
+    description:
+      "Pull it up at your next appointment. Watch prospects say yes.",
   },
 ];
 
@@ -36,7 +39,8 @@ export default function LaunchSteps() {
             </span>
           </h2>
           <p className="mt-4 text-lg text-slate-600">
-            No developers. No complicated setup. Three steps and you're closing deals.
+            No developers. No complicated setup. Three steps and you're closing
+            deals.
           </p>
         </div>
 

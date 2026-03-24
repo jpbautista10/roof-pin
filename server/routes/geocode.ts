@@ -1,5 +1,5 @@
-import type { RequestHandler } from "express";
 import type { GeocodeSuggestResponse } from "@shared/api";
+import type { RequestHandler } from "express";
 
 interface MapboxContextItem {
   id?: string;

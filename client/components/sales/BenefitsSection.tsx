@@ -1,4 +1,4 @@
-import { Target, TrendingUp, Clock, Trophy, BarChart3 } from "lucide-react";
+import { BarChart3, Clock, Target, TrendingUp, Trophy } from "lucide-react";
 
 const benefits = [
   {

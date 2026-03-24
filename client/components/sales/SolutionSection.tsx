@@ -1,4 +1,4 @@
-import { Smartphone, Monitor } from "lucide-react";
+import { Monitor, Smartphone } from "lucide-react";
 
 export default function SolutionSection() {
   return (
@@ -32,8 +32,12 @@ export default function SolutionSection() {
                 <Smartphone className="w-5 h-5 text-red-500" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">How you present now</p>
-                <p className="text-xs text-slate-500">Fumbling through your phone</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  How you present now
+                </p>
+                <p className="text-xs text-slate-500">
+                  Fumbling through your phone
+                </p>
               </div>
             </div>
             <div className="rounded-xl bg-slate-100 p-4 space-y-2">
@@ -68,8 +72,12 @@ export default function SolutionSection() {
                 <Monitor className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900">How you'll present with us</p>
-                <p className="text-xs text-teal-600 font-medium">Clean, branded, professional</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  How you'll present with us
+                </p>
+                <p className="text-xs text-teal-600 font-medium">
+                  Clean, branded, professional
+                </p>
               </div>
             </div>
             <div className="rounded-xl bg-slate-100 p-4 relative overflow-hidden">
@@ -100,15 +108,20 @@ export default function SolutionSection() {
                 ))}
               </div>
               <div className="relative bg-white/90 backdrop-blur rounded-lg px-3 py-2 mt-1">
-                <p className="text-xs font-semibold text-slate-800">Your Company</p>
-                <p className="text-[11px] text-slate-500">14 jobs in this neighborhood</p>
+                <p className="text-xs font-semibold text-slate-800">
+                  Your Company
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  14 jobs in this neighborhood
+                </p>
               </div>
             </div>
           </div>
         </div>
 
         <p className="text-center mt-10 text-base text-slate-600 max-w-xl mx-auto">
-          Your work <span className="font-semibold text-slate-800">IS</span> the proof. We just make it easy to show.
+          Your work <span className="font-semibold text-slate-800">IS</span> the
+          proof. We just make it easy to show.
         </p>
       </div>
     </section>

@@ -108,8 +108,7 @@ export default function WorkTypeFilter({
           </div>
           <div className="max-h-48 overflow-y-auto p-1">
             {workTypes.map((type) => {
-              const isSelected =
-                selected === null || selected.includes(type);
+              const isSelected = selected === null || selected.includes(type);
               return (
                 <button
                   key={type}

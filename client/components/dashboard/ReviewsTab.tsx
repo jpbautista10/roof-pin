@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Eye,
@@ -10,11 +9,8 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
-import { LocationWithAssets } from "@/lib/locations";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +21,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import type { LocationWithAssets } from "@/lib/locations";
+import { supabase } from "@/lib/supabase";
 
 type ReviewFilter = "all" | "positive" | "negative" | "hidden" | "deleted";
 
@@ -119,7 +119,9 @@ export default function ReviewsTab({
       active.length > 0
         ? active.reduce((s, r) => s + (r.stars ?? 0), 0) / active.length
         : 0;
-    const hidden = allReviews.filter((r) => !r.isVisible && !r.deletedAt).length;
+    const hidden = allReviews.filter(
+      (r) => !r.isVisible && !r.deletedAt,
+    ).length;
     const deleted = allReviews.filter((r) => r.deletedAt).length;
     return { total, avgRating, hidden, deleted };
   }, [allReviews]);
@@ -282,8 +284,9 @@ export default function ReviewsTab({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this review?</AlertDialogTitle>
             <AlertDialogDescription>
-              The review will be soft-deleted and hidden from the public map. You
-              can restore it later or request a new review from the customer.
+              The review will be soft-deleted and hidden from the public map.
+              You can restore it later or request a new review from the
+              customer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -307,13 +310,7 @@ export default function ReviewsTab({
   );
 }
 
-function StatCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: number | string;
-}) {
+function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <p className="text-2xl font-bold text-slate-900">{value}</p>
@@ -337,8 +334,7 @@ function ReviewCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const isDeleted = Boolean(review.deletedAt);
-  const textTruncated =
-    (review.reviewText ?? "").length > 120 && !expanded;
+  const textTruncated = (review.reviewText ?? "").length > 120 && !expanded;
 
   return (
     <div

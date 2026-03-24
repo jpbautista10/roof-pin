@@ -1,4 +1,4 @@
-import { UserPlus, MapPinPlus, Code, Rocket } from "lucide-react";
+import { Code, MapPinPlus, Rocket, UserPlus } from "lucide-react";
 
 const steps = [
   {

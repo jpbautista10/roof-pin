@@ -1,4 +1,4 @@
-import { TrendingUp, Clock, Star } from "lucide-react";
+import { Clock, Star, TrendingUp } from "lucide-react";
 
 const cases = [
   {

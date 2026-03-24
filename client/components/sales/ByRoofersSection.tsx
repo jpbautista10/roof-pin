@@ -36,10 +36,10 @@ export default function ByRoofersSection() {
             </p>
 
             <p className="text-base text-slate-300 leading-relaxed max-w-2xl mx-auto">
-              We're not a Silicon Valley startup trying to sell you software.
-              We <span className="text-white font-semibold">ARE</span>{" "}
-              contractors who got tired of looking unprofessional at the
-              appointment. This tool was born in the field — and it shows.
+              We're not a Silicon Valley startup trying to sell you software. We{" "}
+              <span className="text-white font-semibold">ARE</span> contractors
+              who got tired of looking unprofessional at the appointment. This
+              tool was born in the field — and it shows.
             </p>
 
             <div className="mt-8 flex items-center justify-center gap-2 text-sm text-slate-400">

@@ -1,3 +1,14 @@
+import {
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  Mail,
+  Map as MapIcon,
+  MapPin,
+  Menu,
+  Plus,
+  Settings,
+} from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import {
   Link,
@@ -6,19 +17,10 @@ import {
   useNavigate,
   useParams,
 } from "react-router-dom";
-import {
-  KeyRound,
-  LayoutDashboard,
-  LogOut,
-  Mail,
-  MapPin,
-  Menu,
-  Map as MapIcon,
-  Plus,
-  Settings,
-} from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
+import ChangeEmailDialog from "@/components/dashboard/ChangeEmailDialog";
+import ChangePasswordDialog from "@/components/dashboard/ChangePasswordDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,8 +38,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import ChangePasswordDialog from "@/components/dashboard/ChangePasswordDialog";
-import ChangeEmailDialog from "@/components/dashboard/ChangeEmailDialog";
 
 const navDefinitions = [
   { to: "", label: "Overview", icon: LayoutDashboard },
@@ -174,7 +174,10 @@ export default function DashboardLayout({
     });
 
     if (exactMatch) return exactMatch;
-    if (location.pathname.includes("/locations/") || location.pathname.includes("/import")) {
+    if (
+      location.pathname.includes("/locations/") ||
+      location.pathname.includes("/import")
+    ) {
       return navDefinitions[1]; // Pins
     }
     return navDefinitions[0];
@@ -205,7 +208,11 @@ export default function DashboardLayout({
             <div className="flex items-center gap-2">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Open navigation menu">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Open navigation menu"
+                  >
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
@@ -304,7 +311,9 @@ export default function DashboardLayout({
 
       {/* Floating action button */}
       <Link
-        to={companySlug ? `/dashboard/${companySlug}/locations/new` : "/dashboard"}
+        to={
+          companySlug ? `/dashboard/${companySlug}/locations/new` : "/dashboard"
+        }
         className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 transition-transform hover:scale-105 active:scale-95"
         aria-label="Add new pin"
       >

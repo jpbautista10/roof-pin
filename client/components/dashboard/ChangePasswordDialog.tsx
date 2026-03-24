@@ -1,10 +1,7 @@
-import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
 
 interface ChangePasswordDialogProps {
   open: boolean;
@@ -60,9 +60,7 @@ export default function ChangePasswordDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Change password</DialogTitle>
-          <DialogDescription>
-            Enter your new password below.
-          </DialogDescription>
+          <DialogDescription>Enter your new password below.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

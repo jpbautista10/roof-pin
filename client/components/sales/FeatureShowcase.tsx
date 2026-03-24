@@ -1,13 +1,13 @@
 import {
-  MapPin,
-  Star,
-  Image,
-  Upload,
-  Palette,
   Code2,
-  Shield,
+  Image,
+  MapPin,
+  Palette,
   QrCode,
   Rocket,
+  Shield,
+  Star,
+  Upload,
 } from "lucide-react";
 
 const features = [

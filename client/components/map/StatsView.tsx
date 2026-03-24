@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import {
   CircleCheck,
   Hammer,
@@ -7,6 +6,7 @@ import {
   StarHalf,
   TrendingUp,
 } from "lucide-react";
+import { useMemo } from "react";
 import type { PublicCompany, PublicLocation } from "@/types/public-map";
 
 interface StatsViewProps {
@@ -104,7 +104,7 @@ export default function StatsView({ locations, company }: StatsViewProps) {
   if (locations.length === 0) {
     return (
       <div className="min-h-full bg-slate-50">
-      <div className="mx-auto max-w-2xl px-4 pt-6 pb-8">
+        <div className="mx-auto max-w-2xl px-4 pt-6 pb-8">
           <div className="rounded-xl border border-white/30 bg-white/60 p-10 text-center shadow-sm backdrop-blur-lg">
             <MapPin className="mx-auto mb-3 h-8 w-8 text-slate-300" />
             <p className="text-sm font-medium text-slate-700">

@@ -1,4 +1,4 @@
-import { Check, ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const valueStack = [
@@ -49,32 +49,48 @@ export default function PricingOffer() {
               </p>
               <div className="space-y-3">
                 {valueStack.map((v) => (
-                  <div key={v.item} className="flex items-center justify-between">
+                  <div
+                    key={v.item}
+                    className="flex items-center justify-between"
+                  >
                     <span className="text-sm text-slate-700">{v.item}</span>
-                    <span className="text-sm text-slate-400 line-through">{v.value}</span>
+                    <span className="text-sm text-slate-400 line-through">
+                      {v.value}
+                    </span>
                   </div>
                 ))}
               </div>
               <div className="mt-4 pt-4 border-t border-slate-200 flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-700">Total Value</span>
-                <span className="text-sm font-bold text-slate-400 line-through">$4,000+</span>
+                <span className="text-sm font-semibold text-slate-700">
+                  Total Value
+                </span>
+                <span className="text-sm font-bold text-slate-400 line-through">
+                  $4,000+
+                </span>
               </div>
             </div>
 
             {/* Price */}
             <div className="px-6 sm:px-8 py-8 text-center">
               <div className="flex items-center justify-center gap-3 mb-2">
-                <span className="text-2xl text-slate-400 line-through font-medium">$997</span>
+                <span className="text-2xl text-slate-400 line-through font-medium">
+                  $997
+                </span>
                 <span className="bg-teal-100 text-teal-700 text-xs font-bold uppercase px-2 py-1 rounded-full">
                   50% off
                 </span>
               </div>
               <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl sm:text-6xl font-extrabold text-slate-900">$497</span>
-                <span className="text-lg text-slate-500 font-medium">one-time</span>
+                <span className="text-5xl sm:text-6xl font-extrabold text-slate-900">
+                  $497
+                </span>
+                <span className="text-lg text-slate-500 font-medium">
+                  one-time
+                </span>
               </div>
               <p className="mt-2 text-sm text-slate-500">
-                Lifetime access. No monthly fees. No per-lead charges. No surprises. Ever.
+                Lifetime access. No monthly fees. No per-lead charges. No
+                surprises. Ever.
               </p>
 
               <Link

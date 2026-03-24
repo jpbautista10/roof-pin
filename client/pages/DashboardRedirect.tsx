@@ -2,7 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 
 export default function DashboardRedirect() {
-  const { dbUser, company, isLoading } = useAuth();
+  const { dbUser, company, hasPaidAccess, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -10,6 +10,10 @@ export default function DashboardRedirect() {
         <p className="text-sm text-slate-600">Loading dashboard...</p>
       </div>
     );
+  }
+
+  if (!hasPaidAccess) {
+    return <Navigate to="/checkout" replace />;
   }
 
   if (!dbUser?.onboarding_completed_at || !company?.slug) {

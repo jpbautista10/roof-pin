@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { ArrowRight, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Hero() {
   return (
@@ -34,7 +34,7 @@ export default function Hero() {
               to="/auth/login"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all hover:shadow-xl hover:shadow-primary/30"
             >
-              Start for free
+              Get Started
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
@@ -46,7 +46,7 @@ export default function Hero() {
           </div>
 
           <p className="mt-6 text-sm text-slate-500">
-            No credit card required · Set up in under 5 minutes
+            Create your account first · One-time payment unlocks lifetime access
           </p>
         </div>
 

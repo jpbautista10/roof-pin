@@ -1,3 +1,4 @@
+import { Calendar, Hammer, ImageOff, Lock, MapPin, Star } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -5,10 +6,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Calendar, Hammer, ImageOff, Lock, MapPin, Star } from "lucide-react";
 import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
-import BeforeAfterSlider from "./BeforeAfterSlider";
 import type { PublicCompany, PublicLocation } from "@/types/public-map";
+import BeforeAfterSlider from "./BeforeAfterSlider";
 
 interface ProjectDrawerProps {
   location: PublicLocation | null;

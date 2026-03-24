@@ -1,17 +1,17 @@
-import { useCallback, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Download, FileSpreadsheet, Loader2, Upload } from "lucide-react";
 import Papa from "papaparse";
-import { Upload, Download, FileSpreadsheet, Loader2 } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { createLocation } from "@/lib/locations";
-import { useQueryClient } from "@tanstack/react-query";
 import {
+  downloadSampleCsv,
   type ParsedRow,
   type ValidatedRow,
   validateRow,
-  downloadSampleCsv,
 } from "./import/csv-template";
 import ImportPreviewTable from "./import/ImportPreviewTable";
 import ImportResults, { type ImportResult } from "./import/ImportResults";
@@ -51,9 +51,7 @@ export default function DashboardImport() {
           return;
         }
 
-        const validated = parseResult.data.map((row, i) =>
-          validateRow(row, i),
-        );
+        const validated = parseResult.data.map((row, i) => validateRow(row, i));
         setRows(validated);
         setPhase("preview");
       },
@@ -84,7 +82,7 @@ export default function DashboardImport() {
 
     // Step 1: Batch geocode via server
     const importRows = validRows.map((r) => ({
-      project_name: r.project_name?.trim() || r.work_type?.trim() || '',
+      project_name: r.project_name?.trim() || r.work_type?.trim() || "",
       address: r.address.trim(),
       work_type: r.work_type?.trim() || undefined,
       date_completed: r.date_completed?.trim() || undefined,
@@ -124,9 +122,7 @@ export default function DashboardImport() {
       const payload = await response.json();
       geocodedResults = payload.results;
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Geocoding failed.",
-      );
+      toast.error(err instanceof Error ? err.message : "Geocoding failed.");
       setPhase("preview");
       return;
     }
@@ -176,8 +172,7 @@ export default function DashboardImport() {
           rowIndex: originalRow.rowIndex,
           projectName: geo.data.project_name,
           status: "error",
-          error:
-            err instanceof Error ? err.message : "Failed to save location",
+          error: err instanceof Error ? err.message : "Failed to save location",
         });
       }
     }

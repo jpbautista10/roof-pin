@@ -1,4 +1,4 @@
-import { Users, Clock } from "lucide-react";
+import { Clock, Users } from "lucide-react";
 
 export default function UrgencyBanner() {
   const currentMonth = new Date().toLocaleString("default", { month: "long" });
