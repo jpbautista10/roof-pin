@@ -53,7 +53,7 @@ export default function HowItWorks() {
               {i < steps.length - 1 && (
                 <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-gradient-to-r from-slate-300 to-transparent z-0" />
               )}
-              <div className="relative bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm">
+              <div className="relative bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm h-full">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <s.icon className="w-5 h-5 text-primary" />
