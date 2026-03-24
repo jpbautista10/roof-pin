@@ -1,8 +1,8 @@
-import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
-import type { PublicCompany, PublicLocation } from "@/types/public-map";
 import { format, parse } from "date-fns";
 import { Calendar, Hammer, ImageOff, MapPin, Star, X } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
+import type { PublicCompany, PublicLocation } from "@/types/public-map";
 import BeforeAfterSlider from "./BeforeAfterSlider";
 
 interface ProjectPopupProps {
