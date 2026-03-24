@@ -1,8 +1,8 @@
+import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
+import type { PublicCompany, PublicLocation } from "@/types/public-map";
 import { format, parse } from "date-fns";
 import { Calendar, Hammer, ImageOff, MapPin, Star, X } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
-import { getContrastTextColor, getValidBrandColor } from "@/lib/color";
-import type { PublicCompany, PublicLocation } from "@/types/public-map";
 import BeforeAfterSlider from "./BeforeAfterSlider";
 
 interface ProjectPopupProps {
@@ -14,7 +14,7 @@ interface ProjectPopupProps {
   anchorPoint?: { x: number; y: number } | null;
 }
 
-const MONTH_NAMES: Record<string, string> = {
+const _MONTH_NAMES: Record<string, string> = {
   january: "Jan",
   february: "Feb",
   march: "Mar",
@@ -29,7 +29,7 @@ const MONTH_NAMES: Record<string, string> = {
   december: "Dec",
 };
 
-function formatProjectDate(dateCompleted: string | null, createdAt: string) {
+function formatProjectDate(dateCompleted: string | null, _createdAt: string) {
   if (dateCompleted) {
     const parsed = parse(dateCompleted, "MMMM yyyy", new Date());
     return format(parsed, "MMM yyyy");
@@ -315,7 +315,7 @@ function DesktopPopup({
     }
 
     setPos({ left, top });
-  }, [anchorPoint, location]);
+  }, [anchorPoint]);
 
   const style: React.CSSProperties = pos
     ? {
@@ -376,7 +376,7 @@ function MobilePopup({
     }
 
     setPos({ left, top });
-  }, [anchorPoint, location]);
+  }, [anchorPoint]);
 
   const popupWidth = Math.min(300, window.innerWidth - 16);
 
