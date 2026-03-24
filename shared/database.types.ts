@@ -300,29 +300,103 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          amount_refunded: number
+          created_at: string
+          currency: string
+          disputed_at: string | null
+          id: string
+          paid_at: string | null
+          receipt_email: string | null
+          refunded_at: string | null
+          status: string
+          stripe_charge_id: string | null
+          stripe_customer_id: string | null
+          stripe_event_id: string | null
+          stripe_payment_intent_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          amount_refunded?: number
+          created_at?: string
+          currency: string
+          disputed_at?: string | null
+          id?: string
+          paid_at?: string | null
+          receipt_email?: string | null
+          refunded_at?: string | null
+          status: string
+          stripe_charge_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_event_id?: string | null
+          stripe_payment_intent_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          amount_refunded?: number
+          created_at?: string
+          currency?: string
+          disputed_at?: string | null
+          id?: string
+          paid_at?: string | null
+          receipt_email?: string | null
+          refunded_at?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_event_id?: string | null
+          stripe_payment_intent_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           company_id: string | null
           created_at: string
           email: string
+          has_paid_access: boolean
           id: string
           onboarding_completed_at: string | null
+          paid_at: string | null
+          stripe_customer_id: string | null
           updated_at: string
         }
         Insert: {
           company_id?: string | null
           created_at?: string
           email: string
+          has_paid_access?: boolean
           id: string
           onboarding_completed_at?: string | null
+          paid_at?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Update: {
           company_id?: string | null
           created_at?: string
           email?: string
+          has_paid_access?: boolean
           id?: string
           onboarding_completed_at?: string | null
+          paid_at?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -340,6 +414,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      company_has_paid_access: {
+        Args: { p_company_id: string }
+        Returns: boolean
+      }
       create_or_get_location_review_token: {
         Args: { p_location_id: string }
         Returns: string
