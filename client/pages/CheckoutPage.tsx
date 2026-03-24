@@ -152,13 +152,12 @@ function CheckoutForm({ amount, currency }: BillingPaymentIntentResponse) {
         disabled={!stripe || !elements || isSubmitting}
       >
         {isSubmitting
-          ? "Processing payment..."
-          : `Pay ${formatPrice(amount, currency)} - Get lifetime access`}
+          ? "Processing..."
+          : `Pay ${formatPrice(amount, currency)} - Get Lifetime Access`}
       </Button>
 
       <p className="text-xs text-slate-400 text-center">
-        Secure checkout powered by Stripe Elements. Access unlocks after the
-        payment webhook confirms your charge.
+        Powered by Stripe. Your payment info is encrypted and secure.
       </p>
 
       {!dbUser?.has_paid_access ? null : (
@@ -275,15 +274,15 @@ export default function CheckoutPage() {
           <div className="lg:col-span-2 lg:order-2">
             <div className="bg-white rounded-3xl border border-slate-200 p-6 sticky top-6 shadow-sm">
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">
-                Lifetime Access
+                Order Summary
               </h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-600">Neighborhood Proof</span>
+                  <span className="text-slate-600">Lifetime Access</span>
                   <span className="text-slate-900 font-medium">$497.00</span>
                 </div>
                 <div className="flex justify-between text-slate-400 line-through text-xs">
-                  <span>Regular price</span>
+                  <span>Regular Price</span>
                   <span>$997.00</span>
                 </div>
               </div>
@@ -305,20 +304,9 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-                <p className="font-semibold text-slate-900">
-                  What happens next
-                </p>
-                <p className="mt-2">
-                  After payment clears, we unlock your account immediately and
-                  send you into onboarding to create your branded map and
-                  dashboard.
-                </p>
-              </div>
-
               <div className="mt-6 flex items-center justify-center gap-2 text-xs text-slate-400">
                 <ShieldCheck className="w-4 h-4 text-teal-500" />
-                SSL encrypted payment
+                SSL Encrypted Payment
               </div>
             </div>
           </div>
@@ -326,15 +314,13 @@ export default function CheckoutPage() {
           <div className="lg:col-span-3 lg:order-1">
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/70">
-                Payment gate
+                Checkout
               </p>
               <h1 className="mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">
-                Unlock your account with a one-time payment
+                Complete Your Purchase
               </h1>
               <p className="mt-3 text-base text-slate-600">
-                Sign-up comes first, payment comes second, and setup comes last.
-                Once Stripe confirms your payment, we unlock onboarding and your
-                future dashboard access.
+                Finish checkout below to unlock your lifetime access.
               </p>
             </div>
 
