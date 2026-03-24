@@ -1,14 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Loader2, MapPin } from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { toast } from "sonner";
+import { useAuth } from "@/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -16,8 +7,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/auth/AuthProvider";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2, MapPin } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { z } from "zod";
 
 type AuthMode = "sign-in" | "sign-up";
 
@@ -75,7 +75,7 @@ export default function Login() {
 
   const signUpMutation = useMutation({
     mutationFn: async (values: AuthFormValues) => {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -88,9 +88,20 @@ export default function Login() {
       if (error) {
         throw error;
       }
+
+      return data;
     },
-    onSuccess: () => {
-      toast.success("Account created. You can now sign in.");
+    onSuccess: async (data) => {
+      if (data.session) {
+        await queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+        toast.success("Account created.");
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+
+      toast.success(
+        "Account created. Check your email, then sign in to continue.",
+      );
       setMode("sign-in");
     },
     onError: (error) => {

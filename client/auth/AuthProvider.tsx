@@ -1,16 +1,15 @@
+import type { Database } from "@shared/database.types";
+import type { Session, User } from "@supabase/supabase-js";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
+  type ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
-  useCallback,
-  type ReactNode,
 } from "react";
-import type { Session, User } from "@supabase/supabase-js";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import type { Database } from "@shared/database.types";
 
 type DbUser = Database["public"]["Tables"]["users"]["Row"];
 type Company = Database["public"]["Tables"]["companies"]["Row"];
@@ -26,6 +25,8 @@ interface AuthContextValue {
   session: Session | null;
   dbUser: DbUser | null;
   company: Company | null;
+  hasPaidAccess: boolean;
+  paidAt: string | null;
   isLoading: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -35,7 +36,6 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const location = useLocation();
 
   const sessionQuery = useQuery<Session | null>({
     queryKey: ["auth", "session"],
@@ -92,6 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const dbUser = profileQuery.data ?? null;
+  const hasPaidAccess = dbUser?.has_paid_access ?? false;
+  const paidAt = dbUser?.paid_at ?? null;
 
   const companyQuery = useQuery<Company | null>({
     queryKey: ["auth", "company", dbUser?.company_id],
@@ -125,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     root.style.setProperty("--accent", DEFAULT_THEME.accent);
     root.style.setProperty("--ring", DEFAULT_THEME.primary);
     root.style.setProperty("--sidebar-primary", DEFAULT_THEME.primary);
-  }, [location.pathname]);
+  }, []);
 
   const refreshProfile = useCallback(async () => {
     await Promise.all([
@@ -176,6 +178,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session: sessionQuery.data ?? null,
       dbUser,
       company,
+      hasPaidAccess,
+      paidAt,
       isLoading,
       refreshProfile,
       signOut,
@@ -185,6 +189,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionQuery.data,
       dbUser,
       company,
+      hasPaidAccess,
+      paidAt,
       isLoading,
       refreshProfile,
       signOut,

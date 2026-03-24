@@ -9,7 +9,10 @@ window.addEventListener("unhandledrejection", (event) => {
   }
 });
 window.addEventListener("error", (event) => {
-  if (event.error?.name === "AbortError" || event.message?.includes("AbortError")) {
+  if (
+    event.error?.name === "AbortError" ||
+    event.message?.includes("AbortError")
+  ) {
     event.preventDefault();
   }
 });

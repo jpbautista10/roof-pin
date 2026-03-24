@@ -25,3 +25,18 @@ export interface GeocodeSuggestion {
 export interface GeocodeSuggestResponse {
   suggestions: GeocodeSuggestion[];
 }
+
+export interface BillingPaymentIntentResponse {
+  clientSecret: string;
+  paymentIntentId: string;
+  amount: number;
+  currency: string;
+}
+
+export interface BillingStatusResponse {
+  hasPaidAccess: boolean;
+  paidAt: string | null;
+  onboardingCompletedAt: string | null;
+  companySlug: string | null;
+  latestPaymentStatus: string | null;
+}
