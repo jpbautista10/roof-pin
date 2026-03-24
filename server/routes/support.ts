@@ -14,6 +14,7 @@ import { z } from "zod";
 const supportBodySchema = z
   .object({
     name: z.string().trim().min(1).max(120),
+    companyName: z.string().trim().max(200).optional(),
     email: z.string().trim().email().max(254),
     subject: z.string().trim().min(1).max(200),
     message: z.string().trim().min(1).max(8000),
@@ -69,7 +70,7 @@ export const handleSupport: RequestHandler = async (req, res) => {
     return;
   }
 
-  const { name, email, subject, message } = parsed.data;
+  const { name, companyName, email, subject, message } = parsed.data;
 
   const apiKey = process.env.RESEND_API_KEY;
   const toEmail = process.env.SUPPORT_TO_EMAIL ?? "support@roofwisepro.com";
@@ -96,7 +97,14 @@ export const handleSupport: RequestHandler = async (req, res) => {
         to: [toEmail],
         reply_to: email,
         subject: `[Support] ${subject}`,
-        text: `From: ${name} <${email}>\n\n${message}`,
+        text: [
+          `From: ${name} <${email}>`,
+          companyName?.trim()
+            ? `Company: ${companyName.trim()}`
+            : "Company: (not provided)",
+          "",
+          message,
+        ].join("\n"),
       }),
     });
 

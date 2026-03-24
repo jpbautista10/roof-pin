@@ -3,19 +3,14 @@ import LegalPageLayout from "@/components/legal/LegalPageLayout";
 export default function TermsPage() {
   return (
     <LegalPageLayout title="Terms of Service">
-      <p className="not-prose rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
-        <strong>Operator notice:</strong> Replace bracketed placeholders such as{" "}
-        <code className="rounded bg-amber-100 px-1">[Company Legal Name]</code>{" "}
-        with your entity details and have these Terms reviewed by qualified
-        legal counsel before relying on them.
-      </p>
+   
 
       <section>
         <h2>1. Agreement to Terms</h2>
         <p>
           These Terms of Service (“Terms”) govern your access to and use of the
           websites, applications, and services offered by{" "}
-          <strong>[Company Legal Name]</strong> (“we,” “us,” or “our”) relating
+          <strong>Roof Wise Pro</strong> (“we,” “us,” or “our”) relating
           to <strong>Roof Wise Pro</strong> (the “Service”). By accessing or
           using the Service, you agree to these Terms. If you do not agree, do
           not use the Service.
@@ -51,10 +46,10 @@ export default function TermsPage() {
           account credentials and for all activity under your account. You must
           provide accurate registration information and notify us promptly at{" "}
           <a
-            href="mailto:support@roofwisepro.com"
+            href="mailto:support@roofwise-la.com"
             className="font-medium text-primary underline underline-offset-2"
           >
-            support@roofwisepro.com
+            support@roofwise-la.com
           </a>{" "}
           of any unauthorized use.
         </p>
@@ -198,9 +193,9 @@ export default function TermsPage() {
         <h2 className="mt-8">14. Governing law and venue</h2>
         <p>
           These Terms are governed by the laws of{" "}
-          <strong>[State/Country]</strong>, without regard to conflict-of-law
+          <strong>California, US</strong>, without regard to conflict-of-law
           principles. You agree that the courts located in{" "}
-          <strong>[Venue / County / Country]</strong> will have exclusive
+          <strong>United States</strong> will have exclusive
           jurisdiction over disputes, except that we may seek injunctive relief
           in any court of competent jurisdiction.
         </p>
@@ -222,10 +217,10 @@ export default function TermsPage() {
         <p>
           Questions about these Terms:{" "}
           <a
-            href="mailto:support@roofwisepro.com"
+            href="mailto:support@roofwise-la.com"
             className="font-medium text-primary underline underline-offset-2"
           >
-            support@roofwisepro.com
+            support@roofwise-la.com
           </a>
         </p>
       </section>

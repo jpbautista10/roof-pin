@@ -29,6 +29,8 @@ export interface GeocodeSuggestResponse {
 /** POST /api/support — contact form (website field is honeypot; omit or empty) */
 export interface SupportContactRequest {
   name: string;
+  /** Business or organization name (optional) */
+  companyName?: string;
   email: string;
   subject: string;
   message: string;

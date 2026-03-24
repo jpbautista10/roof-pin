@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 export default function SupportPage() {
   const [name, setName] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -32,6 +33,7 @@ export default function SupportPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
+          companyName: companyName.trim(),
           email: email.trim(),
           subject: subject.trim(),
           message: message.trim(),
@@ -52,7 +54,7 @@ export default function SupportPage() {
       if (!res.ok) {
         if (res.status === 503) {
           toast.error(
-            "We can’t send messages from this form right now. Please email support@roofwisepro.com directly.",
+            "We can’t send messages from this form right now. Please email support@roofwise-la.com directly.",
           );
           return;
         }
@@ -71,6 +73,7 @@ export default function SupportPage() {
         data.message ?? "Message sent. We’ll get back to you soon.",
       );
       setName("");
+      setCompanyName("");
       setEmail("");
       setSubject("");
       setMessage("");
@@ -103,10 +106,10 @@ export default function SupportPage() {
           Questions about Roof Wise Pro? Send us a message and we’ll reply by
           email. You can also reach us at{" "}
           <a
-            href="mailto:support@roofwisepro.com"
+            href="mailto:support@roofwise-la.com"
             className="font-medium text-primary underline underline-offset-2"
           >
-            support@roofwisepro.com
+            support@roofwise-la.com
           </a>
           .
         </p>
@@ -139,6 +142,19 @@ export default function SupportPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoComplete="name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="support-company">Company name</Label>
+            <Input
+              id="support-company"
+              name="companyName"
+              maxLength={200}
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              autoComplete="organization"
+              placeholder="Optional"
             />
           </div>
 

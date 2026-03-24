@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       <section>
         <h2>1. Who we are</h2>
         <p>
-          This Privacy Policy explains how <strong>[Company Legal Name]</strong>{" "}
+          This Privacy Policy explains how <strong>Roof Wise Pro</strong>{" "}
           (“we,” “us,” or “our”) collects, uses, and shares information in
           connection with <strong>Roof Wise Pro</strong> (the “Service”).
         </p>
@@ -158,10 +158,8 @@ export default function PrivacyPage() {
       <section>
         <h2 className="mt-8">9. International transfers</h2>
         <p>
-          Your information may be processed in the United States and other
-          countries where we or our vendors operate. Data residency for your
-          Supabase project depends on the region you select — confirm your
-          settings at <strong>[operator to confirm region]</strong>. Where
+          Your information will be processed in the United States and other
+          countries where we or our vendors operate. Where
           required, we use appropriate safeguards for cross-border transfers.
         </p>
       </section>
@@ -174,10 +172,10 @@ export default function PrivacyPage() {
           certain processing. You may also have the right to lodge a complaint
           with a supervisory authority. To exercise rights, contact us at{" "}
           <a
-            href="mailto:support@roofwisepro.com"
+            href="mailto:support@roofwise-la.com"
             className="font-medium text-primary underline underline-offset-2"
           >
-            support@roofwisepro.com
+            support@roofwise-la.com
           </a>
           . We may verify your request before responding.
         </p>
@@ -221,14 +219,14 @@ export default function PrivacyPage() {
       <section>
         <h2 className="mt-8">14. Contact</h2>
         <p>
-          <strong>[Company Legal Name]</strong>
+          <strong>Roof Wise Pro</strong>
           <br />
           Email:{" "}
           <a
-            href="mailto:support@roofwisepro.com"
+            href="mailto:support@roofwise-la.com"
             className="font-medium text-primary underline underline-offset-2"
           >
-            support@roofwisepro.com
+            support@roofwise-la.com
           </a>
         </p>
       </section>
