@@ -51,8 +51,36 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-slate-800 text-xs text-slate-500">
-          © {new Date().getFullYear()} Roof Wise Pro. All rights reserved.
+        <div className="mt-10 pt-6 border-t border-slate-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500">
+          <p>
+            © {new Date().getFullYear()} Roof Wise Pro. All rights reserved.
+          </p>
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end">
+            <Link
+              to="/terms"
+              className="hover:text-white transition-colors"
+            >
+              Terms of Service
+            </Link>
+            <span className="text-slate-600" aria-hidden>
+              ·
+            </span>
+            <Link
+              to="/privacy"
+              className="hover:text-white transition-colors"
+            >
+              Privacy Policy
+            </Link>
+            <span className="text-slate-600" aria-hidden>
+              ·
+            </span>
+            <Link
+              to="/support"
+              className="hover:text-white transition-colors"
+            >
+              Support
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>

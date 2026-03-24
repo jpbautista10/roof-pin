@@ -21,9 +21,39 @@ export default function SalesFooter() {
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>&copy; {new Date().getFullYear()} Roof Wise Pro. All rights reserved.</p>
-          <p>30-Day Money-Back Guarantee &middot; Lifetime Access &middot; No Monthly Fees</p>
+        <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col gap-4 text-xs text-slate-500">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p>&copy; {new Date().getFullYear()} Roof Wise Pro. All rights reserved.</p>
+            <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end">
+              <Link
+                to="/terms"
+                className="hover:text-white transition-colors"
+              >
+                Terms of Service
+              </Link>
+              <span className="text-slate-600" aria-hidden>
+                ·
+              </span>
+              <Link
+                to="/privacy"
+                className="hover:text-white transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <span className="text-slate-600" aria-hidden>
+                ·
+              </span>
+              <Link
+                to="/support"
+                className="hover:text-white transition-colors"
+              >
+                Support
+              </Link>
+            </nav>
+          </div>
+          <p className="text-center sm:text-left text-slate-600">
+            30-Day Money-Back Guarantee &middot; Lifetime Access &middot; No Monthly Fees
+          </p>
         </div>
       </div>
     </footer>

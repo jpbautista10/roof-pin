@@ -1,28 +1,32 @@
 import "./global.css";
 
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/auth/AuthProvider";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { OnboardingOnly, RequireOnboarding } from "@/auth/RequireOnboarding";
-import Index from "./pages/Index";
+import ScrollToTop from "@/components/ScrollToTop";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import DashboardLayout from "./components/layout/DashboardLayout";
 import Login from "./pages/auth/Login";
-import Onboarding from "./pages/Onboarding";
-import PublicMap from "./pages/PublicMap";
-import PublicReview from "./pages/PublicReview";
+import CheckoutPage from "./pages/CheckoutPage";
 import Dashboard from "./pages/Dashboard";
+import DashboardImport from "./pages/DashboardImport";
+import DashboardLocationCreate from "./pages/DashboardLocationCreate";
 import DashboardPins from "./pages/DashboardPins";
 import DashboardRedirect from "./pages/DashboardRedirect";
-import DashboardLayout from "./components/layout/DashboardLayout";
-import DashboardLocationCreate from "./pages/DashboardLocationCreate";
 import DashboardSettings from "./pages/DashboardSettings";
-import DashboardImport from "./pages/DashboardImport";
-import SalesPage from "./pages/SalesPage";
-import CheckoutPage from "./pages/CheckoutPage";
-import WelcomePage from "./pages/WelcomePage";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Onboarding from "./pages/Onboarding";
+import PrivacyPage from "./pages/PrivacyPage";
+import PublicMap from "./pages/PublicMap";
+import PublicReview from "./pages/PublicReview";
+import SalesPage from "./pages/SalesPage";
+import SupportPage from "./pages/SupportPage";
+import TermsPage from "./pages/TermsPage";
+import WelcomePage from "./pages/WelcomePage";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +43,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Sonner />
           <Routes>
             <Route path="/" element={<Index />} />
@@ -47,6 +52,9 @@ export default function App() {
             <Route path="/get-started" element={<SalesPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/welcome" element={<WelcomePage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/support" element={<SupportPage />} />
 
             <Route element={<AuthRoutes />}>
               <Route path="/auth/login" element={<Login />} />

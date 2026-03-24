@@ -1,9 +1,10 @@
 import "dotenv/config";
-import express from "express";
 import cors from "cors";
+import express from "express";
 import { handleDemo } from "./routes/demo";
 import { handleGeocodeSuggest } from "./routes/geocode";
 import { handleBatchGeocode } from "./routes/import";
+import { handleSupport } from "./routes/support";
 
 export function createServer() {
   const app = express();
@@ -22,6 +23,7 @@ export function createServer() {
   app.get("/api/demo", handleDemo);
   app.get("/api/geocode/suggest", handleGeocodeSuggest);
   app.post("/api/import/geocode", handleBatchGeocode);
+  app.post("/api/support", handleSupport);
 
   return app;
 }

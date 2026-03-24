@@ -25,3 +25,19 @@ export interface GeocodeSuggestion {
 export interface GeocodeSuggestResponse {
   suggestions: GeocodeSuggestion[];
 }
+
+/** POST /api/support — contact form (website field is honeypot; omit or empty) */
+export interface SupportContactRequest {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  /** Bot trap — must be empty */
+  website?: string;
+}
+
+export interface SupportContactResponse {
+  ok: boolean;
+  message?: string;
+  error?: string;
+}
