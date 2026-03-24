@@ -1,4 +1,4 @@
-import { MapPin } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Link } from "react-router-dom";
 
 export default function Footer() {
@@ -7,14 +7,9 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col sm:flex-row items-start justify-between gap-8">
           <div>
-            <Link to="/" className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-                <MapPin className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="text-base font-bold text-white tracking-tight">
-                Neighborhood Proof
-              </span>
-            </Link>
+            <div className="mb-3">
+              <BrandLogo to="/" size="sm" onDarkBackground />
+            </div>
             <p className="text-sm max-w-xs leading-relaxed">
               The map-based portfolio widget that helps local contractors win
               more jobs with social proof.
@@ -56,8 +51,27 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-slate-800 text-xs text-slate-500">
-          © {new Date().getFullYear()} Neighborhood Proof. All rights reserved.
+        <div className="mt-10 pt-6 border-t border-slate-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500">
+          <p>
+            © {new Date().getFullYear()} Roof Wise Pro. All rights reserved.
+          </p>
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:justify-end">
+            <Link to="/terms" className="hover:text-white transition-colors">
+              Terms of Service
+            </Link>
+            <span className="text-slate-600" aria-hidden>
+              ·
+            </span>
+            <Link to="/privacy" className="hover:text-white transition-colors">
+              Privacy Policy
+            </Link>
+            <span className="text-slate-600" aria-hidden>
+              ·
+            </span>
+            <Link to="/support" className="hover:text-white transition-colors">
+              Support
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>

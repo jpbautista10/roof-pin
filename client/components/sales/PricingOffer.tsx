@@ -43,18 +43,20 @@ export default function PricingOffer() {
         <div className="max-w-xl mx-auto">
           <div className="rounded-2xl border-2 border-primary/20 bg-white shadow-xl shadow-primary/5 overflow-hidden">
             {/* Value stack header */}
-            <div className="bg-slate-50 px-6 sm:px-8 py-6 border-b border-slate-200/80">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">
-                Here's what you're getting
+            <div className="bg-slate-50 px-4 sm:px-8 py-5 sm:py-6 border-b border-slate-200/80">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 sm:mb-4">
+                Here&apos;s what you&apos;re getting
               </p>
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 {valueStack.map((v) => (
                   <div
                     key={v.item}
-                    className="flex items-center justify-between"
+                    className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                   >
-                    <span className="text-sm text-slate-700">{v.item}</span>
-                    <span className="text-sm text-slate-400 line-through">
+                    <span className="text-xs sm:text-sm text-slate-700 leading-snug">
+                      {v.item}
+                    </span>
+                    <span className="text-xs sm:text-sm text-slate-400 line-through shrink-0 sm:text-right">
                       {v.value}
                     </span>
                   </div>

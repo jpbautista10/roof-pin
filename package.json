@@ -1,5 +1,6 @@
 {
   "name": "fusion-starter",
+  "description": "Roof Wise Pro — map-based portfolio for contractors",
   "private": true,
   "type": "module",
   "pkg": {

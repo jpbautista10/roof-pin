@@ -16,10 +16,13 @@ export default function Hero() {
             Built for local contractors
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
-            Turn every job into{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-teal-500">
-              neighborhood proof
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.12]">
+            <span className="block text-base sm:text-lg font-semibold uppercase tracking-[0.12em] text-primary mb-3 sm:mb-4">
+              Roof Wise Pro
+            </span>
+            <span className="block">Proof beats promises.</span>
+            <span className="block mt-2 sm:mt-3 text-transparent bg-clip-text bg-gradient-to-r from-primary to-teal-500">
+              Show them on a map.
             </span>
           </h1>
 

@@ -1,3 +1,6 @@
+import { useAuth } from "@/auth/AuthProvider";
+import { Button } from "@/components/ui/button";
+import { stripePromise } from "@/lib/stripe";
 import type { BillingPaymentIntentResponse } from "@shared/api";
 import {
   Elements,
@@ -9,9 +12,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check, Lock, MapPin, ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { useAuth } from "@/auth/AuthProvider";
-import { Button } from "@/components/ui/button";
-import { stripePromise } from "@/lib/stripe";
 
 const includedItems = [
   "One-time payment",
@@ -31,11 +31,7 @@ function formatPrice(amount: number, currency: string) {
   }).format(amount / 100);
 }
 
-function CheckoutForm({
-  clientSecret,
-  amount,
-  currency,
-}: BillingPaymentIntentResponse) {
+function CheckoutForm({ amount, currency }: BillingPaymentIntentResponse) {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();

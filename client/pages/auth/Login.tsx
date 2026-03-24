@@ -1,12 +1,5 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, MapPin } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { z } from "zod";
 import { useAuth } from "@/auth/AuthProvider";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +11,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { z } from "zod";
 
 type AuthMode = "sign-in" | "sign-up";
 
@@ -137,17 +138,7 @@ export default function Login() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-teal-50/30 px-4 py-12">
       <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-        <Link
-          to="/"
-          className="mx-auto inline-flex items-center gap-2 text-slate-800"
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <MapPin className="h-4 w-4 text-white" />
-          </span>
-          <span className="text-base font-semibold tracking-tight">
-            Neighborhood Proof
-          </span>
-        </Link>
+        <BrandLogo to="/" className="mx-auto" />
 
         <Card className="border-slate-200/80 bg-white/90 shadow-lg shadow-slate-200/40">
           <CardHeader className="space-y-3">
