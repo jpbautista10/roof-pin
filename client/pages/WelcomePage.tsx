@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { MapPin, CheckCircle2, ArrowRight, Rocket, Upload, Palette } from "lucide-react";
+import { CheckCircle2, ArrowRight, Rocket, Upload, Palette } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const nextSteps = [
   {
@@ -29,7 +30,7 @@ export default function WelcomePage() {
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-3">
-          Welcome to Neighborhood Proof!
+          Welcome to Roof Wise Pro!
         </h1>
         <p className="text-lg text-slate-600 mb-10 max-w-md mx-auto">
           Your payment was successful. You now have lifetime access. Let's get
@@ -72,16 +73,12 @@ export default function WelcomePage() {
 
         <p className="mt-4 text-sm text-slate-500">
           Need help? Email us at{" "}
-          <span className="font-medium text-slate-700">support@neighborhoodproof.com</span>{" "}
+          <span className="font-medium text-slate-700">support@roofwisepro.com</span>{" "}
           — we'll set it up with you.
         </p>
 
-        {/* Logo */}
-        <div className="mt-12 flex items-center justify-center gap-2 text-slate-400">
-          <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
-            <MapPin className="w-3 h-3 text-white" />
-          </div>
-          <span className="text-sm font-medium">Neighborhood Proof</span>
+        <div className="mt-12 flex justify-center opacity-90">
+          <BrandLogo to="/" />
         </div>
       </div>
     </div>

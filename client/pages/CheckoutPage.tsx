@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { MapPin, Lock, Check, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Lock, Check, ArrowLeft, ShieldCheck } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -30,12 +31,7 @@ export default function CheckoutPage() {
             <ArrowLeft className="w-4 h-4" />
             Back
           </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-              <MapPin className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="text-base font-bold text-slate-900">Neighborhood Proof</span>
-          </div>
+          <BrandLogo to="/" size="sm" />
           <div className="flex items-center gap-1 text-xs text-slate-400">
             <Lock className="w-3 h-3" />
             Secure

@@ -1,8 +1,21 @@
-import { Play } from "lucide-react";
-import { useState } from "react";
+import { Maximize2, Play, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+
+const DEMO_EMBED_SRC = "/s/demo?embed=true";
 
 export default function DemoSection() {
   const [showDemo, setShowDemo] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [fullscreen]);
 
   return (
     <section id="demo" className="py-16 sm:py-24 bg-slate-50">
@@ -25,17 +38,59 @@ export default function DemoSection() {
 
         <div className="max-w-5xl mx-auto">
           {showDemo ? (
-            <div className="aspect-[16/9] rounded-2xl overflow-hidden border border-slate-200 shadow-2xl shadow-slate-200/50">
-              <iframe
-                src="/s/demo?embed=true"
-                className="w-full h-full"
-                title="Live Demo Map"
-              />
-            </div>
+            <>
+              {/* Only one iframe mounted: inline (desktop + mobile) or fullscreen overlay (mobile) */}
+              {!fullscreen && (
+                <div
+                  className={cn(
+                    "relative rounded-2xl overflow-hidden border border-slate-200 shadow-2xl shadow-slate-200/50",
+                    "min-h-[min(72vh,640px)] h-[min(72vh,640px)] md:min-h-0 md:h-auto md:aspect-[16/9]",
+                  )}
+                >
+                  <iframe
+                    src={DEMO_EMBED_SRC}
+                    className="absolute inset-0 w-full h-full border-0"
+                    title="Live Demo Map"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFullscreen(true)}
+                    className="md:hidden absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-md ring-1 ring-slate-200/80 backdrop-blur-sm"
+                  >
+                    <Maximize2 className="h-3.5 w-3.5" />
+                    Full screen
+                  </button>
+                </div>
+              )}
+
+              {fullscreen && (
+                <div className="fixed inset-0 z-[100] flex flex-col bg-white md:hidden">
+                  <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+                    <p className="text-sm font-semibold text-slate-900">
+                      Live demo map
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setFullscreen(false)}
+                      className="flex h-10 w-10 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100"
+                      aria-label="Close fullscreen map"
+                    >
+                      <X className="h-6 w-6" />
+                    </button>
+                  </div>
+                  <iframe
+                    src={DEMO_EMBED_SRC}
+                    className="min-h-0 w-full flex-1 border-0"
+                    title="Live Demo Map fullscreen"
+                  />
+                </div>
+              )}
+            </>
           ) : (
             <button
+              type="button"
               onClick={() => setShowDemo(true)}
-              className="w-full aspect-[16/9] rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/50 overflow-hidden relative group cursor-pointer"
+              className="w-full min-h-[min(52vh,420px)] md:min-h-0 md:aspect-[16/9] rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/50 overflow-hidden relative group cursor-pointer"
             >
               {/* Grid pattern for map feel */}
               <div
