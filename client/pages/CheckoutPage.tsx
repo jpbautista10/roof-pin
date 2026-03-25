@@ -18,6 +18,7 @@ import { z } from "zod";
 import { useAuth } from "@/auth/AuthProvider";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
+import { pushGtmEvent } from "@/lib/gtm";
 import { stripePromise } from "@/lib/stripe";
 
 const includedItems = [
@@ -65,6 +66,12 @@ function CheckoutForm({
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    pushGtmEvent("payment_submit_clicked", {
+      funnel_step: "checkout_payment",
+      order_token_present: Boolean(orderToken),
+      currency: currency.toUpperCase(),
+      amount: amount / 100,
+    });
 
     const result = await stripe.confirmPayment({
       elements,
@@ -81,6 +88,10 @@ function CheckoutForm({
     });
 
     if (result.error) {
+      pushGtmEvent("payment_error", {
+        funnel_step: "checkout_payment",
+        error_message: result.error.message ?? "Payment failed.",
+      });
       setErrorMessage(result.error.message ?? "Payment failed.");
       setIsSubmitting(false);
       return;
@@ -230,6 +241,12 @@ export default function CheckoutPage() {
   );
 
   const onSubmit = form.handleSubmit(async (values) => {
+    pushGtmEvent("checkout_started", {
+      funnel_step: "checkout_details",
+      email_provided: Boolean(values.email),
+      contact_name_provided: Boolean(values.contactName),
+      company_name_provided: Boolean(values.companyName),
+    });
     await createIntentMutation.mutateAsync(values);
   });
 

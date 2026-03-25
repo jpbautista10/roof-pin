@@ -1,4 +1,5 @@
 import { ArrowRight, CheckCircle2, MapPin } from "lucide-react";
+import { pushGtmEvent } from "@/lib/gtm";
 
 export default function SalesHero() {
   return (
@@ -34,6 +35,14 @@ export default function SalesHero() {
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href="#pricing"
+              onClick={() =>
+                pushGtmEvent("funnel_cta_click", {
+                  funnel_step: "sales_page",
+                  cta_location: "hero",
+                  cta_text: "Get Lifetime Access — $497",
+                  destination: "#pricing",
+                })
+              }
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all hover:shadow-xl hover:shadow-primary/30"
             >
               Get Lifetime Access — $497

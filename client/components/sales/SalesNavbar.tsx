@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/BrandLogo";
+import { pushGtmEvent } from "@/lib/gtm";
 
 export default function SalesNavbar() {
   return (
@@ -14,6 +15,14 @@ export default function SalesNavbar() {
             </span>
             <a
               href="#pricing"
+              onClick={() =>
+                pushGtmEvent("funnel_cta_click", {
+                  funnel_step: "sales_page",
+                  cta_location: "navbar",
+                  cta_text: "Get Lifetime Access",
+                  destination: "#pricing",
+                })
+              }
               className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors shadow-sm"
             >
               Get Lifetime Access

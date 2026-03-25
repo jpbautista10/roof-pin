@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { pushGtmEvent } from "@/lib/gtm";
 import { cn } from "@/lib/utils";
 
 export default function MobileCTA() {
@@ -41,6 +42,14 @@ export default function MobileCTA() {
     >
       <Link
         to="/checkout"
+        onClick={() =>
+          pushGtmEvent("funnel_cta_click", {
+            funnel_step: "sales_page",
+            cta_location: "mobile_sticky_cta",
+            cta_text: "Get Lifetime Access — $497",
+            destination: "/checkout",
+          })
+        }
         className="flex items-center justify-center gap-2 w-full rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25"
       >
         Get Lifetime Access — $497

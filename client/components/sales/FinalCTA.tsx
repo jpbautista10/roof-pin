@@ -1,5 +1,6 @@
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { pushGtmEvent } from "@/lib/gtm";
 
 export default function FinalCTA() {
   return (
@@ -30,6 +31,14 @@ export default function FinalCTA() {
 
         <Link
           to="/checkout"
+          onClick={() =>
+            pushGtmEvent("funnel_cta_click", {
+              funnel_step: "sales_page",
+              cta_location: "final_cta",
+              cta_text: "Get Lifetime Access — $497",
+              destination: "/checkout",
+            })
+          }
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-8 py-4 text-base font-semibold text-slate-900 shadow-xl hover:bg-slate-100 transition-all"
         >
           Get Lifetime Access — $497

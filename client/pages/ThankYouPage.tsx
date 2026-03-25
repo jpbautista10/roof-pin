@@ -9,6 +9,7 @@ import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
+import { pushGtmEvent } from "@/lib/gtm";
 
 function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
@@ -22,6 +23,7 @@ export default function ThankYouPage() {
   const token = searchParams.get("token");
   const { company, dbUser, hasPaidAccess } = useAuth();
   const autoSendTriggeredRef = useRef(false);
+  const purchaseTrackedRef = useRef(false);
 
   const orderQuery = useQuery({
     queryKey: ["billing", "checkout-order", token],
@@ -90,6 +92,23 @@ export default function ThankYouPage() {
       resendMutation.mutate();
     }
   }, [orderQuery.data, resendMutation.isPending, resendMutation.mutate, token]);
+
+  useEffect(() => {
+    if (purchaseTrackedRef.current) {
+      return;
+    }
+
+    if (orderQuery.data?.status === "succeeded") {
+      purchaseTrackedRef.current = true;
+      pushGtmEvent("purchase_completed", {
+        funnel_step: "thank_you",
+        amount: orderQuery.data.amount / 100,
+        currency: orderQuery.data.currency.toUpperCase(),
+        company_name: orderQuery.data.companyName,
+        order_token_present: Boolean(token),
+      });
+    }
+  }, [orderQuery.data, token]);
 
   const email = orderQuery.data?.email ?? "";
   const loginLinkHref = useMemo(() => {
