@@ -13,9 +13,9 @@ export default function PrivacyPage() {
       <section>
         <h2>1. Who we are</h2>
         <p>
-          This Privacy Policy explains how <strong>Roof Wise Pro</strong>{" "}
-          (“we,” “us,” or “our”) collects, uses, and shares information in
-          connection with <strong>Roof Wise Pro</strong> (the “Service”).
+          This Privacy Policy explains how <strong>Roof Wise Pro</strong> (“we,”
+          “us,” or “our”) collects, uses, and shares information in connection
+          with <strong>Roof Wise Pro</strong> (the “Service”).
         </p>
       </section>
 
@@ -159,8 +159,8 @@ export default function PrivacyPage() {
         <h2 className="mt-8">9. International transfers</h2>
         <p>
           Your information will be processed in the United States and other
-          countries where we or our vendors operate. Where
-          required, we use appropriate safeguards for cross-border transfers.
+          countries where we or our vendors operate. Where required, we use
+          appropriate safeguards for cross-border transfers.
         </p>
       </section>
 

@@ -56,10 +56,15 @@ export function BrandLogo({
 
   if (to) {
     return (
-      <Link to={to} className={cn("inline-flex items-center shrink-0", className)}>
+      <Link
+        to={to}
+        className={cn("inline-flex items-center shrink-0", className)}
+      >
         {inner}
       </Link>
     );
   }
-  return <div className={cn("inline-flex items-center", className)}>{inner}</div>;
+  return (
+    <div className={cn("inline-flex items-center", className)}>{inner}</div>
+  );
 }

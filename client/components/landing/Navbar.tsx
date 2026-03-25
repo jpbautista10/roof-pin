@@ -1,7 +1,7 @@
-import { BrandLogo } from "@/components/BrandLogo";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);

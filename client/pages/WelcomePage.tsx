@@ -1,5 +1,3 @@
-import { useAuth } from "@/auth/AuthProvider";
-import { BrandLogo } from "@/components/BrandLogo";
 import {
   ArrowRight,
   CheckCircle2,
@@ -8,6 +6,8 @@ import {
   Upload,
 } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
+import { useAuth } from "@/auth/AuthProvider";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const nextSteps = [
   {

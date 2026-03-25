@@ -1,5 +1,5 @@
-import { BrandLogo } from "@/components/BrandLogo";
 import { Link } from "react-router-dom";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export default function SalesFooter() {
   return (

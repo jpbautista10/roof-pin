@@ -3,17 +3,15 @@ import LegalPageLayout from "@/components/legal/LegalPageLayout";
 export default function TermsPage() {
   return (
     <LegalPageLayout title="Terms of Service">
-   
-
       <section>
         <h2>1. Agreement to Terms</h2>
         <p>
           These Terms of Service (“Terms”) govern your access to and use of the
           websites, applications, and services offered by{" "}
-          <strong>Roof Wise Pro</strong> (“we,” “us,” or “our”) relating
-          to <strong>Roof Wise Pro</strong> (the “Service”). By accessing or
-          using the Service, you agree to these Terms. If you do not agree, do
-          not use the Service.
+          <strong>Roof Wise Pro</strong> (“we,” “us,” or “our”) relating to{" "}
+          <strong>Roof Wise Pro</strong> (the “Service”). By accessing or using
+          the Service, you agree to these Terms. If you do not agree, do not use
+          the Service.
         </p>
       </section>
 
@@ -195,9 +193,9 @@ export default function TermsPage() {
           These Terms are governed by the laws of{" "}
           <strong>California, US</strong>, without regard to conflict-of-law
           principles. You agree that the courts located in{" "}
-          <strong>United States</strong> will have exclusive
-          jurisdiction over disputes, except that we may seek injunctive relief
-          in any court of competent jurisdiction.
+          <strong>United States</strong> will have exclusive jurisdiction over
+          disputes, except that we may seek injunctive relief in any court of
+          competent jurisdiction.
         </p>
       </section>
 

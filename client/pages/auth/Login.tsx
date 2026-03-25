@@ -1,16 +1,3 @@
-import { useAuth } from "@/auth/AuthProvider";
-import { BrandLogo } from "@/components/BrandLogo";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Mail } from "lucide-react";
@@ -24,6 +11,19 @@ import {
 } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useAuth } from "@/auth/AuthProvider";
+import { BrandLogo } from "@/components/BrandLogo";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),
