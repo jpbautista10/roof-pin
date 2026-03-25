@@ -1,16 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { Loader2, Mail } from "lucide-react";
-import { useMemo } from "react";
-import { useForm } from "react-hook-form";
-import {
-  Navigate,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
-import { toast } from "sonner";
-import { z } from "zod";
 import { useAuth } from "@/auth/AuthProvider";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
@@ -24,6 +11,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { Loader2, Mail } from "lucide-react";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),
@@ -33,7 +33,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const location = useLocation();
-  const navigate = useNavigate();
+  const _navigateeeee = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, isLoading } = useAuth();
 
@@ -149,7 +149,7 @@ export default function Login() {
 
               <p className="text-center text-xs text-slate-500">
                 Need access first?{" "}
-                <a href="/get-started" className="font-medium text-primary">
+                <a href="/checkout" className="font-medium text-primary">
                   Go to checkout
                 </a>
               </p>

@@ -10,12 +10,13 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Check, Lock, MapPin, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Check, Lock, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/auth/AuthProvider";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { stripePromise } from "@/lib/stripe";
 
@@ -259,14 +260,7 @@ export default function CheckoutPage() {
             <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-              <MapPin className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="text-base font-bold text-slate-900">
-              Roof Wise Pro
-            </span>
-          </div>
+          <BrandLogo to="/" size="sm" />
           <div className="flex items-center gap-1 text-xs text-slate-400">
             <Lock className="h-3 w-3" />
             Secure
