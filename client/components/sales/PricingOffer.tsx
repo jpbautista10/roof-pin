@@ -1,5 +1,6 @@
 import { ArrowRight, Check } from "lucide-react";
 import { Link } from "react-router-dom";
+import { pushGtmEvent } from "@/lib/gtm";
 
 const valueStack = [
   { item: "Branded Live Map & Sales Tool", value: "$2,000+" },
@@ -97,6 +98,14 @@ export default function PricingOffer() {
 
               <Link
                 to="/checkout"
+                onClick={() =>
+                  pushGtmEvent("funnel_cta_click", {
+                    funnel_step: "sales_page",
+                    cta_location: "pricing_offer",
+                    cta_text: "Get Lifetime Access Now",
+                    destination: "/checkout",
+                  })
+                }
                 className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-8 py-4 text-base font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all hover:shadow-xl hover:shadow-primary/30"
               >
                 Get Lifetime Access Now

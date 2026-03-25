@@ -1,6 +1,7 @@
 import "./global.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/auth/AuthProvider";
 import { RequireAuth } from "@/auth/RequireAuth";
@@ -9,6 +10,8 @@ import { RequirePaidAccess } from "@/auth/RequirePaidAccess";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { trackVirtualPageView } from "@/lib/gtm";
+import { useLocation } from "react-router-dom";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import Login from "./pages/auth/Login";
 import CheckoutPage from "./pages/CheckoutPage";
@@ -32,6 +35,17 @@ import WelcomePage from "./pages/WelcomePage";
 
 const queryClient = new QueryClient();
 
+function RouteTracking() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = `${location.pathname}${location.search}${location.hash}`;
+    trackVirtualPageView(path);
+  }, [location.hash, location.pathname, location.search]);
+
+  return null;
+}
+
 function AuthRoutes() {
   return (
     <AuthProvider>
@@ -45,6 +59,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <RouteTracking />
           <ScrollToTop />
           <Sonner />
           <Routes>
