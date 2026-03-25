@@ -1,28 +1,38 @@
-import { useAuth } from "@/auth/AuthProvider";
-import { Button } from "@/components/ui/button";
-import { stripePromise } from "@/lib/stripe";
-import type { BillingPaymentIntentResponse } from "@shared/api";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type {
+  BillingCreateCheckoutOrderRequest,
+  BillingPaymentIntentResponse,
+} from "@shared/api";
 import {
   Elements,
   PaymentElement,
   useElements,
   useStripe,
 } from "@stripe/react-stripe-js";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Check, Lock, MapPin, ShieldCheck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { useAuth } from "@/auth/AuthProvider";
+import { Button } from "@/components/ui/button";
+import { stripePromise } from "@/lib/stripe";
 
 const includedItems = [
   "One-time payment",
   "Lifetime access",
   "30-day money-back guarantee",
-  "Personal onboarding included",
+  "Magic-link login included",
 ];
 
-async function sleep(ms: number) {
-  await new Promise((resolve) => window.setTimeout(resolve, ms));
-}
+const checkoutDetailsSchema = z.object({
+  email: z.string().trim().email("Enter a valid email"),
+  contactName: z.string().trim().min(2, "Enter your full name"),
+  companyName: z.string().trim().min(2, "Enter your company name"),
+});
+
+type CheckoutDetailsValues = z.infer<typeof checkoutDetailsSchema>;
 
 function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
@@ -31,45 +41,19 @@ function formatPrice(amount: number, currency: string) {
   }).format(amount / 100);
 }
 
-function CheckoutForm({ amount, currency }: BillingPaymentIntentResponse) {
+function CheckoutForm({
+  amount,
+  currency,
+  orderToken,
+  email,
+  contactName,
+  companyName,
+}: BillingPaymentIntentResponse & CheckoutDetailsValues) {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
-  const { company, dbUser, refreshProfile, session, user } = useAuth();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  async function waitForEntitlement() {
-    if (!session?.access_token) {
-      throw new Error("Missing session.");
-    }
-
-    for (let attempt = 0; attempt < 12; attempt += 1) {
-      const response = await fetch("/api/billing/payment-status", {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Unable to verify payment status.");
-      }
-
-      const payload = (await response.json()) as {
-        hasPaidAccess: boolean;
-      };
-
-      if (payload.hasPaidAccess) {
-        return;
-      }
-
-      await sleep(1000);
-    }
-
-    throw new Error(
-      "Payment is processing. Refresh in a moment if access does not unlock.",
-    );
-  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,10 +69,11 @@ function CheckoutForm({ amount, currency }: BillingPaymentIntentResponse) {
       elements,
       redirect: "if_required",
       confirmParams: {
+        return_url: `${window.location.origin}/thank-you?token=${encodeURIComponent(orderToken)}`,
         payment_method_data: {
           billing_details: {
-            email: user?.email ?? undefined,
-            name: company?.name ?? undefined,
+            email,
+            name: contactName,
           },
         },
       },
@@ -104,18 +89,9 @@ function CheckoutForm({ amount, currency }: BillingPaymentIntentResponse) {
       result.paymentIntent?.status === "succeeded" ||
       result.paymentIntent?.status === "processing"
     ) {
-      try {
-        await waitForEntitlement();
-        await refreshProfile();
-        navigate("/welcome", { replace: true });
-      } catch (error) {
-        setErrorMessage(
-          error instanceof Error ? error.message : "Unable to verify payment.",
-        );
-      } finally {
-        setIsSubmitting(false);
-      }
-
+      navigate(`/thank-you?token=${encodeURIComponent(orderToken)}`, {
+        replace: true,
+      });
       return;
     }
 
@@ -132,12 +108,18 @@ function CheckoutForm({ amount, currency }: BillingPaymentIntentResponse) {
           options={{
             defaultValues: {
               billingDetails: {
-                email: user?.email ?? "",
-                name: company?.name ?? "",
+                email,
+                name: contactName,
               },
             },
           }}
         />
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <p className="font-medium text-slate-900">Purchasing for</p>
+        <p className="mt-1">{companyName}</p>
+        <p>{email}</p>
       </div>
 
       {errorMessage ? (
@@ -156,58 +138,81 @@ function CheckoutForm({ amount, currency }: BillingPaymentIntentResponse) {
           : `Pay ${formatPrice(amount, currency)} - Get Lifetime Access`}
       </Button>
 
-      <p className="text-xs text-slate-400 text-center">
-        Powered by Stripe. Your payment info is encrypted and secure.
+      <p className="text-center text-xs text-slate-400">
+        Powered by Stripe. We will email your magic login link after payment.
       </p>
-
-      {!dbUser?.has_paid_access ? null : (
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={() => navigate("/welcome", { replace: true })}
-        >
-          Continue to setup
-        </Button>
-      )}
     </form>
   );
 }
 
 export default function CheckoutPage() {
-  const { company, dbUser, hasPaidAccess, isLoading, session } = useAuth();
   const navigate = useNavigate();
+  const { company, dbUser, hasPaidAccess, isLoading, user } = useAuth();
+  const [checkoutData, setCheckoutData] = useState<
+    (BillingPaymentIntentResponse & CheckoutDetailsValues) | null
+  >(null);
 
-  const paymentIntentQuery = useQuery({
-    queryKey: ["billing", "payment-intent", session?.user.id],
-    enabled: Boolean(session?.access_token) && !hasPaidAccess,
-    queryFn: async () => {
+  const form = useForm<CheckoutDetailsValues>({
+    resolver: zodResolver(checkoutDetailsSchema),
+    defaultValues: {
+      email: user?.email ?? "",
+      contactName: dbUser?.full_name ?? "",
+      companyName: company?.name ?? "",
+    },
+  });
+
+  useEffect(() => {
+    if (checkoutData) {
+      return;
+    }
+
+    form.reset({
+      email: user?.email ?? form.getValues("email"),
+      contactName: dbUser?.full_name ?? form.getValues("contactName"),
+      companyName: company?.name ?? form.getValues("companyName"),
+    });
+  }, [checkoutData, company?.name, dbUser?.full_name, form, user?.email]);
+
+  const createIntentMutation = useMutation({
+    mutationFn: async (values: CheckoutDetailsValues) => {
+      const payload: BillingCreateCheckoutOrderRequest = {
+        email: values.email.trim().toLowerCase(),
+        contactName: values.contactName.trim(),
+        companyName: values.companyName.trim(),
+      };
+
       const response = await fetch("/api/billing/create-payment-intent", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${session?.access_token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as {
+        const data = (await response.json().catch(() => null)) as {
           message?: string;
         } | null;
-        throw new Error(payload?.message ?? "Unable to start payment.");
+        throw new Error(data?.message ?? "Unable to start payment.");
       }
 
-      return (await response.json()) as BillingPaymentIntentResponse;
+      const paymentIntent =
+        (await response.json()) as BillingPaymentIntentResponse;
+      return {
+        ...paymentIntent,
+        ...payload,
+      };
     },
-    retry: false,
+    onSuccess: (data) => {
+      setCheckoutData(data);
+    },
   });
 
   const elementsOptions = useMemo(
     () =>
-      paymentIntentQuery.data
+      checkoutData
         ? {
-            clientSecret: paymentIntentQuery.data.clientSecret,
+            clientSecret: checkoutData.clientSecret,
             appearance: {
               theme: "stripe" as const,
               variables: {
@@ -220,19 +225,19 @@ export default function CheckoutPage() {
             },
           }
         : undefined,
-    [paymentIntentQuery.data],
+    [checkoutData],
   );
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    await createIntentMutation.mutateAsync(values);
+  });
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
         <p className="text-sm text-slate-600">Loading checkout...</p>
       </div>
     );
-  }
-
-  if (!session) {
-    return <Navigate to="/auth/login" replace />;
   }
 
   if (hasPaidAccess) {
@@ -240,54 +245,54 @@ export default function CheckoutPage() {
       return <Navigate to={`/dashboard/${company.slug}`} replace />;
     }
 
-    return <Navigate to="/welcome" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <nav className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
           <Link
-            to="/dashboard"
+            to="/get-started"
             className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-              <MapPin className="w-3.5 h-3.5 text-white" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
+              <MapPin className="h-3.5 w-3.5 text-white" />
             </div>
             <span className="text-base font-bold text-slate-900">
-              Neighborhood Proof
+              Roof Wise Pro
             </span>
           </div>
           <div className="flex items-center gap-1 text-xs text-slate-400">
-            <Lock className="w-3 h-3" />
+            <Lock className="h-3 w-3" />
             Secure
           </div>
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-4 py-10 sm:py-16">
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:py-16">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
-          <div className="lg:col-span-2 lg:order-2">
-            <div className="bg-white rounded-3xl border border-slate-200 p-6 sticky top-6 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">
+          <div className="lg:order-2 lg:col-span-2">
+            <div className="sticky top-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-slate-900">
                 Order Summary
               </h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-600">Lifetime Access</span>
-                  <span className="text-slate-900 font-medium">$497.00</span>
+                  <span className="font-medium text-slate-900">$497.00</span>
                 </div>
-                <div className="flex justify-between text-slate-400 line-through text-xs">
+                <div className="flex justify-between text-xs text-slate-400 line-through">
                   <span>Regular Price</span>
                   <span>$997.00</span>
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between font-bold text-slate-900">
+              <div className="mt-4 flex justify-between border-t border-slate-200 pt-4 font-bold text-slate-900">
                 <span>Total</span>
                 <span>$497.00</span>
               </div>
@@ -298,69 +303,160 @@ export default function CheckoutPage() {
                     key={item}
                     className="flex items-center gap-2 text-xs text-slate-500"
                   >
-                    <Check className="w-3.5 h-3.5 text-teal-500" />
+                    <Check className="h-3.5 w-3.5 text-teal-500" />
                     {item}
                   </div>
                 ))}
               </div>
 
               <div className="mt-6 flex items-center justify-center gap-2 text-xs text-slate-400">
-                <ShieldCheck className="w-4 h-4 text-teal-500" />
+                <ShieldCheck className="h-4 w-4 text-teal-500" />
                 SSL Encrypted Payment
               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-3 lg:order-1">
+          <div className="lg:order-1 lg:col-span-3">
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/70">
                 Checkout
               </p>
               <h1 className="mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">
-                Complete Your Purchase
+                Buy now. We email your login link after payment.
               </h1>
               <p className="mt-3 text-base text-slate-600">
-                Finish checkout below to unlock your lifetime access.
+                Enter the basics first so we can attach lifetime access to the
+                right email and prefill your onboarding.
               </p>
             </div>
 
-            <div className="mt-8">
-              {paymentIntentQuery.isLoading ? (
-                <div className="rounded-3xl border border-slate-200 bg-white p-8 text-sm text-slate-600 shadow-sm">
-                  Preparing secure checkout...
-                </div>
-              ) : paymentIntentQuery.isError ? (
-                <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-                  {paymentIntentQuery.error instanceof Error
-                    ? paymentIntentQuery.error.message
-                    : "Unable to load checkout."}
-                  <div className="mt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => paymentIntentQuery.refetch()}
-                    >
-                      Try again
-                    </Button>
+            <div className="mt-8 space-y-6">
+              {!checkoutData ? (
+                <form
+                  className="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+                  onSubmit={onSubmit}
+                >
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-900">
+                      Account details
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      These details are required before payment and will be used
+                      for your magic login link.
+                    </p>
                   </div>
-                </div>
-              ) : paymentIntentQuery.data && elementsOptions ? (
-                <Elements stripe={stripePromise} options={elementsOptions}>
-                  <CheckoutForm {...paymentIntentQuery.data} />
-                </Elements>
-              ) : (
-                <div className="rounded-3xl border border-slate-200 bg-white p-8 text-sm text-slate-600 shadow-sm">
-                  Unable to initialize Stripe checkout.
-                </div>
-              )}
 
-              <button
-                type="button"
-                onClick={() => navigate("/auth/login", { replace: true })}
-                className="mt-6 text-sm text-slate-500 hover:text-slate-800"
-              >
-                Switch accounts
-              </button>
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="email"
+                      className="text-sm font-medium text-slate-700"
+                    >
+                      Email
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      placeholder="you@company.com"
+                      {...form.register("email")}
+                    />
+                    {form.formState.errors.email ? (
+                      <p className="text-xs text-red-600">
+                        {form.formState.errors.email.message}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="contactName"
+                      className="text-sm font-medium text-slate-700"
+                    >
+                      Your name
+                    </label>
+                    <input
+                      id="contactName"
+                      type="text"
+                      autoComplete="name"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      placeholder="Alex Carter"
+                      {...form.register("contactName")}
+                    />
+                    {form.formState.errors.contactName ? (
+                      <p className="text-xs text-red-600">
+                        {form.formState.errors.contactName.message}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="companyName"
+                      className="text-sm font-medium text-slate-700"
+                    >
+                      Company name
+                    </label>
+                    <input
+                      id="companyName"
+                      type="text"
+                      autoComplete="organization"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      placeholder="Acme Roofing"
+                      {...form.register("companyName")}
+                    />
+                    {form.formState.errors.companyName ? (
+                      <p className="text-xs text-red-600">
+                        {form.formState.errors.companyName.message}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {createIntentMutation.isError ? (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      {createIntentMutation.error instanceof Error
+                        ? createIntentMutation.error.message
+                        : "Unable to start checkout."}
+                    </div>
+                  ) : null}
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={createIntentMutation.isPending}
+                  >
+                    {createIntentMutation.isPending
+                      ? "Preparing secure checkout..."
+                      : "Continue to payment"}
+                  </Button>
+                </form>
+              ) : elementsOptions ? (
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    Your payment will unlock lifetime access for{" "}
+                    {checkoutData.email}.
+                  </div>
+
+                  <Elements stripe={stripePromise} options={elementsOptions}>
+                    <CheckoutForm {...checkoutData} />
+                  </Elements>
+
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutData(null)}
+                    className="text-sm text-slate-500 hover:text-slate-800"
+                  >
+                    Edit account details
+                  </button>
+                </div>
+              ) : null}
+
+              <div className="text-sm text-slate-500">
+                Already purchased?{" "}
+                <Link to="/auth/login" className="font-medium text-primary">
+                  Get your login link
+                </Link>
+              </div>
             </div>
           </div>
         </div>

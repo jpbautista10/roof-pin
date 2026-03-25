@@ -1,49 +1,67 @@
 import type {
+  BillingCreateCheckoutOrderRequest,
   BillingPaymentIntentResponse,
   BillingStatusResponse,
+  CheckoutOrderStatusResponse,
+  SendCheckoutLoginLinkResponse,
 } from "@shared/api";
 import type { RequestHandler } from "express";
 import type Stripe from "stripe";
+import { z } from "zod";
 import { getAuthenticatedUser } from "../lib/auth";
-import { getStripeWebhookSecret } from "../lib/env";
+import { getAppUrl, getStripeWebhookSecret } from "../lib/env";
 import { getBillingConfig, getStripeClient } from "../lib/stripe";
 import { getSupabaseAdmin } from "../lib/supabase-admin";
 
 type UserProfile = {
   id: string;
   email: string;
+  full_name: string | null;
   has_paid_access: boolean;
   paid_at: string | null;
   onboarding_completed_at: string | null;
-  stripe_customer_id: string | null;
   company_id: string | null;
 };
 
-type PaymentRecord = {
-  user_id: string;
+type CheckoutOrder = {
+  id: string;
+  public_token: string;
+  auth_user_id: string | null;
+  email: string;
+  contact_name: string;
+  company_name: string;
   stripe_payment_intent_id: string;
   stripe_customer_id: string | null;
-  stripe_charge_id: string | null;
   stripe_event_id: string | null;
   status: string;
   amount: number;
   amount_refunded: number;
   currency: string;
-  receipt_email: string | null;
   paid_at: string | null;
   refunded_at: string | null;
   disputed_at: string | null;
+  login_link_sent_at: string | null;
 };
+
+const checkoutSchema = z.object({
+  email: z.string().trim().email(),
+  contactName: z.string().trim().min(2).max(120),
+  companyName: z.string().trim().min(2).max(160),
+});
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
 
 async function getUserProfile(userId: string) {
   const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
     .from("users")
     .select(
-      "id, email, has_paid_access, paid_at, onboarding_completed_at, stripe_customer_id, company_id",
+      "id, email, full_name, has_paid_access, paid_at, onboarding_completed_at, company_id",
     )
     .eq("id", userId)
-    .single();
+    .single<UserProfile>();
 
   if (error) {
     throw error;
@@ -52,35 +70,165 @@ async function getUserProfile(userId: string) {
   return data;
 }
 
-async function ensureStripeCustomer(profile: UserProfile) {
-  if (profile.stripe_customer_id) {
-    return profile.stripe_customer_id;
-  }
-
-  const stripe = getStripeClient();
+async function getUserProfileByEmail(email: string) {
   const supabaseAdmin = getSupabaseAdmin();
-  const customer = await stripe.customers.create({
-    email: profile.email || undefined,
-    metadata: {
-      userId: profile.id,
-    },
-  });
-
-  const { error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("users")
-    .update({ stripe_customer_id: customer.id })
-    .eq("id", profile.id);
+    .select(
+      "id, email, full_name, has_paid_access, paid_at, onboarding_completed_at, company_id",
+    )
+    .ilike("email", normalizeEmail(email))
+    .maybeSingle<UserProfile>();
 
   if (error) {
     throw error;
   }
 
+  return data;
+}
+
+async function getCheckoutOrderByIntentId(paymentIntentId: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
+    .from("checkout_orders")
+    .select(
+      "id, public_token, auth_user_id, email, contact_name, company_name, stripe_payment_intent_id, stripe_customer_id, stripe_event_id, status, amount, amount_refunded, currency, paid_at, refunded_at, disputed_at, login_link_sent_at",
+    )
+    .eq("stripe_payment_intent_id", paymentIntentId)
+    .maybeSingle<CheckoutOrder>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+async function getCheckoutOrderByToken(token: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
+    .from("checkout_orders")
+    .select(
+      "id, public_token, auth_user_id, email, contact_name, company_name, stripe_payment_intent_id, stripe_customer_id, stripe_event_id, status, amount, amount_refunded, currency, paid_at, refunded_at, disputed_at, login_link_sent_at",
+    )
+    .eq("public_token", token)
+    .maybeSingle<CheckoutOrder>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+async function getLatestCheckoutOrderForUser(userId: string, email: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const normalizedEmail = normalizeEmail(email);
+  const { data, error } = await supabaseAdmin
+    .from("checkout_orders")
+    .select("status")
+    .or(`auth_user_id.eq.${userId},email.eq.${normalizedEmail}`)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ status: string }>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.status ?? null;
+}
+
+async function getLatestPaidCheckoutOrderForAuthUser(userId: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
+    .from("checkout_orders")
+    .select(
+      "id, public_token, auth_user_id, email, contact_name, company_name, stripe_payment_intent_id, stripe_customer_id, stripe_event_id, status, amount, amount_refunded, currency, paid_at, refunded_at, disputed_at, login_link_sent_at",
+    )
+    .eq("auth_user_id", userId)
+    .not("paid_at", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<CheckoutOrder>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+async function getExistingStripeCustomerId(email: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
+    .from("checkout_orders")
+    .select("stripe_customer_id")
+    .eq("email", normalizeEmail(email))
+    .not("stripe_customer_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ stripe_customer_id: string }>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.stripe_customer_id ?? null;
+}
+
+async function ensureStripeCustomer(
+  email: string,
+  contactName: string,
+  companyName: string,
+) {
+  const existingCustomerId = await getExistingStripeCustomerId(email);
+  if (existingCustomerId) {
+    return existingCustomerId;
+  }
+
+  const stripe = getStripeClient();
+  const customer = await stripe.customers.create({
+    email,
+    name: contactName,
+    metadata: {
+      checkoutEmail: email,
+      companyName,
+    },
+  });
+
   return customer.id;
 }
 
-async function upsertPayment(record: PaymentRecord) {
+async function insertCheckoutOrder(order: {
+  email: string;
+  contact_name: string;
+  company_name: string;
+  stripe_payment_intent_id: string;
+  stripe_customer_id: string | null;
+  status: string;
+  amount: number;
+  currency: string;
+}) {
   const supabaseAdmin = getSupabaseAdmin();
-  const { error } = await supabaseAdmin.from("payments").upsert(record, {
+  const { data, error } = await supabaseAdmin
+    .from("checkout_orders")
+    .insert(order)
+    .select(
+      "id, public_token, auth_user_id, email, contact_name, company_name, stripe_payment_intent_id, stripe_customer_id, stripe_event_id, status, amount, amount_refunded, currency, paid_at, refunded_at, disputed_at, login_link_sent_at",
+    )
+    .single<CheckoutOrder>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+async function upsertCheckoutOrder(order: CheckoutOrder) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { error } = await supabaseAdmin.from("checkout_orders").upsert(order, {
     onConflict: "stripe_payment_intent_id",
   });
 
@@ -91,15 +239,21 @@ async function upsertPayment(record: PaymentRecord) {
 
 async function updateUserAccess(
   userId: string,
-  hasPaidAccess: boolean,
-  paidAt: string | null,
+  values: {
+    email: string;
+    fullName?: string | null;
+    hasPaidAccess: boolean;
+    paidAt: string | null;
+  },
 ) {
   const supabaseAdmin = getSupabaseAdmin();
   const { error } = await supabaseAdmin
     .from("users")
     .update({
-      has_paid_access: hasPaidAccess,
-      paid_at: paidAt,
+      email: values.email,
+      full_name: values.fullName ?? null,
+      has_paid_access: values.hasPaidAccess,
+      paid_at: values.paidAt,
     })
     .eq("id", userId);
 
@@ -108,19 +262,124 @@ async function updateUserAccess(
   }
 }
 
-async function getPaymentByIntentId(paymentIntentId: string) {
+async function linkOrderToUser(orderId: string, userId: string) {
   const supabaseAdmin = getSupabaseAdmin();
-  const { data, error } = await supabaseAdmin
-    .from("payments")
-    .select("user_id")
-    .eq("stripe_payment_intent_id", paymentIntentId)
-    .maybeSingle<{ user_id: string }>();
+  const { error } = await supabaseAdmin
+    .from("checkout_orders")
+    .update({ auth_user_id: userId })
+    .eq("id", orderId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function ensureAuthUserForOrder(order: CheckoutOrder) {
+  const existingProfile = await getUserProfileByEmail(order.email);
+  if (existingProfile) {
+    await linkOrderToUser(order.id, existingProfile.id);
+    return existingProfile;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    email: order.email,
+    email_confirm: true,
+    user_metadata: {
+      full_name: order.contact_name,
+      company_name: order.company_name,
+    },
+  });
+
+  if (error || !data.user) {
+    throw error ?? new Error("Unable to create auth user.");
+  }
+
+  await updateUserAccess(data.user.id, {
+    email: order.email,
+    fullName: order.contact_name,
+    hasPaidAccess: order.status === "succeeded",
+    paidAt: order.paid_at,
+  });
+  await linkOrderToUser(order.id, data.user.id);
+
+  return {
+    id: data.user.id,
+    email: order.email,
+    full_name: order.contact_name,
+    has_paid_access: order.status === "succeeded",
+    paid_at: order.paid_at,
+    onboarding_completed_at: null,
+    company_id: null,
+  } satisfies UserProfile;
+}
+
+async function sendMagicLinkEmail(order: CheckoutOrder, force = false) {
+  if (order.login_link_sent_at && !force) {
+    return order.login_link_sent_at;
+  }
+
+  const user = await ensureAuthUserForOrder(order);
+
+  await updateUserAccess(user.id, {
+    email: order.email,
+    fullName: order.contact_name,
+    hasPaidAccess: order.status === "succeeded",
+    paidAt: order.paid_at,
+  });
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const { error } = await supabaseAdmin.auth.signInWithOtp({
+    email: order.email,
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo: `${getAppUrl()}/auth/login?next=${encodeURIComponent("/dashboard")}`,
+    },
+  });
 
   if (error) {
     throw error;
   }
 
-  return data;
+  const sentAt = new Date().toISOString();
+  const { error: updateError } = await supabaseAdmin
+    .from("checkout_orders")
+    .update({
+      auth_user_id: user.id,
+      login_link_sent_at: sentAt,
+    })
+    .eq("id", order.id);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  return sentAt;
+}
+
+async function updateOrderForRevokedAccess(
+  order: CheckoutOrder,
+  nextStatus: "refunded" | "disputed",
+) {
+  const revokedAt = new Date().toISOString();
+  await upsertCheckoutOrder({
+    ...order,
+    status: nextStatus,
+    paid_at: null,
+    refunded_at: nextStatus === "refunded" ? revokedAt : null,
+    disputed_at: nextStatus === "disputed" ? revokedAt : null,
+  });
+
+  const targetUserId =
+    order.auth_user_id ?? (await getUserProfileByEmail(order.email))?.id;
+  if (targetUserId) {
+    await updateUserAccess(targetUserId, {
+      email: order.email,
+      fullName: order.contact_name,
+      hasPaidAccess: false,
+      paidAt: null,
+    });
+  }
 }
 
 async function getCompanySlug(companyId: string | null) {
@@ -142,97 +401,63 @@ async function getCompanySlug(companyId: string | null) {
   return data?.slug ?? null;
 }
 
-async function getLatestPaymentStatus(userId: string) {
-  const supabaseAdmin = getSupabaseAdmin();
-  const { data, error } = await supabaseAdmin
-    .from("payments")
-    .select("status")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle<{ status: string }>();
-
-  if (error) {
-    throw error;
-  }
-
-  return data?.status ?? null;
-}
-
-function getChargeId(paymentIntent: Stripe.PaymentIntent) {
-  const latestCharge = paymentIntent.latest_charge;
-
-  if (typeof latestCharge === "string") {
-    return latestCharge;
-  }
-
-  return latestCharge?.id ?? null;
-}
-
 async function handlePaymentIntentSucceeded(
   event: Stripe.Event,
   paymentIntent: Stripe.PaymentIntent,
 ) {
-  const metadataUserId = paymentIntent.metadata.userId || null;
-  const paymentRecord = metadataUserId
-    ? { user_id: metadataUserId }
-    : await getPaymentByIntentId(paymentIntent.id);
-
-  if (!paymentRecord?.user_id) {
-    throw new Error(
-      `Unable to resolve user for payment intent ${paymentIntent.id}`,
-    );
+  const order = await getCheckoutOrderByIntentId(paymentIntent.id);
+  if (!order) {
+    throw new Error(`Unable to resolve checkout order for ${paymentIntent.id}`);
   }
 
   const paidAt = new Date(paymentIntent.created * 1000).toISOString();
-  await upsertPayment({
-    user_id: paymentRecord.user_id,
-    stripe_payment_intent_id: paymentIntent.id,
+  const nextOrder: CheckoutOrder = {
+    ...order,
     stripe_customer_id:
       typeof paymentIntent.customer === "string"
         ? paymentIntent.customer
         : null,
-    stripe_charge_id: getChargeId(paymentIntent),
     stripe_event_id: event.id,
     status: paymentIntent.status,
     amount: paymentIntent.amount,
     amount_refunded: 0,
     currency: paymentIntent.currency,
-    receipt_email: paymentIntent.receipt_email,
     paid_at: paidAt,
     refunded_at: null,
     disputed_at: null,
-  });
+  };
 
-  await updateUserAccess(paymentRecord.user_id, true, paidAt);
+  await upsertCheckoutOrder(nextOrder);
+  const user = await ensureAuthUserForOrder(nextOrder);
+  await updateUserAccess(user.id, {
+    email: nextOrder.email,
+    fullName: nextOrder.contact_name,
+    hasPaidAccess: true,
+    paidAt,
+  });
+  await sendMagicLinkEmail(nextOrder);
 }
 
 async function handlePaymentIntentFailed(
   event: Stripe.Event,
   paymentIntent: Stripe.PaymentIntent,
 ) {
-  const paymentRecord = paymentIntent.metadata.userId
-    ? { user_id: paymentIntent.metadata.userId }
-    : await getPaymentByIntentId(paymentIntent.id);
-
-  if (!paymentRecord?.user_id) {
+  const order = await getCheckoutOrderByIntentId(paymentIntent.id);
+  if (!order) {
     return;
   }
 
-  await upsertPayment({
-    user_id: paymentRecord.user_id,
-    stripe_payment_intent_id: paymentIntent.id,
+  await upsertCheckoutOrder({
+    ...order,
     stripe_customer_id:
       typeof paymentIntent.customer === "string"
         ? paymentIntent.customer
         : null,
-    stripe_charge_id: getChargeId(paymentIntent),
     stripe_event_id: event.id,
     status: "payment_failed",
     amount: paymentIntent.amount,
     amount_refunded: 0,
     currency: paymentIntent.currency,
-    receipt_email: paymentIntent.receipt_email,
     paid_at: null,
     refunded_at: null,
     disputed_at: null,
@@ -253,29 +478,23 @@ async function handleChargeRefunded(
     return;
   }
 
-  const paymentRecord = await getPaymentByIntentId(paymentIntentId);
-  if (!paymentRecord?.user_id) {
+  const order = await getCheckoutOrderByIntentId(paymentIntentId);
+  if (!order) {
     return;
   }
 
-  await upsertPayment({
-    user_id: paymentRecord.user_id,
-    stripe_payment_intent_id: paymentIntentId,
-    stripe_customer_id:
-      typeof charge.customer === "string" ? charge.customer : null,
-    stripe_charge_id: charge.id,
-    stripe_event_id: event.id,
-    status: "refunded",
-    amount: charge.amount,
-    amount_refunded: charge.amount_refunded,
-    currency: charge.currency,
-    receipt_email: charge.billing_details.email,
-    paid_at: null,
-    refunded_at: new Date().toISOString(),
-    disputed_at: null,
-  });
-
-  await updateUserAccess(paymentRecord.user_id, false, null);
+  await updateOrderForRevokedAccess(
+    {
+      ...order,
+      stripe_customer_id:
+        typeof charge.customer === "string" ? charge.customer : null,
+      stripe_event_id: event.id,
+      amount: charge.amount,
+      amount_refunded: charge.amount_refunded,
+      currency: charge.currency,
+    },
+    "refunded",
+  );
 }
 
 async function handleChargeDisputed(
@@ -297,48 +516,57 @@ async function handleChargeDisputed(
     return;
   }
 
-  const paymentRecord = await getPaymentByIntentId(paymentIntentId);
-  if (!paymentRecord?.user_id) {
+  const order = await getCheckoutOrderByIntentId(paymentIntentId);
+  if (!order) {
     return;
   }
 
-  await upsertPayment({
-    user_id: paymentRecord.user_id,
-    stripe_payment_intent_id: paymentIntentId,
-    stripe_customer_id:
-      typeof charge.customer === "string" ? charge.customer : null,
-    stripe_charge_id: charge.id,
-    stripe_event_id: event.id,
-    status: "disputed",
-    amount: charge.amount,
-    amount_refunded: charge.amount_refunded,
-    currency: charge.currency,
-    receipt_email: charge.billing_details.email,
-    paid_at: null,
-    refunded_at: null,
-    disputed_at: new Date().toISOString(),
-  });
-
-  await updateUserAccess(paymentRecord.user_id, false, null);
+  await updateOrderForRevokedAccess(
+    {
+      ...order,
+      stripe_customer_id:
+        typeof charge.customer === "string" ? charge.customer : null,
+      stripe_event_id: event.id,
+      amount: charge.amount,
+      amount_refunded: charge.amount_refunded,
+      currency: charge.currency,
+    },
+    "disputed",
+  );
 }
 
 export const handleCreatePaymentIntent: RequestHandler = async (req, res) => {
   try {
-    const authUser = await getAuthenticatedUser(req, res);
-    if (!authUser) {
+    const parsed = checkoutSchema.safeParse(
+      req.body satisfies BillingCreateCheckoutOrderRequest,
+    );
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ message: "Enter your name, company name, and email." });
       return;
     }
 
-    const profile = await getUserProfile(authUser.id);
-    if (profile.has_paid_access) {
-      res.status(409).json({ message: "Payment already completed." });
+    const email = normalizeEmail(parsed.data.email);
+    const contactName = parsed.data.contactName.trim();
+    const companyName = parsed.data.companyName.trim();
+    const existingUser = await getUserProfileByEmail(email);
+
+    if (existingUser?.has_paid_access) {
+      res.status(409).json({
+        message:
+          "This email already has lifetime access. Use the login link to continue.",
+      });
       return;
     }
 
-    const customerId = await ensureStripeCustomer(profile);
     const stripe = getStripeClient();
+    const customerId = await ensureStripeCustomer(
+      email,
+      contactName,
+      companyName,
+    );
     const { amount, currency } = getBillingConfig();
-
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency,
@@ -346,26 +574,12 @@ export const handleCreatePaymentIntent: RequestHandler = async (req, res) => {
       automatic_payment_methods: {
         enabled: true,
       },
-      receipt_email: profile.email || undefined,
+      receipt_email: email,
       metadata: {
-        userId: authUser.id,
+        checkoutEmail: email,
+        contactName,
+        companyName,
       },
-    });
-
-    await upsertPayment({
-      user_id: authUser.id,
-      stripe_payment_intent_id: paymentIntent.id,
-      stripe_customer_id: customerId,
-      stripe_charge_id: null,
-      stripe_event_id: null,
-      status: paymentIntent.status,
-      amount,
-      amount_refunded: 0,
-      currency,
-      receipt_email: profile.email || null,
-      paid_at: null,
-      refunded_at: null,
-      disputed_at: null,
     });
 
     if (!paymentIntent.client_secret) {
@@ -373,9 +587,21 @@ export const handleCreatePaymentIntent: RequestHandler = async (req, res) => {
       return;
     }
 
+    const order = await insertCheckoutOrder({
+      email,
+      contact_name: contactName,
+      company_name: companyName,
+      stripe_payment_intent_id: paymentIntent.id,
+      stripe_customer_id: customerId,
+      status: paymentIntent.status,
+      amount,
+      currency,
+    });
+
     const payload: BillingPaymentIntentResponse = {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      orderToken: order.public_token,
       amount,
       currency,
     };
@@ -397,7 +623,7 @@ export const handleBillingStatus: RequestHandler = async (req, res) => {
     const profile = await getUserProfile(authUser.id);
     const [companySlug, latestPaymentStatus] = await Promise.all([
       getCompanySlug(profile.company_id),
-      getLatestPaymentStatus(authUser.id),
+      getLatestCheckoutOrderForUser(authUser.id, profile.email),
     ]);
 
     const payload: BillingStatusResponse = {
@@ -412,6 +638,101 @@ export const handleBillingStatus: RequestHandler = async (req, res) => {
   } catch (error) {
     console.error("Failed to fetch billing status", error);
     res.status(500).json({ message: "Unable to load billing status." });
+  }
+};
+
+export const handleCheckoutOrderStatus: RequestHandler = async (req, res) => {
+  try {
+    const token = typeof req.query.token === "string" ? req.query.token : null;
+    if (!token) {
+      res.status(400).json({ message: "Missing checkout token." });
+      return;
+    }
+
+    const order = await getCheckoutOrderByToken(token);
+    if (!order) {
+      res.status(404).json({ message: "Checkout order not found." });
+      return;
+    }
+
+    const payload: CheckoutOrderStatusResponse = {
+      email: order.email,
+      contactName: order.contact_name,
+      companyName: order.company_name,
+      status: order.status,
+      amount: order.amount,
+      currency: order.currency,
+      paidAt: order.paid_at,
+      loginLinkSentAt: order.login_link_sent_at,
+    };
+
+    res.status(200).json(payload);
+  } catch (error) {
+    console.error("Failed to fetch checkout order status", error);
+    res.status(500).json({ message: "Unable to load checkout status." });
+  }
+};
+
+export const handleSendCheckoutLoginLink: RequestHandler = async (req, res) => {
+  try {
+    const token = z.string().uuid().safeParse(req.body?.token);
+    if (!token.success) {
+      res.status(400).json({ message: "Missing checkout token." });
+      return;
+    }
+
+    const order = await getCheckoutOrderByToken(token.data);
+    if (!order) {
+      res.status(404).json({ message: "Checkout order not found." });
+      return;
+    }
+
+    if (order.status !== "succeeded") {
+      res.status(409).json({ message: "Payment is not complete yet." });
+      return;
+    }
+
+    const sentAt = await sendMagicLinkEmail(order, true);
+    const payload: SendCheckoutLoginLinkResponse = {
+      ok: true,
+      sentAt,
+    };
+
+    res.status(200).json(payload);
+  } catch (error) {
+    console.error("Failed to send checkout login link", error);
+    res.status(500).json({ message: "Unable to send login link." });
+  }
+};
+
+export const handleLatestCheckoutOrder: RequestHandler = async (req, res) => {
+  try {
+    const authUser = await getAuthenticatedUser(req, res);
+    if (!authUser) {
+      return;
+    }
+
+    const order = await getLatestPaidCheckoutOrderForAuthUser(authUser.id);
+    if (!order) {
+      res.status(404).json({ message: "No paid checkout order found." });
+      return;
+    }
+
+    const payload: CheckoutOrderStatusResponse = {
+      email: order.email,
+      contactName: order.contact_name,
+      companyName: order.company_name,
+      status: order.status,
+      amount: order.amount,
+      currency: order.currency,
+      paidAt: order.paid_at,
+      loginLinkSentAt: order.login_link_sent_at,
+    };
+
+    res.status(200).json(payload);
+  } catch (error) {
+    console.error("Failed to fetch latest checkout order", error);
+    res.status(500).json({ message: "Unable to load checkout order." });
   }
 };
 

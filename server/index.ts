@@ -3,7 +3,10 @@ import "dotenv/config";
 import express from "express";
 import {
   handleBillingStatus,
+  handleCheckoutOrderStatus,
   handleCreatePaymentIntent,
+  handleLatestCheckoutOrder,
+  handleSendCheckoutLoginLink,
   handleStripeWebhook,
 } from "./routes/billing";
 import { handleDemo } from "./routes/demo";
@@ -33,6 +36,9 @@ export function createServer() {
   app.get("/api/demo", handleDemo);
   app.post("/api/billing/create-payment-intent", handleCreatePaymentIntent);
   app.get("/api/billing/payment-status", handleBillingStatus);
+  app.get("/api/billing/checkout-order", handleCheckoutOrderStatus);
+  app.get("/api/billing/latest-checkout-order", handleLatestCheckoutOrder);
+  app.post("/api/billing/send-login-link", handleSendCheckoutLoginLink);
   app.get("/api/geocode/suggest", handleGeocodeSuggest);
   app.post("/api/import/geocode", handleBatchGeocode);
   app.post("/api/support", handleSupport);

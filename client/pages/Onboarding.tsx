@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { CheckoutOrderStatusResponse } from "@shared/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Upload } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -44,7 +45,7 @@ type OnboardingValues = z.infer<typeof onboardingSchema>;
 export default function Onboarding() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, company, refreshProfile } = useAuth();
+  const { user, company, refreshProfile, session } = useAuth();
   const [slugTouched, setSlugTouched] = useState(false);
   const [logoPreview, setLogoPreview] = useState(company?.logo_url ?? "");
 
@@ -104,6 +105,54 @@ export default function Onboarding() {
       return data;
     },
   });
+
+  const latestCheckoutOrderQuery = useQuery({
+    queryKey: ["billing", "latest-checkout-order", session?.user.id],
+    enabled: Boolean(session?.access_token) && !company,
+    retry: false,
+    queryFn: async () => {
+      const response = await fetch("/api/billing/latest-checkout-order", {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+
+      if (response.status === 404) {
+        return null;
+      }
+
+      if (!response.ok) {
+        throw new Error("Unable to load your checkout details.");
+      }
+
+      return (await response.json()) as CheckoutOrderStatusResponse;
+    },
+  });
+
+  useEffect(() => {
+    const checkoutOrder = latestCheckoutOrderQuery.data;
+    if (!checkoutOrder || company) {
+      return;
+    }
+
+    if (!form.getValues("companyName")) {
+      form.setValue("companyName", checkoutOrder.companyName, {
+        shouldDirty: false,
+      });
+    }
+
+    if (!slugTouched && !form.getValues("slug")) {
+      form.setValue(
+        "slug",
+        slugify(checkoutOrder.companyName, {
+          lower: true,
+          strict: true,
+          trim: true,
+        }),
+        { shouldDirty: false },
+      );
+    }
+  }, [company, form, latestCheckoutOrderQuery.data, slugTouched]);
 
   const onboardingMutation = useMutation({
     mutationFn: async (values: OnboardingValues) => {

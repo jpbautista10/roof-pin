@@ -16,6 +16,10 @@ export function getSupabaseServiceRoleKey() {
   return requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 }
 
+export function getAppUrl() {
+  return process.env.APP_URL?.trim() || requireEnv("VITE_APP_URL");
+}
+
 export function getStripeSecretKey() {
   return requireEnv("STRIPE_SECRET_KEY");
 }

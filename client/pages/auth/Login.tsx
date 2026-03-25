@@ -1,3 +1,16 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { Loader2, Mail } from "lucide-react";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import {
+  Navigate,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
+import { toast } from "sonner";
+import { z } from "zod";
 import { useAuth } from "@/auth/AuthProvider";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
@@ -11,121 +24,69 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { z } from "zod";
 
-type AuthMode = "sign-in" | "sign-up";
-
-const authSchema = z.object({
-  email: z.string().email("Enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+const loginSchema = z.object({
+  email: z.string().trim().email("Enter a valid email"),
 });
 
-type AuthFormValues = z.infer<typeof authSchema>;
+type LoginValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const location = useLocation();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const { user, isLoading } = useAuth();
-  const [mode, setMode] = useState<AuthMode>("sign-in");
-
-  const form = useForm<AuthFormValues>({
-    resolver: zodResolver(authSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
 
   const redirectPath = useMemo(() => {
-    const next = (location.state as { from?: string } | null)?.from;
+    const fromState = (location.state as { from?: string } | null)?.from;
+    const fromQuery = searchParams.get("next");
+    const next = fromState || fromQuery;
     if (!next || next.startsWith("/auth")) {
       return "/dashboard";
     }
     return next;
-  }, [location.state]);
+  }, [location.state, searchParams]);
 
-  const signInMutation = useMutation({
-    mutationFn: async (values: AuthFormValues) => {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-      if (error) {
-        throw error;
-      }
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
-      toast.success("Signed in successfully.");
-      navigate(redirectPath, { replace: true });
-    },
-    onError: (error) => {
-      const message =
-        error instanceof Error ? error.message : "Authentication failed";
-      toast.error(message);
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: searchParams.get("email") ?? "",
     },
   });
 
-  const signUpMutation = useMutation({
-    mutationFn: async (values: AuthFormValues) => {
-      const { data, error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
+  const emailLinkMutation = useMutation({
+    mutationFn: async (values: LoginValues) => {
+      const redirectBase =
+        import.meta.env.VITE_APP_URL || window.location.origin;
+      const { error } = await supabase.auth.signInWithOtp({
+        email: values.email.trim().toLowerCase(),
         options: {
-          emailRedirectTo: import.meta.env.VITE_APP_URL
-            ? `${import.meta.env.VITE_APP_URL}/auth/login`
-            : undefined,
+          shouldCreateUser: false,
+          emailRedirectTo: `${redirectBase}/auth/login?next=${encodeURIComponent(redirectPath)}`,
         },
       });
 
       if (error) {
         throw error;
       }
-
-      return data;
     },
-    onSuccess: async (data) => {
-      if (data.session) {
-        await queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
-        toast.success("Account created.");
-        navigate("/dashboard", { replace: true });
-        return;
-      }
-
-      toast.success(
-        "Account created. Check your email, then sign in to continue.",
-      );
-      setMode("sign-in");
+    onSuccess: (_, values) => {
+      toast.success(`Login link sent to ${values.email.trim().toLowerCase()}.`);
     },
     onError: (error) => {
       const message =
-        error instanceof Error ? error.message : "Authentication failed";
+        error instanceof Error ? error.message : "Unable to send login link.";
       toast.error(message);
     },
   });
 
-  const isSubmitting = signInMutation.isPending || signUpMutation.isPending;
-
   const onSubmit = form.handleSubmit(async (values) => {
-    if (mode === "sign-in") {
-      await signInMutation.mutateAsync(values);
-      return;
-    }
-
-    await signUpMutation.mutateAsync(values);
+    await emailLinkMutation.mutateAsync(values);
   });
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
         <p className="text-sm text-slate-600">Checking your session...</p>
       </div>
     );
@@ -142,37 +103,15 @@ export default function Login() {
 
         <Card className="border-slate-200/80 bg-white/90 shadow-lg shadow-slate-200/40">
           <CardHeader className="space-y-3">
-            <div className="inline-flex rounded-lg bg-slate-100 p-1">
-              <button
-                type="button"
-                onClick={() => setMode("sign-in")}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  mode === "sign-in"
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                Sign in
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("sign-up")}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  mode === "sign-up"
-                    ? "bg-white text-slate-900 shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                Create account
-              </button>
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Mail className="h-5 w-5" />
             </div>
             <CardTitle className="text-2xl text-slate-900">
-              {mode === "sign-in" ? "Welcome back" : "Create your account"}
+              Get your login link
             </CardTitle>
             <CardDescription>
-              {mode === "sign-in"
-                ? "Sign in with your email and password to access your dashboard."
-                : "Use your email and password to create a new account."}
+              Enter the email attached to your purchase and we will send you a
+              magic link.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -193,38 +132,27 @@ export default function Login() {
                 ) : null}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete={
-                    mode === "sign-in" ? "current-password" : "new-password"
-                  }
-                  placeholder="••••••••"
-                  {...form.register("password")}
-                />
-                {form.formState.errors.password ? (
-                  <p className="text-xs text-red-600">
-                    {form.formState.errors.password.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? (
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={emailLinkMutation.isPending}
+              >
+                {emailLinkMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {mode === "sign-in"
-                      ? "Signing in..."
-                      : "Creating account..."}
+                    Sending link...
                   </>
-                ) : mode === "sign-in" ? (
-                  "Sign in"
                 ) : (
-                  "Create account"
+                  "Email me a login link"
                 )}
               </Button>
+
+              <p className="text-center text-xs text-slate-500">
+                Need access first?{" "}
+                <a href="/get-started" className="font-medium text-primary">
+                  Go to checkout
+                </a>
+              </p>
             </form>
           </CardContent>
         </Card>

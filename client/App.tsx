@@ -1,5 +1,7 @@
 import "./global.css";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/auth/AuthProvider";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { OnboardingOnly, RequireOnboarding } from "@/auth/RequireOnboarding";
@@ -7,8 +9,6 @@ import { RequirePaidAccess } from "@/auth/RequirePaidAccess";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import Login from "./pages/auth/Login";
 import CheckoutPage from "./pages/CheckoutPage";
@@ -27,6 +27,7 @@ import PublicReview from "./pages/PublicReview";
 import SalesPage from "./pages/SalesPage";
 import SupportPage from "./pages/SupportPage";
 import TermsPage from "./pages/TermsPage";
+import ThankYouPage from "./pages/ThankYouPage";
 import WelcomePage from "./pages/WelcomePage";
 
 const queryClient = new QueryClient();
@@ -56,10 +57,11 @@ export default function App() {
             <Route path="/support" element={<SupportPage />} />
 
             <Route element={<AuthRoutes />}>
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/thank-you" element={<ThankYouPage />} />
               <Route path="/auth/login" element={<Login />} />
 
               <Route element={<RequireAuth />}>
-                <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/welcome" element={<WelcomePage />} />
                 <Route path="/dashboard" element={<DashboardRedirect />} />
                 <Route element={<RequirePaidAccess />}>

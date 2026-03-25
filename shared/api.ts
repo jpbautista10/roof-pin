@@ -29,6 +29,7 @@ export interface GeocodeSuggestResponse {
 export interface BillingPaymentIntentResponse {
   clientSecret: string;
   paymentIntentId: string;
+  orderToken: string;
   amount: number;
   currency: string;
 }
@@ -39,6 +40,32 @@ export interface BillingStatusResponse {
   onboardingCompletedAt: string | null;
   companySlug: string | null;
   latestPaymentStatus: string | null;
+}
+
+export interface BillingCreateCheckoutOrderRequest {
+  email: string;
+  contactName: string;
+  companyName: string;
+}
+
+export interface CheckoutOrderStatusResponse {
+  email: string;
+  contactName: string;
+  companyName: string;
+  status: string;
+  amount: number;
+  currency: string;
+  paidAt: string | null;
+  loginLinkSentAt: string | null;
+}
+
+export interface SendCheckoutLoginLinkRequest {
+  token: string;
+}
+
+export interface SendCheckoutLoginLinkResponse {
+  ok: boolean;
+  sentAt: string;
 }
 
 /** POST /api/support — contact form (website field is honeypot; omit or empty) */
