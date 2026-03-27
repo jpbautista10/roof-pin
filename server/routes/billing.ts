@@ -537,8 +537,27 @@ async function handleChargeDisputed(
 
 export const handleCreatePaymentIntent: RequestHandler = async (req, res) => {
   try {
+    let body = req.body;
+
+    if (Buffer.isBuffer(body)) {
+      const raw = body.toString("utf8").trim();
+      if (!raw) return undefined;
+      try {
+        body = JSON.parse(raw);
+      } catch {
+        return undefined;
+      }
+    } else if (typeof body === "string") {
+      const raw = body.trim();
+      if (!raw) return undefined;
+      try {
+        body = JSON.parse(raw);
+      } catch {
+        return undefined;
+      }
+    }
     const parsed = checkoutSchema.safeParse(
-      req.body satisfies BillingCreateCheckoutOrderRequest,
+      body satisfies BillingCreateCheckoutOrderRequest,
     );
     if (!parsed.success) {
       res
