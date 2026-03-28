@@ -2,7 +2,13 @@ import "./global.css";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import { AuthProvider } from "@/auth/AuthProvider";
 import { RequireAuth } from "@/auth/RequireAuth";
 import { OnboardingOnly, RequireOnboarding } from "@/auth/RequireOnboarding";
@@ -10,8 +16,7 @@ import { RequirePaidAccess } from "@/auth/RequirePaidAccess";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { trackVirtualPageView } from "@/lib/gtm";
-import { useLocation } from "react-router-dom";
+import { trackPageView } from "@/lib/gtm";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import Login from "./pages/auth/Login";
 import CheckoutPage from "./pages/CheckoutPage";
@@ -35,12 +40,69 @@ import WelcomePage from "./pages/WelcomePage";
 
 const queryClient = new QueryClient();
 
+function getPageTitle(pathname: string) {
+  if (pathname === "/") {
+    return "Roof Wise Pro - Home";
+  }
+
+  if (pathname === "/get-started") {
+    return "Roof Wise Pro - Get Started";
+  }
+
+  if (pathname === "/checkout") {
+    return "Roof Wise Pro - Checkout";
+  }
+
+  if (pathname === "/thank-you") {
+    return "Roof Wise Pro - Thank You";
+  }
+
+  if (pathname === "/auth/login") {
+    return "Roof Wise Pro - Login";
+  }
+
+  if (pathname === "/onboarding") {
+    return "Roof Wise Pro - Onboarding";
+  }
+
+  if (pathname === "/dashboard") {
+    return "Roof Wise Pro - Dashboard";
+  }
+
+  if (pathname.startsWith("/dashboard/")) {
+    return "Roof Wise Pro - Dashboard";
+  }
+
+  if (pathname === "/support") {
+    return "Roof Wise Pro - Support";
+  }
+
+  if (pathname === "/privacy") {
+    return "Roof Wise Pro - Privacy";
+  }
+
+  if (pathname === "/terms") {
+    return "Roof Wise Pro - Terms";
+  }
+
+  if (pathname.startsWith("/review/")) {
+    return "Roof Wise Pro - Review";
+  }
+
+  return "Roof Wise Pro";
+}
+
 function RouteTracking() {
   const location = useLocation();
 
   useEffect(() => {
     const path = `${location.pathname}${location.search}${location.hash}`;
-    trackVirtualPageView(path);
+    const pageTitle = getPageTitle(location.pathname);
+    document.title = pageTitle;
+    trackPageView({
+      page_path: path,
+      page_title: pageTitle,
+    });
   }, [location.hash, location.pathname, location.search]);
 
   return null;

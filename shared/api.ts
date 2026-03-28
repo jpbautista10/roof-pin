@@ -49,6 +49,8 @@ export interface BillingCreateCheckoutOrderRequest {
 }
 
 export interface CheckoutOrderStatusResponse {
+  orderToken: string;
+  paymentIntentId: string;
   email: string;
   contactName: string;
   companyName: string;

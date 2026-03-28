@@ -18,7 +18,13 @@ import { z } from "zod";
 import { useAuth } from "@/auth/AuthProvider";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
-import { pushGtmEvent } from "@/lib/gtm";
+import {
+  buildLifetimeAccessItem,
+  pushGtmEvent,
+  trackAddPaymentInfo,
+  trackBeginCheckout,
+  trackCheckoutProgress,
+} from "@/lib/gtm";
 import { stripePromise } from "@/lib/stripe";
 
 const includedItems = [
@@ -43,10 +49,31 @@ function formatPrice(amount: number, currency: string) {
   }).format(amount / 100);
 }
 
+function getCheckoutAnalyticsPayload({
+  amount,
+  currency,
+  orderToken,
+  paymentIntentId,
+}: Pick<
+  BillingPaymentIntentResponse,
+  "amount" | "currency" | "orderToken" | "paymentIntentId"
+>) {
+  const value = amount / 100;
+
+  return {
+    currency: currency.toUpperCase(),
+    value,
+    items: [buildLifetimeAccessItem(value)],
+    order_token: orderToken,
+    payment_intent_id: paymentIntentId,
+  };
+}
+
 function CheckoutForm({
   amount,
   currency,
   orderToken,
+  paymentIntentId,
   email,
   contactName,
   companyName,
@@ -66,11 +93,14 @@ function CheckoutForm({
 
     setIsSubmitting(true);
     setErrorMessage(null);
-    pushGtmEvent("payment_submit_clicked", {
-      funnel_step: "checkout_payment",
-      order_token_present: Boolean(orderToken),
-      currency: currency.toUpperCase(),
-      amount: amount / 100,
+    trackAddPaymentInfo({
+      ...getCheckoutAnalyticsPayload({
+        amount,
+        currency,
+        orderToken,
+        paymentIntentId,
+      }),
+      checkout_step: "payment_submission",
     });
 
     const result = await stripe.confirmPayment({
@@ -91,6 +121,8 @@ function CheckoutForm({
       pushGtmEvent("payment_error", {
         funnel_step: "checkout_payment",
         error_message: result.error.message ?? "Payment failed.",
+        order_token: orderToken,
+        payment_intent_id: paymentIntentId,
       });
       setErrorMessage(result.error.message ?? "Payment failed.");
       setIsSubmitting(false);
@@ -216,6 +248,16 @@ export default function CheckoutPage() {
       };
     },
     onSuccess: (data) => {
+      const analyticsPayload = getCheckoutAnalyticsPayload(data);
+
+      trackBeginCheckout({
+        ...analyticsPayload,
+        checkout_step: "account_details_completed",
+      });
+      trackCheckoutProgress({
+        ...analyticsPayload,
+        checkout_step: "payment_form_viewed",
+      });
       setCheckoutData(data);
     },
   });
@@ -241,12 +283,6 @@ export default function CheckoutPage() {
   );
 
   const onSubmit = form.handleSubmit(async (values) => {
-    pushGtmEvent("checkout_started", {
-      funnel_step: "checkout_details",
-      email_provided: Boolean(values.email),
-      contact_name_provided: Boolean(values.contactName),
-      company_name_provided: Boolean(values.companyName),
-    });
     await createIntentMutation.mutateAsync(values);
   });
 

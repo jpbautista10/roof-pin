@@ -675,6 +675,8 @@ export const handleCheckoutOrderStatus: RequestHandler = async (req, res) => {
     }
 
     const payload: CheckoutOrderStatusResponse = {
+      orderToken: order.public_token,
+      paymentIntentId: order.stripe_payment_intent_id,
       email: order.email,
       contactName: order.contact_name,
       companyName: order.company_name,
@@ -738,6 +740,8 @@ export const handleLatestCheckoutOrder: RequestHandler = async (req, res) => {
     }
 
     const payload: CheckoutOrderStatusResponse = {
+      orderToken: order.public_token,
+      paymentIntentId: order.stripe_payment_intent_id,
       email: order.email,
       contactName: order.contact_name,
       companyName: order.company_name,

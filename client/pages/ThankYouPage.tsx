@@ -4,12 +4,12 @@ import type {
 } from "@shared/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, Mail, RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
-import { pushGtmEvent } from "@/lib/gtm";
+import { buildLifetimeAccessItem, trackPurchase } from "@/lib/gtm";
 
 function formatPrice(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
@@ -24,6 +24,7 @@ export default function ThankYouPage() {
   const { company, dbUser, hasPaidAccess } = useAuth();
   const autoSendTriggeredRef = useRef(false);
   const purchaseTrackedRef = useRef(false);
+  const [hasTrackedPurchase, setHasTrackedPurchase] = useState(false);
 
   const orderQuery = useQuery({
     queryKey: ["billing", "checkout-order", token],
@@ -99,16 +100,21 @@ export default function ThankYouPage() {
     }
 
     if (orderQuery.data?.status === "succeeded") {
+      const value = orderQuery.data.amount / 100;
+
       purchaseTrackedRef.current = true;
-      pushGtmEvent("purchase_completed", {
-        funnel_step: "thank_you",
-        amount: orderQuery.data.amount / 100,
+      trackPurchase({
+        transaction_id: orderQuery.data.paymentIntentId,
         currency: orderQuery.data.currency.toUpperCase(),
-        company_name: orderQuery.data.companyName,
-        order_token_present: Boolean(token),
+        value,
+        items: [buildLifetimeAccessItem(value)],
+        order_token: orderQuery.data.orderToken,
+        payment_intent_id: orderQuery.data.paymentIntentId,
+        checkout_step: "thank_you",
       });
+      setHasTrackedPurchase(true);
     }
-  }, [orderQuery.data, token]);
+  }, [orderQuery.data]);
 
   const email = orderQuery.data?.email ?? "";
   const loginLinkHref = useMemo(() => {
@@ -119,7 +125,12 @@ export default function ThankYouPage() {
     return `/auth/login?email=${encodeURIComponent(email)}`;
   }, [email]);
 
-  if (hasPaidAccess) {
+  const shouldDelayRedirectForPurchase =
+    hasPaidAccess &&
+    orderQuery.data?.status === "succeeded" &&
+    !hasTrackedPurchase;
+
+  if (hasPaidAccess && !shouldDelayRedirectForPurchase) {
     if (dbUser?.onboarding_completed_at && company?.slug) {
       return <Navigate to={`/dashboard/${company.slug}`} replace />;
     }
